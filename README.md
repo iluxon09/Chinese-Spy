@@ -8,27 +8,29 @@ TILT is an educational, virtual stock-market simulator. It combines a determinis
 
 - Repository: https://github.com/iluxon09/Chinese-Spy
 - Integrated application source: https://github.com/iluxon09/Chinese-Spy/tree/tilt-integration
+- Member 4 review branch: https://github.com/iluxon09/Chinese-Spy/tree/member4-integration
 - Integration guide: [docs/INTEGRATION.md](docs/INTEGRATION.md)
 - Vercel deployment guide: [docs/DEPLOY_VERCEL.md](docs/DEPLOY_VERCEL.md)
 - Team branch integration status: [docs/BRANCH_INTEGRATION_STATUS.md](docs/BRANCH_INTEGRATION_STATUS.md)
+- Member 4 modules and compatibility notes: [src/lib/member4/README.md](src/lib/member4/README.md)
 
-The integrated application is on the `tilt-integration` branch. The repository's default `main` branch is maintained separately; use the branch link above to review this version.
+The production application is based on the integrated branch, not the repository's default `main` branch. Review the intended branch before deploying.
 
 ## Main features
 
 - Supabase email/password authentication with protected application pages and sign-out.
 - User-owned simulation sessions, each starting with ₹10,00,000 in virtual capital.
-- Eight fictional companies across different sectors.
+- Eight fictional companies in the active market.
 - Deterministic market progression, scripted news events and price history.
 - BUY and SELL market orders with server-side validation and configurable transaction charges.
 - Atomic database transactions, idempotent order handling and ownership checks.
 - Portfolio value, cash, holdings, average cost, realised/unrealised P&L and allocation.
 - Dashboard, market watch, trading terminal, portfolio and simulator UI.
-- Finance Academy lessons and knowledge checks.
-- SIP/goal calculator (illustrative only).
-- CSV upload preview (preview only; it does not import holdings or transactions).
-
-Market Mirror / behavioural analysis is intentionally deferred for a later integration phase.
+- Five Finance Academy lessons with stable IDs, practical examples, takeaways and quizzes.
+- Validated SIP and goal-based SIP calculators with assumptions and educational disclaimers.
+- CSV transaction preview with row-level validation; preview only, no persistent import.
+- Member 4's alternate fictional-company catalogue, event definitions and demo scenario fixtures are preserved as inactive reference modules until mapped to the active database symbols and event IDs.
+- Market Mirror behavioural analysis is intentionally deferred to the final integration phase.
 
 ## Technology
 
@@ -56,6 +58,14 @@ cd Chinese-Spy
 npm install
 ```
 
+For Member 4's additions, use the review branch until the PR is reviewed and merged:
+
+```cmd
+git fetch origin
+git switch --track origin/member4-integration
+npm install
+```
+
 ### 2. Configure Supabase
 
 Create a local `.env.local` file in the project root:
@@ -73,7 +83,7 @@ In Supabase Dashboard → SQL Editor, run the migration:
 
 `supabase/migrations/20261120000000_initial_schema.sql`
 
-The migration creates the market scenario, fictional companies, market events, sessions, holdings, transactions, price history, row-level security policies and database functions used by the API.
+Do not rerun it against a live database unless you understand its upgrade-safe operations and have a backup.
 
 ### 4. Start the app
 
@@ -94,7 +104,7 @@ npm test
 npm run build
 ```
 
-The backend unit-test suite currently contains market and trading tests. The integrated branch has previously passed the local lint, TypeScript, 15-test Vitest and Next.js production-build checks before the latest authentication-gate changes. Re-run the commands above on the current branch before a live demonstration.
+The existing backend suite contains market and trading tests. The Member 4 test suite adds lesson, calculator, CSV parser and demo-scenario coverage. Run all checks on the exact branch you intend to deploy.
 
 ## Application routes
 
@@ -106,10 +116,10 @@ The backend unit-test suite currently contains market and trading tests. The int
 | `/trading` | BUY / SELL market orders, holdings and transaction history |
 | `/portfolio` | Portfolio value, allocation and P&L |
 | `/simulator` | Market-step and event controls |
-| `/academy` | Finance Academy |
-| `/academy/[lessonId]` | Lesson content and quiz |
-| `/portfolio/architect` | Illustrative SIP and goal calculator |
-| `/portfolio/upload` | Local CSV preview only |
+| `/academy` | Five Finance Academy lessons |
+| `/academy/[lessonId]` | Lesson content and knowledge check |
+| `/portfolio/architect` | Validated illustrative SIP and goal calculator |
+| `/portfolio/upload` | CSV validation and preview only |
 | `/api/docs` | API summary |
 | `/api/health` | API health check |
 
@@ -132,10 +142,11 @@ Important API endpoints include:
 
 Authenticated API handlers validate the signed-in user and session ownership. Financial writes are performed through database functions so cash, holdings and transaction updates are atomic. Order UUIDs provide idempotency for safe retries.
 
-## Known scope boundaries
+## Integration boundaries
 
 - Market orders only; limit orders are not implemented.
 - The demo charge rate is a configurable educational assumption, not a complete model of statutory Indian market fees.
-- CSV upload currently previews the file in the browser; persistent import is not implemented.
-- Market Mirror behavioural analysis is deferred.
-- The integration should be re-verified against the intended Supabase project before a public live demo.
+- CSV upload currently validates and previews rows in the browser; persistent historical import is not implemented.
+- Member 4's alternate symbols/events/scenarios are preserved as inactive content because they do not match the active Supabase seed.
+- Market Mirror behavioural analysis is deferred until its data contracts are adapted and tested.
+- Re-verify authentication, trading and the production build against the intended Supabase project before a public demonstration.
