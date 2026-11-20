@@ -1,0 +1,22 @@
+{
+  "name": "tilt-member4",
+  "version": "1.0.0",
+  "description": "TILT Member 4 — Finance Academy, Investment Architect calculators, CSV import & demo scenarios",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": ["tilt", "fintech", "behavioural-finance", "academy", "sip", "csv"],
+  "author": "Team CHINESE SPY — Member 4",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "type": "module"
+}
