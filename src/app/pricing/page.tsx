@@ -1,10 +1,17 @@
 import Link from "next/link";
-import { ArrowRight, Check, GraduationCap, LockKeyhole, Sparkles, WalletCards } from "lucide-react";
+import {
+  ArrowRight,
+  Check,
+  GraduationCap,
+  LockKeyhole,
+  Sparkles,
+  WalletCards,
+} from "lucide-react";
 import { PRICING_PLANS } from "@/lib/pricing/plans";
 
 export const metadata = {
-  title: "Pricing & Plans | TILT",
-  description: "Explore TILT's proposed free and paid educational plans. Demo checkout only.",
+  title: "Pricing & Business Model | TILT",
+  description: "TILT's proposed pilot-first institutional revenue model. No prices or payments are live.",
 };
 
 export default function PricingPage() {
@@ -16,42 +23,52 @@ export default function PricingPage() {
             <Sparkles size={14} aria-hidden="true" /> REVENUE MODEL PREVIEW
           </div>
           <div className="max-w-3xl">
-            <p className="text-xs font-bold uppercase tracking-[.24em] text-emerald-400">TILT / PRICING</p>
-            <h1 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">Learn for free. Grow with TILT.</h1>
+            <p className="text-xs font-bold uppercase tracking-[.24em] text-emerald-400">TILT / BUSINESS MODEL</p>
+            <h1 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">
+              Free to learn. Built to scale with institutions.
+            </h1>
             <p className="mt-4 text-base leading-7 text-slate-400">
-              A look at how TILT could support its educational mission through optional premium
-              plans and institution-funded access.
+              TILT starts with a free student experience, converts through facilitated
+              class and club pilots, and scales through annual institutional site licences.
             </p>
           </div>
-          <div role="note" className="flex items-start gap-3 rounded-xl border border-amber-300/25 bg-amber-300/[.06] p-4 text-sm leading-6 text-amber-100">
+          <div
+            role="note"
+            className="flex items-start gap-3 rounded-xl border border-amber-300/25 bg-amber-300/[.06] p-4 text-sm leading-6 text-amber-100"
+          >
             <LockKeyhole size={19} className="mt-0.5 shrink-0" aria-hidden="true" />
             <p>
-              <strong>Demo only.</strong> These prices come from our proposed revenue model.
-              Payments, subscriptions, paid entitlements and statement-report delivery are not active.
-              All checkout screens are simulations; no money will be collected.
+              <strong>Model preview only.</strong> The team plan does not set Indian price
+              points or establish willingness to pay. Pricing is to be validated through
+              pilots. No paid plan, checkout, subscription or entitlement is active here;
+              every checkout path is a no-charge UI simulation.
             </p>
           </div>
         </header>
 
-        <section aria-label="Proposed plans" className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <section aria-label="TILT revenue model" className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {PRICING_PLANS.map((plan) => (
             <article
               key={plan.id}
               className={`flex h-full flex-col rounded-2xl border p-6 shadow-lg shadow-black/10 ${
-                plan.featured
+                plan.highlightLabel
                   ? "border-emerald-400/50 bg-gradient-to-b from-emerald-400/[.11] to-[#111a2b]"
                   : "border-white/10 bg-[#111a2b]"
               }`}
             >
               <div className="mb-5 flex items-center justify-between gap-3">
-                <span className="text-xs font-semibold uppercase tracking-widest text-slate-400">{plan.audience}</span>
-                {plan.featured ? (
-                  <span className="rounded-full bg-emerald-300 px-3 py-1 text-[11px] font-bold text-slate-950">PROPOSED POPULAR PLAN</span>
+                <span className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+                  {plan.audience}
+                </span>
+                {plan.highlightLabel ? (
+                  <span className="rounded-full bg-emerald-300 px-3 py-1 text-[11px] font-bold text-slate-950">
+                    {plan.highlightLabel}
+                  </span>
                 ) : null}
               </div>
               <h2 className="text-xl font-bold">{plan.name}</h2>
               <div className="mt-4 flex flex-wrap items-baseline gap-2">
-                <strong className="text-3xl tracking-tight text-white">{plan.price}</strong>
+                <strong className="text-2xl tracking-tight text-white">{plan.priceLabel}</strong>
                 <span className="text-xs text-slate-400">{plan.interval}</span>
               </div>
               <p className="mt-4 min-h-14 text-sm leading-6 text-slate-400">{plan.description}</p>
@@ -69,19 +86,15 @@ export default function PricingPage() {
                     href={`/pricing/demo-checkout?plan=${plan.demoPlanId}`}
                     className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-300 px-4 py-3 text-center text-sm font-bold text-slate-950 transition hover:bg-emerald-200"
                   >
-                    Preview demo checkout <ArrowRight size={16} aria-hidden="true" />
+                    Preview demo flow <ArrowRight size={16} aria-hidden="true" />
                   </Link>
-                ) : plan.id === "free" ? (
+                ) : (
                   <Link
                     href="/simulator"
                     className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-white/20 px-4 py-3 text-sm font-bold text-slate-100 hover:bg-white/5"
                   >
                     Explore the free simulator <ArrowRight size={16} aria-hidden="true" />
                   </Link>
-                ) : (
-                  <p className="rounded-xl border border-white/10 p-3 text-center text-xs leading-5 text-slate-400">
-                    Institutional partnerships are a future offering; no checkout is available.
-                  </p>
                 )}
               </div>
             </article>
@@ -92,27 +105,32 @@ export default function PricingPage() {
           <div className="flex items-start gap-3">
             <GraduationCap className="mt-1 shrink-0 text-emerald-300" aria-hidden="true" />
             <div>
-              <h2 className="font-semibold">Free for learners, supported by institutions</h2>
+              <h2 className="font-semibold">The first commercial loop</h2>
               <p className="mt-2 text-sm leading-6 text-slate-400">
-                Our business-model proposal uses college licences and fixed-fee institutional
-                partnerships to help fund financial education.
+                Free student demo → facilitated class or club session → paid cohort pilot
+                → annual institutional site licence. Business and finance programmes,
+                CFA-prep groups and trading clubs are the initial buyer focus.
               </p>
             </div>
           </div>
           <div className="flex items-start gap-3">
             <WalletCards className="mt-1 shrink-0 text-emerald-300" aria-hidden="true" />
             <div>
-              <h2 className="font-semibold">No real payment or investment activity</h2>
+              <h2 className="font-semibold">Later and supplementary revenue</h2>
               <p className="mt-2 text-sm leading-6 text-slate-400">
-                TILT is a virtual investment-learning platform. The demo checkout is for
-                showing a possible product journey, not receiving payment or activating benefits.
+                Broker and fintech licensing comes after classroom evidence. Trading-firm
+                assessments are a later segment. Extra scenario packs and deeper reports
+                may support the free learner funnel, but are not the primary revenue bet.
               </p>
             </div>
           </div>
         </section>
+
         <p className="pb-6 text-xs leading-5 text-slate-500">
-          Prices and benefits are assumptions for a hackathon prototype, not live offers.
-          Financial education only: no stock tips, execution of real trades or guaranteed returns.
+          This is a proposed business model, not a live offer or a forecast. No prices are
+          published because the team plan calls for pricing validation through pilots.
+          TILT remains an educational simulator: no real-money trading, stock tips or
+          guaranteed returns.
         </p>
       </div>
     </main>

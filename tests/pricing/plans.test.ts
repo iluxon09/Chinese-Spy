@@ -1,35 +1,57 @@
 import { describe, expect, it } from "vitest";
 import {
   getDemoCheckoutPlan,
-  getDemoTotalRupees,
+  getValidatedCohortSize,
   PRICING_PLANS,
 } from "../../src/lib/pricing/plans";
 
-describe("proposed TILT pricing and demo checkout", () => {
-  it("keeps the free tier available", () => {
-    expect(PRICING_PLANS.find((plan) => plan.id === "free")?.price).toBe("₹0");
+describe("TILT pilot-first revenue model and demo checkout", () => {
+  it("keeps the free student experience as the entry point", () => {
+    expect(PRICING_PLANS[0]).toMatchObject({
+      id: "free",
+      priceLabel: "₹0",
+    });
   });
 
-  it("matches proposed annual and one-off prices", () => {
-    expect(getDemoTotalRupees("plus")).toBe(999);
-    expect(getDemoTotalRupees("report")).toBe(199);
-    expect(getDemoCheckoutPlan("college")?.unitPriceRupees).toBe(150);
+  it("orders the primary institutional path before later-stage markets", () => {
+    expect(PRICING_PLANS.map((plan) => plan.id)).toEqual([
+      "free",
+      "cohort-pilot",
+      "site-licence",
+      "broker-fintech",
+      "trading-firm",
+    ]);
+    expect(PRICING_PLANS[2].highlightLabel).toBe("PRIMARY REVENUE PATH");
   });
 
-  it("computes a college estimate without issuing any payment", () => {
-    expect(getDemoTotalRupees("college", 400)).toBe(60_000);
-    expect(getDemoTotalRupees("college", 1)).toBe(150);
+  it("does not invent fixed prices for paid models", () => {
+    const paidPlans = PRICING_PLANS.filter((plan) => plan.id !== "free");
+    expect(paidPlans.every((plan) => !/₹\s?\d/.test(plan.priceLabel))).toBe(true);
   });
 
-  it("rejects invalid student counts", () => {
-    for (const count of [0, -1, 1.5, 5001, Number.NaN]) {
-      expect(() => getDemoTotalRupees("college", count)).toThrow(RangeError);
+  it("uses the source's commercial basis for later segments", () => {
+    expect(getDemoCheckoutPlan("broker-fintech")?.pricingBasis).toContain(
+      "per-activated-user or annual",
+    );
+    expect(getDemoCheckoutPlan("trading-firm")?.pricingBasis).toContain(
+      "per-assessment or per-seat",
+    );
+  });
+
+  it("validates cohort size without treating it as a per-student price", () => {
+    expect(getValidatedCohortSize("1")).toBe(1);
+    expect(getValidatedCohortSize("5000")).toBe(5000);
+    for (const value of ["", "0", "-1", "1.5", "5001", "abc", " 10 "]) {
+      expect(getValidatedCohortSize(value)).toBeNull();
     }
   });
 
-  it("does not accept arbitrary checkout plan identifiers", () => {
-    expect(getDemoCheckoutPlan(undefined)).toBeNull();
+  it("accepts only known demo checkout plan identifiers", () => {
+    expect(getDemoCheckoutPlan("cohort-pilot")?.requiresCohortSize).toBe(true);
+    expect(getDemoCheckoutPlan("site-licence")?.requiresCohortSize).toBe(true);
+    expect(getDemoCheckoutPlan("plus")).toBeNull();
     expect(getDemoCheckoutPlan("partner")).toBeNull();
     expect(getDemoCheckoutPlan("unknown")).toBeNull();
+    expect(getDemoCheckoutPlan(undefined)).toBeNull();
   });
 });

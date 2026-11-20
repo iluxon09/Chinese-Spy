@@ -1,148 +1,174 @@
 /**
- * Proposed business-model assumptions from the team's TILT Revenue Model PDF.
- * None of these prices represent an active billing product.
+ * TILT's pilot-first revenue model, based on Section 9 of TILT_Full_Plan.pdf.
+ *
+ * The source plan deliberately sets no Indian price points: pricing and willingness
+ * to pay are to be validated through paid cohort pilots. Labels here describe
+ * commercial models, not approved prices or active billing products.
  */
-export type DemoPlanId = "plus" | "report" | "college";
+export type DemoPlanId =
+  | "cohort-pilot"
+  | "site-licence"
+  | "broker-fintech"
+  | "trading-firm";
 
 export type PricingPlan = {
-  id: "free" | DemoPlanId | "partner";
+  id: "free" | DemoPlanId;
   name: string;
   audience: string;
-  price: string;
+  priceLabel: string;
   interval: string;
   description: string;
   features: readonly string[];
   demoPlanId?: DemoPlanId;
-  featured?: boolean;
+  highlightLabel?: string;
 };
 
 export type DemoCheckoutPlan = {
   id: DemoPlanId;
   name: string;
-  unitPriceRupees: number;
   interval: string;
   description: string;
+  pricingStatus: string;
+  pricingBasis: string;
+  requiresCohortSize: boolean;
 };
 
 export const PRICING_PLANS: readonly PricingPlan[] = [
   {
     id: "free",
-    name: "TILT Free",
-    audience: "For curious learners",
-    price: "₹0",
-    interval: "free access",
-    description: "Start learning through fictional markets and virtual trading.",
+    name: "TILT Student Demo",
+    audience: "For students and first-time learners",
+    priceLabel: "₹0",
+    interval: "Free entry point",
+    description: "A no-cost way for learners to experience TILT before an institution runs a facilitated session.",
     features: [
-      "Virtual-market simulator",
-      "Basic behavioural feedback",
-      "Introductory Finance Academy lessons",
+      "Fictional-market learning experience",
+      "Virtual capital only",
+      "Entry point for classroom and club pilots",
     ],
   },
   {
-    id: "plus",
-    name: "TILT Plus",
-    audience: "For engaged learners",
-    price: "₹999",
-    interval: "per year",
-    description: "A proposed annual plan for deeper, personalised learning.",
+    id: "cohort-pilot",
+    name: "Class / Club Pilot",
+    audience: "First paid conversion",
+    priceLabel: "Paid pilot",
+    interval: "Custom cohort scope",
+    description: "A facilitated session for a business school, finance programme, CFA-prep group or trading club.",
     features: [
-      "Unlimited simulations (planned plan benefit)",
-      "Full behaviour reports (proposed)",
-      "Goal planning and progress tracking (proposed)",
+      "Ready-to-run educational case",
+      "Facilitated class or club session",
+      "Pilot feedback used to shape the institutional offer",
     ],
-    demoPlanId: "plus",
-    featured: true,
+    demoPlanId: "cohort-pilot",
   },
   {
-    id: "report",
-    name: "Market Mirror Report",
-    audience: "For active traders",
-    price: "₹199",
-    interval: "per statement",
-    description: "A proposed one-off analysis of an uploaded trading statement.",
+    id: "site-licence",
+    name: "Annual Institutional Site Licence",
+    audience: "Primary initial buyer",
+    priceLabel: "Custom annual quote",
+    interval: "Institution-wide licence",
+    description: "The intended scale-up after a successful paid cohort pilot and buyer validation.",
     features: [
-      "One-off statement analysis (future feature)",
-      "Evidence-backed behavioural explanation (planned)",
-      "No stock tips or guaranteed returns",
+      "Business schools and finance programmes",
+      "Instructor guide and reusable learning case",
+      "Cohort reporting as the institutional value proposition",
     ],
-    demoPlanId: "report",
+    demoPlanId: "site-licence",
+    highlightLabel: "PRIMARY REVENUE PATH",
   },
   {
-    id: "college",
-    name: "TILT Campus",
-    audience: "For colleges",
-    price: "₹150",
-    interval: "per student / year",
-    description: "A proposed educational licence priced per student.",
+    id: "broker-fintech",
+    name: "Broker & Fintech Education",
+    audience: "Later-stage market",
+    priceLabel: "Later phase",
+    interval: "Per-activated-user or annual licence",
+    description: "A potential readiness and education layer for broker and fintech customers, after classroom evidence exists.",
     features: [
-      "Cohort access (planned)",
-      "Instructor dashboard (future feature)",
-      "Class-level learning insights (planned)",
+      "Readiness education before higher-risk products",
+      "Potential per-activated-user or annual model",
+      "Longer sales cycle; not the first go-to-market target",
     ],
-    demoPlanId: "college",
+    demoPlanId: "broker-fintech",
   },
   {
-    id: "partner",
-    name: "Institutional Partners",
-    audience: "For fintechs and institutions",
-    price: "₹5–6 lakh",
-    interval: "per year · indicative",
-    description: "Proposed fixed-fee partnerships, not transaction-based commissions.",
+    id: "trading-firm",
+    name: "Trading & Prop-Style Firms",
+    audience: "Later-stage market",
+    priceLabel: "Later phase",
+    interval: "Per-assessment or per-seat",
+    description: "A possible behavioural screening and training product for junior traders.",
     features: [
-      "Sponsored educational scenarios (planned)",
-      "Co-branded learning modules (planned)",
-      "Potential white-label licensing (planned)",
+      "Behavioural screening and training",
+      "Potential per-assessment or per-seat model",
+      "To be explored after the initial institutional pilots",
     ],
+    demoPlanId: "trading-firm",
   },
 ];
 
 const DEMO_CHECKOUT_PLANS: Record<DemoPlanId, DemoCheckoutPlan> = {
-  plus: {
-    id: "plus",
-    name: "TILT Plus",
-    unitPriceRupees: 999,
-    interval: "one year",
-    description: "Proposed annual learning plan",
+  "cohort-pilot": {
+    id: "cohort-pilot",
+    name: "TILT Class / Club Pilot",
+    interval: "Paid cohort pilot",
+    description: "A facilitated pilot session for a class, finance programme or trading club.",
+    pricingStatus: "Pilot quote to be agreed with the organiser",
+    pricingBasis: "Scope the learner cohort and pilot requirements; no per-student rate has been approved.",
+    requiresCohortSize: true,
   },
-  report: {
-    id: "report",
-    name: "Market Mirror Report",
-    unitPriceRupees: 199,
-    interval: "one statement",
-    description: "Proposed one-off statement analysis",
+  "site-licence": {
+    id: "site-licence",
+    name: "Annual Institutional Site Licence",
+    interval: "Annual institutional licence",
+    description: "An institutional licence considered after a successful cohort pilot.",
+    pricingStatus: "Custom annual quote after pilot validation",
+    pricingBasis: "Institution-wide scope and requirements; not a published per-seat price.",
+    requiresCohortSize: true,
   },
-  college: {
-    id: "college",
-    name: "TILT Campus Licence",
-    unitPriceRupees: 150,
-    interval: "one student for one year",
-    description: "Proposed college cohort licence",
+  "broker-fintech": {
+    id: "broker-fintech",
+    name: "Broker / Fintech Education Partnership",
+    interval: "Later-stage partnership",
+    description: "A future education and readiness programme for broker or fintech customers.",
+    pricingStatus: "Not priced — later phase",
+    pricingBasis: "The plan identifies per-activated-user or annual licensing as possible models.",
+    requiresCohortSize: false,
+  },
+  "trading-firm": {
+    id: "trading-firm",
+    name: "Trading / Prop-Firm Assessment",
+    interval: "Later-stage partnership",
+    description: "A future behavioural screening and training offer for junior traders.",
+    pricingStatus: "Not priced — later phase",
+    pricingBasis: "The plan identifies per-assessment or per-seat pricing as possible models.",
+    requiresCohortSize: false,
   },
 };
 
 export function getDemoCheckoutPlan(
   value: string | undefined,
 ): DemoCheckoutPlan | null {
-  if (value === "plus" || value === "report" || value === "college") {
+  if (
+    value === "cohort-pilot" ||
+    value === "site-licence" ||
+    value === "broker-fintech" ||
+    value === "trading-firm"
+  ) {
     return DEMO_CHECKOUT_PLANS[value];
   }
   return null;
 }
 
-/** Display-only estimate; never used to request or settle a payment. */
-export function getDemoTotalRupees(
-  planId: DemoPlanId,
-  collegeSeats = 400,
-): number {
-  if (planId === "plus") return 999;
-  if (planId === "report") return 199;
+/**
+ * Validates cohort scope for the demo only. It intentionally does not calculate
+ * a monetary quote because the source revenue model defines no per-student rate.
+ */
+export function getValidatedCohortSize(value: string): number | null {
+  if (!/^\d+$/.test(value)) return null;
 
-  if (
-    !Number.isSafeInteger(collegeSeats) ||
-    collegeSeats < 1 ||
-    collegeSeats > 5000
-  ) {
-    throw new RangeError("Student count must be a whole number from 1 to 5000.");
+  const cohortSize = Number(value);
+  if (!Number.isSafeInteger(cohortSize) || cohortSize < 1 || cohortSize > 5000) {
+    return null;
   }
-  return collegeSeats * 150;
+  return cohortSize;
 }
