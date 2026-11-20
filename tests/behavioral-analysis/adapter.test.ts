@@ -5,7 +5,7 @@ import {
   adaptTransactions,
   analyzePortfolioBehaviour,
   INDICATOR_LESSONS,
-} from "../../src/lib/market-mirror";
+} from "../../src/lib/behavioral-analysis";
 
 const transactions = [{
   id: "tx-1",
@@ -32,7 +32,7 @@ const holdings = [{
   unrealisedPnlPaise: 6_450,
 }];
 
-describe("Market Mirror live API adapter", () => {
+describe("Behavioral Analysis live API adapter", () => {
   it("converts transaction execution prices and charges from paise to rupees", () => {
     const [transaction] = adaptTransactions(transactions);
     expect(transaction.price).toBe(123.45);

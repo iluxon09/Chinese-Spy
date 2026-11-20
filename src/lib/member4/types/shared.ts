@@ -8,8 +8,7 @@
 export type OrderSide = 'BUY' | 'SELL';
 
 /**
- * Canonical transaction record used by Simulator, Market Mirror and CSV import.
- * Imported rows must map into this exact shape.
+ * Shared rupee-denominated transaction shape for educational simulator modules.
  */
 export interface Transaction {
   /** Unique id (uuid or deterministic string) */
@@ -26,8 +25,6 @@ export interface Transaction {
   charges?: number;
   /** Market step when this trade occurred (simulator clock) */
   marketStep?: number;
-  /** True when the record came from CSV / statement import */
-  isImported?: boolean;
   /** Optional free-text note */
   note?: string;
 }
@@ -53,7 +50,7 @@ export interface PricePoint {
   volume?: number;
 }
 
-/** Behaviour indicator keys that Market Mirror emits */
+/** Behaviour pattern keys used by Behavioral Analysis */
 export type IndicatorId =
   | 'fomo'
   | 'overtrading'
@@ -63,7 +60,7 @@ export type IndicatorId =
 export type IndicatorStatus = 'detected' | 'not_detected' | 'insufficient_data';
 
 /**
- * Report object returned by Behaviour Engine (Member 3).
+ * Report contract for the Behavioral Analysis engine (Member 3).
  * Member 4 lesson IDs must match the recommendation.lessonId values.
  */
 export interface BehaviourReport {
@@ -82,7 +79,7 @@ export interface BehaviourReport {
   };
 }
 
-/** Stable lesson identifiers used across Academy and Market Mirror */
+/** Stable lesson identifiers used across Academy and Behavioral Analysis */
 export type LessonId =
   | 'volatility'
   | 'diversification'
@@ -107,7 +104,7 @@ export interface Lesson {
   practicalExample: string;
   keyTakeaway: string;
   quiz?: LessonQuiz;
-  /** Which Market Mirror indicators recommend this lesson */
+  /** Which Behavioral Analysis patterns recommend this lesson */
   relatedIndicators: IndicatorId[];
   /** Estimated reading time in minutes */
   estimatedMinutes: number;
@@ -153,7 +150,7 @@ export interface DemoScenario {
   }>;
   /** Event IDs that fire during this scenario */
   eventIds: string[];
-  /** Expected Market Mirror outcome after the scenario */
+  /** Expected Behavioral Analysis outcome after the scenario */
   expectedReport: {
     indicator: IndicatorId;
     status: IndicatorStatus;

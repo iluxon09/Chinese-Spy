@@ -28,7 +28,7 @@ type SourceTransaction = Pick<
 
 /**
  * Adapter from the live TILT API/domain contract to Member 3's
- * Market Mirror contract. API money fields are integer paise;
+ * Behavioral Analysis contract. API money fields are integer paise;
  * detectors intentionally operate on rupees.
  */
 export type MarketHistoryBySymbol = Readonly<

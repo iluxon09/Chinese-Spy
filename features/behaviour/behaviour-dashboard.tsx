@@ -4,21 +4,21 @@ import { useMemo, type ReactNode } from "react";
 import Link from "next/link";
 import { Activity, AlertTriangle, ArrowRight, Brain, CheckCircle2, RefreshCw, ShieldAlert } from "lucide-react";
 import { useTilt } from "@/features/shared/tilt-provider";
-import { analyzePortfolioBehaviour } from "@/lib/market-mirror";
-import type { BehaviourReport } from "@/lib/market-mirror/types";
+import { analyzePortfolioBehaviour } from "@/lib/behavioral-analysis";
+import type { BehaviourReport } from "@/lib/behavioral-analysis/types";
 
 const indicatorMeta: Record<string, { title: string; subtitle: string }> = {
   PANIC_SELLING: {
-    title: "Panic-selling pattern",
-    subtitle: "Selling after a sharp short-term price decline",
+    title: "Post-decline exits",
+    subtitle: "Sells executed after sharp short-term price drops",
   },
   FOMO: {
-    title: "FOMO / momentum chasing",
-    subtitle: "Repeated buying after sharp short-term price rises",
+    title: "Rally-following buys",
+    subtitle: "Repeated purchases after sharp short-term price rises",
   },
   OVERTRADING: {
-    title: "Overtrading",
-    subtitle: "High trade frequency, clustering or transaction-cost drag",
+    title: "Trading frequency",
+    subtitle: "Trade frequency, clustered activity and transaction-cost drag",
   },
   CONCENTRATION: {
     title: "Portfolio concentration",
@@ -65,17 +65,40 @@ export default function BehaviourDashboard() {
 
   const detectedCount = reports.filter((report) => report.status === "DETECTED").length;
   const insufficientCount = reports.filter((report) => report.status === "INSUFFICIENT_DATA").length;
+  const completedTradeCount = portfolio?.transactions.length ?? 0;
+  const openPositionCount = portfolio?.snapshot.holdings.filter((holding) => holding.quantity > 0).length ?? 0;
+  const profileSummary = useMemo(() => {
+    if (reports.length === 0) {
+      return "Your profile will appear once the signed-in simulation data has loaded.";
+    }
+
+    const detected = reports.filter((report) => report.status === "DETECTED");
+    if (detected.length > 0) {
+      const names = detected.map((report) => indicatorMeta[report.indicator]?.title ?? report.indicator);
+      return `Your current simulation shows ${detected.length} observable pattern signal(s): ${names.join(", ")}. Review the evidence and context for each signal before interpreting it.`;
+    }
+
+    if (reports.every((report) => report.status === "INSUFFICIENT_DATA")) {
+      return "There is not enough transaction, price-history or holdings data to build a reliable picture yet. Complete more simulation activity and review the analysis again.";
+    }
+
+    if (reports.some((report) => report.status === "INSUFFICIENT_DATA")) {
+      return "No assessed pattern crossed its selected threshold, but some areas still need more history. The available results are not a complete assessment of your activity.";
+    }
+
+    return "The patterns assessed in your current simulation remain below the selected thresholds. This describes only the available simulation history, not your overall financial behaviour.";
+  }, [reports]);
 
   return (
     <main className="min-h-screen bg-[#080d18] px-4 py-8 text-white sm:px-8">
       <div className="mx-auto max-w-7xl space-y-8">
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-sm text-cyan-400">TILT · MARKET MIRROR</p>
-            <h1 className="mt-2 text-3xl font-bold">Behaviour Analysis</h1>
+            <p className="text-sm text-cyan-400">TILT · BEHAVIORAL ANALYSIS</p>
+            <h1 className="mt-2 text-3xl font-bold">Behavioral Analysis</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-              Review observable patterns in your current simulation trades and holdings.
-              Insights are heuristic signals, not conclusions about intent or personal financial advice.
+              A personal review of the trading patterns visible in your current TILT simulation.
+              It examines completed trades, price movements around entries and exits, trading frequency, and open positions. These signals describe activity—not personality or intent.
             </p>
           </div>
           <button
@@ -99,6 +122,26 @@ export default function BehaviourDashboard() {
           <SummaryCard icon={<Brain size={19} />} label="Patterns detected" value={loading ? "—" : detectedCount} />
           <SummaryCard icon={<CheckCircle2 size={19} />} label="Indicators assessed" value={loading ? "—" : reports.filter((r) => r.status !== "INSUFFICIENT_DATA").length} />
           <SummaryCard icon={<Activity size={19} />} label="Need more data" value={loading ? "—" : insufficientCount} />
+        </section>
+
+        <section className="rounded-2xl border border-white/10 bg-[#111a2b] p-5">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="max-w-4xl">
+              <p className="text-xs font-semibold tracking-[0.18em] text-cyan-300">PERSONAL TRADING PROFILE</p>
+              <h2 className="mt-2 text-xl font-semibold">Your observed patterns</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-300">{loading ? "Reviewing your simulation activity…" : profileSummary}</p>
+            </div>
+            <div className="grid min-w-[220px] grid-cols-2 gap-3 text-sm">
+              <div className="rounded-xl bg-white/[0.04] p-3">
+                <p className="text-xs text-slate-500">Trades reviewed</p>
+                <p className="mt-1 text-lg font-semibold">{loading ? "—" : completedTradeCount}</p>
+              </div>
+              <div className="rounded-xl bg-white/[0.04] p-3">
+                <p className="text-xs text-slate-500">Open positions</p>
+                <p className="mt-1 text-lg font-semibold">{loading ? "—" : openPositionCount}</p>
+              </div>
+            </div>
+          </div>
         </section>
 
         <section className="rounded-2xl border border-cyan-400/20 bg-cyan-400/5 p-5">
@@ -136,7 +179,7 @@ export default function BehaviourDashboard() {
                 <article key={report.indicator} className="rounded-2xl border border-white/10 bg-[#111a2b] p-6">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <p className="text-xs font-semibold tracking-widest text-slate-500">BEHAVIOUR INDICATOR</p>
+                      <p className="text-xs font-semibold tracking-widest text-slate-500">PATTERN MEASURED</p>
                       <h2 className="mt-2 text-xl font-semibold">{meta?.title ?? report.indicator}</h2>
                       <p className="mt-1 text-sm text-slate-400">{meta?.subtitle}</p>
                     </div>

@@ -12,7 +12,7 @@ TILT is an educational, virtual stock-market simulator. It combines a determinis
 - Integration pull request: https://github.com/iluxon09/Chinese-Spy/pull/2
 - Vercel deployment guide: [docs/DEPLOY_VERCEL.md](docs/DEPLOY_VERCEL.md)
 - Team branch status: [docs/BRANCH_INTEGRATION_STATUS.md](docs/BRANCH_INTEGRATION_STATUS.md)
-- Market Mirror design and limits: [src/lib/market-mirror/README.md](src/lib/market-mirror/README.md)
+- Behavioral Analysis design and limits: [src/lib/behavioral-analysis/README.md](src/lib/behavioral-analysis/README.md)
 - Member 4 module boundaries: [src/lib/member4/README.md](src/lib/member4/README.md)
 
 ## Main features
@@ -26,8 +26,7 @@ TILT is an educational, virtual stock-market simulator. It combines a determinis
 - Dashboard, market watch, trading terminal, portfolio and simulation controls.
 - Five Finance Academy lessons with stable IDs, practical examples, key takeaways and quizzes.
 - SIP and goal-based SIP calculators with validation, assumptions and educational disclaimers.
-- CSV transaction preview with row-level validation; preview only, no persistent import.
-- Market Mirror behavioural heuristics for panic-selling patterns, FOMO-like buying, overtrading and concentration, using the signed-in user's active simulation data.
+- Behavioral Analysis of the signed-in user's simulation activity: entry/exit timing, trading frequency, transaction-cost drag and portfolio concentration, with evidence-backed pattern summaries.
 
 ## Technology
 
@@ -115,26 +114,23 @@ The GitHub Actions workflow `.github/workflows/ci.yml` runs the same checks on p
 | `/trading` | BUY / SELL terminal and transactions |
 | `/portfolio` | Portfolio value, allocation and P&L |
 | `/simulator` | Market-step and event controls |
-| `/behaviour` | Read-only Market Mirror analysis |
+| `/behaviour` | Personal Behavioral Analysis |
 | `/academy` | Five Finance Academy lessons |
 | `/academy/[lessonId]` | Lesson content and knowledge check |
 | `/portfolio/architect` | Illustrative SIP and goal calculator |
-| `/portfolio/upload` | CSV validation and preview only |
 
 ## Architecture notes
 
 - Supabase PostgreSQL is the source of truth for sessions, cash, holdings, orders, market prices and transaction history.
 - Monetary values in the trading domain and API are integer paise (100 paise = ₹1).
 - The frontend has one shared `TiltDataProvider`. It loads the active session snapshot once per authenticated session; route changes do not restart the bootstrap. A sign-out clears in-memory account data.
-- Market Mirror is a pure, read-only analysis layer. Its adapter converts backend paise values to rupees exactly once and maps detector recommendations to stable Academy lesson IDs.
-- The Market Mirror indicators are configurable heuristics, not diagnoses or evidence of intent. Insufficient data is distinct from a negative finding.
-- The CSV upload is a local preview only. It does not alter cash, holdings or transaction history.
+- Behavioral Analysis is a pure, read-only analysis layer. Its adapter converts backend paise values to rupees exactly once and maps pattern recommendations to stable Academy lesson IDs.
+- Behavioral Analysis uses configurable heuristics over the user's simulation history. It does not diagnose personality or infer intent; insufficient data is distinct from a negative finding.
 - Member 4's alternative company/scenario seed uses symbols that do not match the active eight-company database market; it is preserved as inactive reference data and is not seeded into Supabase.
 
 ## Known scope boundaries
 
 - Market orders only; limit orders are not implemented.
 - The demo charge rate is an educational assumption, not a complete model of statutory Indian market fees.
-- Persistent historical CSV import is not implemented.
-- Market Mirror excludes uninvested cash from stock/sector concentration and cannot determine trader intent.
-- Verify authentication, trading, Market Mirror and the production build against the intended Supabase project before a public demonstration.
+- Behavioral Analysis excludes uninvested cash from stock/sector concentration and cannot determine trader intent.
+- Verify authentication, trading, Behavioral Analysis and the production build against the intended Supabase project before a public demonstration.

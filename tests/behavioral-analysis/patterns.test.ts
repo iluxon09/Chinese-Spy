@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest';
-import { detectFomo, detectPanicSelling, detectOvertrading, detectConcentration } from '../../src/lib/market-mirror';
-import type { Transaction, Holding, PricePoint } from '../../src/lib/market-mirror/types';
+import { detectFomo, detectPanicSelling, detectOvertrading, detectConcentration } from '../../src/lib/behavioral-analysis';
+import type { Transaction, Holding, PricePoint } from '../../src/lib/behavioral-analysis/types';
 
 function analyzeBehaviour(
   transactions: Transaction[],
@@ -16,7 +16,7 @@ function analyzeBehaviour(
   ];
 }
 
-describe('Market Mirror - Complete Behavioural Engine', () => {
+describe('Behavioral Analysis - Complete Behavioural Engine', () => {
   test('detects all four indicators for a risky trading profile', () => {
     const prices: PricePoint[] = [
       { symbol: 'TECHX', marketStep: 1, price: 1000 },

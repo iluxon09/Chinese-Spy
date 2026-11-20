@@ -4,25 +4,24 @@ This directory contains Member 4's pure TypeScript modules, incorporated into th
 
 ## Active application integrations
 
-- **Finance Academy:** five stable lesson IDs, lesson content, practical examples, key takeaways and quizzes. The UI routes use the stable IDs so they can later be used by behavioural recommendations.
+- **Finance Academy:** five stable lesson IDs, lesson content, practical examples, key takeaways and quizzes. Behavioral Analysis recommendations use these IDs to link observed patterns to relevant lessons.
 - **Investment Architect:** the UI calls the pure SIP and goal-based SIP functions from this module. Both calculators validate inputs and return assumptions and educational disclaimers.
-- **CSV preview:** the browser upload page uses the validating parser. Valid and invalid rows are displayed separately. The parser does not write to Supabase or alter simulation cash, holdings or transactions.
 
 ## Preserved but not active in the current market
 
 - `content/companies.ts` contains ten Member 4 fictional companies.
 - `content/newsEvents.ts` contains Member 4 event definitions.
-- `scenarios/demoScenarios.ts` contains four behavioural demo scenarios.
+- `scenarios/demoScenarios.ts` contains four behavioural demonstration scenarios.
 
-These are preserved verbatim as reference data, but are **not seeded into the live simulation**. The existing database's canonical market contains eight different symbols: ASTE, NVMT, BGTC, HVFD, ZNFC, MEDX, URBN and LOGX. Member 4's catalogue/scenarios refer to symbols including AQUA, GREEN, MEDIX, FINCORP, AGRO, STEELX, CLOUDY, PHARMA, RETAIL and INFRA, plus event IDs that are not in the current database. Activating them without an explicit symbol/event adapter would cause unknown-symbol or missing-price failures.
+These are preserved as reference data, but are **not seeded into the live simulation**. The database's canonical market contains eight different symbols: ASTE, NVMT, BGTC, HVFD, ZNFC, MEDX, URBN and LOGX. Member 4's catalogue and scenarios refer to different symbols and event IDs. Activating them without an explicit symbol/event adapter would cause unknown-symbol or missing-price failures.
 
 ## Contract boundaries
 
-- `types/shared.ts` is kept under the Member 4 namespace. It is not a replacement for Member 1's paise-denominated API/domain types.
-- Member 4's calculator amounts and CSV prices/charges are rupee-denominated values.
-- The current trading API accepts order intent and calculates execution price/charges server-side in integer paise. Do not directly replay imported CSV transactions into that API.
-- Member 3's Market Mirror report identifiers are mapped to these stable Member 4 lesson IDs by the adapter in `src/lib/market-mirror/engine.ts`.
-- The static behaviour dashboard in Member 4's copied frontend remains unused because it is a mock. The active `/behaviour` screen uses Member 3's detector engine and authenticated TILT data.
+- `types/shared.ts` remains under the Member 4 namespace. It is not a replacement for Member 1's paise-denominated API/domain types.
+- Member 4's calculator amounts are rupee-denominated values.
+- The current trading API accepts order intent and calculates execution price and charges server-side in integer paise.
+- Behavioral Analysis reports map their detector identifiers to these stable Member 4 Academy lesson IDs through the adapter in `src/lib/behavioral-analysis/engine.ts`.
+- Member 4's static behaviour dashboard remains unused because it is a mock. The active `/behaviour` screen analyses the signed-in user's authenticated TILT simulation data.
 
 ## Tests
 

@@ -1,6 +1,6 @@
 /**
  * TILT Member 4 public API
- * Finance Academy • Investment Architect calculators • CSV import • Demo scenarios • Content
+ * Finance Academy • Investment Architect calculators • Demo scenarios • Content
  */
 
 // Shared types
@@ -43,17 +43,6 @@ export {
   type GoalResult,
   type GoalValidationError,
 } from './calculators/index';
-
-// CSV import
-export {
-  parseTransactionCsv,
-  getCsvTemplate,
-  REQUIRED_COLUMNS,
-  OPTIONAL_COLUMNS,
-  type CsvParseOptions,
-  type CsvParseResult,
-  type CsvRowError,
-} from './import/index';
 
 // Content
 export {
