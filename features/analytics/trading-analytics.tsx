@@ -122,7 +122,7 @@ export default function TradingAnalytics({ mode }: { mode: "psychology" | "histo
     }
   }, []);
 
-  const trades = mode === "history" && importedTrades.length ? importedTrades.map((t) => ({ ...t, source: "csv" as const })) : simulatorTrades;
+  const trades = importedTrades.length ? importedTrades.map((t) => ({ ...t, source: "csv" as const })) : simulatorTrades;
   const hasImported = importedTrades.length > 0;
   const buyTrades = trades.filter((trade) => trade.side === "BUY");
   const sellTrades = trades.filter((trade) => trade.side === "SELL");
@@ -232,7 +232,7 @@ export default function TradingAnalytics({ mode }: { mode: "psychology" | "histo
         {mode === "psychology" && (
           <section className="flex items-start gap-3 rounded-2xl border border-violet-300/20 bg-violet-300/[0.05] p-4">
             <Brain className="mt-0.5 shrink-0 text-violet-300" size={20} />
-            <p className="text-xs leading-5 text-slate-300">These are descriptive learning signals from recorded simulated trades. They do not diagnose your personality or prove why you made a decision. Import a CSV in the History Analyzer to explore a separate trading record.</p>
+            <p className="text-xs leading-5 text-slate-300">These are descriptive learning signals from recorded simulated trades. They do not diagnose your personality or prove why you made a decision. Import a CSV in the History Analyzer and it will also become the dataset for these insights.</p>
           </section>
         )}
 
@@ -283,7 +283,7 @@ export default function TradingAnalytics({ mode }: { mode: "psychology" | "histo
             </section>
 
             <section className="rounded-2xl border border-white/10 bg-[#111a2b] p-5">
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-semibold">Recent recorded trades</h2><p className="mt-1 text-xs text-slate-500">Largest trade: {largest ? largest.symbol + " · " + money(largest.total) : "—"}</p></div><span className="rounded-full bg-cyan-300/10 px-3 py-1 text-[11px] text-cyan-200">{mode === "history" && hasImported ? "Imported CSV" : "Simulator records"}</span></div>
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-semibold">Recent recorded trades</h2><p className="mt-1 text-xs text-slate-500">Largest trade: {largest ? largest.symbol + " · " + money(largest.total) : "—"}</p></div><span className="rounded-full bg-cyan-300/10 px-3 py-1 text-[11px] text-cyan-200">{hasImported ? "Imported CSV" : "Simulator records"}</span></div>
               <div className="overflow-x-auto"><table className="w-full min-w-[620px] text-left text-xs"><thead className="text-slate-500"><tr><th className="pb-3">Date</th><th className="pb-3">Symbol</th><th className="pb-3">Side</th><th className="pb-3">Quantity</th><th className="pb-3">Price</th><th className="pb-3">Value</th></tr></thead><tbody>{[...trades].slice().reverse().slice(0, 12).map((trade) => <tr key={trade.id} className="border-t border-white/5"><td className="py-3 text-slate-400">{new Date(trade.date).toLocaleDateString("en-IN")}</td><td className="font-semibold">{trade.symbol}</td><td className={trade.side === "BUY" ? "text-emerald-300" : "text-blue-300"}>{trade.side}</td><td>{trade.quantity}</td><td>{money(trade.price)}</td><td>{money(trade.total)}</td></tr>)}</tbody></table></div>
             </section>
           </>
