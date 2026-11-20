@@ -1,212 +1,139 @@
-# TILT - Member 1: Simulator, Financial Engine & Market
+# TILT — Financial Universe
 
-A Next.js App Router + TypeScript implementation of Member 1's TILT responsibility: a virtual trading engine, fictional deterministic market, persistent portfolio/transaction history, and authenticated APIs.
+TILT is an educational, virtual stock-market simulator. It combines a deterministic fictional market and database-backed trading engine with a dashboard, market terminal, portfolio analytics, simulation controls and Finance Academy.
 
-**All stocks and market events are fictional. This is an educational simulator, not a brokerage, investment adviser, or real-money trading system.**
+**TILT uses fictional companies and virtual money only. It is not a brokerage, does not place real trades, and does not provide investment advice.**
 
-## 1. Prerequisites
+## Project links
 
-- Node.js **22.16 or newer** (the `package.json` engine floor is 22.12).
-- npm 10 or newer.
-- A Supabase project.
-- VS Code or another TypeScript editor.
+- Repository: https://github.com/iluxon09/Chinese-Spy
+- Integrated application source: https://github.com/iluxon09/Chinese-Spy/tree/tilt-integration
+- Integration guide: [docs/INTEGRATION.md](docs/INTEGRATION.md)
 
-The dependency versions are pinned in `package.json` to avoid silently pulling an incompatible `latest` release. A lockfile is generated on the first successful `npm install`; commit that `package-lock.json` with your team so everyone uses the same dependency resolution.
+The integrated application is on the `tilt-integration` branch. The repository's default `main` branch is maintained separately; use the branch link above to review this version.
 
-## 2. Install and run locally (Windows PowerShell)
+## Main features
 
-Open PowerShell in the extracted project folder:
+- Supabase email/password authentication with protected application pages and sign-out.
+- User-owned simulation sessions, each starting with ₹10,00,000 in virtual capital.
+- Eight fictional companies across different sectors.
+- Deterministic market progression, scripted news events and price history.
+- BUY and SELL market orders with server-side validation and configurable transaction charges.
+- Atomic database transactions, idempotent order handling and ownership checks.
+- Portfolio value, cash, holdings, average cost, realised/unrealised P&L and allocation.
+- Dashboard, market watch, trading terminal, portfolio and simulator UI.
+- Finance Academy lessons and knowledge checks.
+- SIP/goal calculator (illustrative only).
+- CSV upload preview (preview only; it does not import holdings or transactions).
 
-```powershell
+Market Mirror / behavioural analysis is intentionally deferred for a later integration phase.
+
+## Technology
+
+- Next.js App Router and React
+- TypeScript
+- Supabase Auth and PostgreSQL
+- Supabase SSR cookie-based authentication
+- Tailwind CSS
+- Recharts
+- Vitest
+
+## Run locally
+
+### Requirements
+
+- Node.js 22.12 or newer (22.16+ recommended)
+- npm 10 or newer
+- A Supabase project
+
+### 1. Get the integrated branch
+
+```cmd
+git clone --branch tilt-integration https://github.com/iluxon09/Chinese-Spy.git
+cd Chinese-Spy
 npm install
-Copy-Item .env.example .env.local
 ```
 
-If your terminal is **Command Prompt (cmd.exe)** rather than PowerShell, use `copy .env.example .env.local` instead of `Copy-Item`. The `Copy-Item` command is PowerShell-specific.
+### 2. Configure Supabase
 
-Edit `.env.local` and enter the Supabase Project URL and **publishable** key from Supabase Dashboard -> Project Settings -> API / Connect:
+Create a local `.env.local` file in the project root:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_YOUR_KEY
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=YOUR_SUPABASE_PUBLISHABLE_KEY
 ```
 
-Do not add a service-role key. This implementation does not need one. Never commit `.env.local`.
+Use the project's URL and publishable key from Supabase Project Settings. Never put a Supabase service-role key in client-side code, and never commit `.env.local`.
 
-Run the database migration before using login or protected APIs:
+### 3. Apply the database migration
 
-1. Open Supabase Dashboard -> SQL Editor.
-2. Open `supabase/migrations/20261120000000_initial_schema.sql`.
-3. Copy the complete SQL into a new Supabase query and run it once.
-4. Confirm the tables `market_scenarios`, `companies`, `market_events`, `simulation_sessions`, `holdings`, `transactions`, and `price_points` exist.
-5. Confirm that the `tilt-demo-v1` scenario has eight companies and five scripted events.
+In Supabase Dashboard → SQL Editor, run the migration:
 
-Then run:
+`supabase/migrations/20261120000000_initial_schema.sql`
 
-```powershell
+The migration creates the market scenario, fictional companies, market events, sessions, holdings, transactions, price history, row-level security policies and database functions used by the API.
+
+### 4. Start the app
+
+```cmd
 npm run dev
 ```
 
-Open `http://localhost:3000`, choose **Sign in / Create account**, and create a user. If Supabase email confirmation is enabled, confirm the email before signing in. For a quick college demo, the project owner can adjust Supabase Auth email-confirmation settings in the Supabase dashboard.
+Open http://localhost:3000. Unauthenticated users are redirected to `/login`. Sign in or create an account with Supabase Auth to access the simulator.
 
-## 3. Verification commands
+## Verification
 
-```powershell
+Run these commands from the project root:
+
+```cmd
+npm run lint
 npm run typecheck
 npm test
-npm run lint
 npm run build
 ```
 
-Run these after every significant change. This handover was checked with a standalone TypeScript compile and manual Node smoke tests for the pure engine. Full npm install, Vitest, Next build and live Supabase RPC execution were not run in the authoring environment because its npm registry DNS requests timed out and no Supabase project credentials were supplied. Run all four commands in your local environment after `npm install`.
+The backend unit-test suite currently contains market and trading tests. The integrated branch has previously passed the local lint, TypeScript, 15-test Vitest and Next.js production-build checks before the latest authentication-gate changes. Re-run the commands above on the current branch before a live demonstration.
 
-## 4. What is implemented
+## Application routes
 
-### Trading / financial engine
+| Route | Description |
+|---|---|
+| `/login` | Sign in / create account |
+| `/` | Dashboard and recent transactions |
+| `/markets` | Fictional companies, prices, news and price history |
+| `/trading` | BUY / SELL market orders, holdings and transaction history |
+| `/portfolio` | Portfolio value, allocation and P&L |
+| `/simulator` | Market-step and event controls |
+| `/academy` | Finance Academy |
+| `/academy/[lessonId]` | Lesson content and quiz |
+| `/portfolio/architect` | Illustrative SIP and goal calculator |
+| `/portfolio/upload` | Local CSV preview only |
+| `/api/docs` | API summary |
+| `/api/health` | API health check |
 
-- ₹10,00,000 starting virtual capital per session.
-- Market BUY and SELL orders only; no limit orders.
-- Integer-paise accounting (`100 paise = ₹1`).
-- Configurable per-scenario charges, with a demo default of 10 basis points (0.10%) and no minimum.
-- Cash balance, holdings, weighted average cost basis, order value and transaction history.
-- Realised P&L on sells, including sell-side charges.
-- Unrealised P&L, portfolio value, return, company allocation and sector allocation.
-- Validation for invalid symbols, prices, quantities, insufficient cash and insufficient holdings.
-- Pure TypeScript functions that do not mutate the input portfolio state.
+## Backend and API design
 
-**Charge-policy note:** 10 bps is a provisional educational assumption, not a statement of actual Indian brokerage, STT, exchange, GST, stamp-duty or other statutory charges. It is not a complete market-fee model. The order RPC reads the policy from `market_scenarios`; clients cannot submit a cheaper fee rate. A trusted project administrator may change it in the database after the team agrees the intended model.
+Supabase PostgreSQL is the source of truth for sessions, cash, holdings, orders, market prices and transaction history. Monetary values are stored in integer paise (100 paise = ₹1). The browser sends order intent (UUID, symbol, side and quantity); authoritative prices, charges and balances are determined and validated by the backend.
 
-### Fictional market
-
-Eight fictional companies are seeded across Energy, Automobile, Technology, FMCG, Financial Services, Healthcare, Real Estate and Industrials. Five news events are scripted at market steps 1-5. Each event applies a basis-point percentage change in stable event-ID order. No uncontrolled random value or wall-clock time is used to calculate a price.
-
-The scenario uses a fixed start timestamp and a one-hour simulated interval. Each user's session stores its own `market_step`, while immutable scenario price history is shared. If a price step has already been generated by another session, the next session reuses it rather than calculating a different price.
-
-### Persistence and security
-
-- Supabase Postgres is the source of truth.
-- All monetary database fields use `bigint` paise.
-- Financial writes occur inside Postgres RPC functions, making cash, holdings and transaction updates atomic.
-- The order RPC locks the session row before calculating and writing a trade.
-- The market RPC locks the session and scenario rows to avoid two concurrent requests creating conflicting prices for the same scenario/step.
-- `client_order_id` is unique per session. Retrying the same order ID with the same symbol/side/quantity returns the original transaction; reusing it for a different order is rejected.
-- RPCs use the authenticated user's `auth.uid()` and verify session ownership.
-- RLS restricts reads of a user's sessions, holdings and transactions. Browser clients receive no direct write permission to financial tables.
-- Supabase credentials are cookie-backed using `@supabase/ssr`; the browser receives only the publishable key.
-
-## 5. API reference
-
-All endpoints below except `/api/health` and `/api/docs` require a valid Supabase Auth cookie session. Sign in through `/login` first.
+Important API endpoints include:
 
 | Method | Endpoint | Purpose |
 |---|---|---|
-| GET | `/api/health` | Liveness check |
-| GET | `/api/docs` | Machine-readable API summary |
-| GET | `/api/market` | Scenario, company catalogue, event definitions and step-0 prices |
-| GET | `/api/sessions` | List the signed-in user's sessions |
-| POST | `/api/sessions` | Create a session with ₹10 lakh |
-| GET | `/api/sessions/{sessionId}` | Session, holdings, transactions and calculated portfolio snapshot |
-| GET | `/api/sessions/{sessionId}/portfolio` | Portfolio snapshot alias for Member 2 |
-| GET | `/api/sessions/{sessionId}/market` | Current session prices, scenario metadata and current-step news |
-| POST | `/api/sessions/{sessionId}/orders` | Place a market BUY/SELL order |
-| GET | `/api/sessions/{sessionId}/transactions?limit=100` | Latest transaction history (limit capped at 500) |
-| POST | `/api/sessions/{sessionId}/market/advance` | Advance this user's market by one step |
-| GET | `/api/sessions/{sessionId}/market/history?symbol=ASTE` | Price history up to this session's current market step |
+| GET | `/api/sessions` | List the authenticated user's sessions |
+| POST | `/api/sessions` | Create a new simulation |
+| GET | `/api/sessions/{sessionId}/portfolio` | Portfolio snapshot |
+| GET | `/api/sessions/{sessionId}/market` | Current fictional market and events |
+| POST | `/api/sessions/{sessionId}/orders` | Execute a BUY / SELL market order |
+| GET | `/api/sessions/{sessionId}/transactions` | Transaction history |
+| POST | `/api/sessions/{sessionId}/market/advance` | Advance one market step |
+| GET | `/api/sessions/{sessionId}/market/history?symbol=ASTE` | Price history for a symbol |
 
-### Example request bodies
+Authenticated API handlers validate the signed-in user and session ownership. Financial writes are performed through database functions so cash, holdings and transaction updates are atomic. Order UUIDs provide idempotency for safe retries.
 
-Create a simulation:
+## Known scope boundaries
 
-```json
-{ "scenarioId": "tilt-demo-v1" }
-```
-
-Place a BUY order:
-
-```json
-{
-  "clientOrderId": "9b4d64c6-bf4c-4516-8f1b-6748c4b70c4b",
-  "symbol": "ASTE",
-  "side": "BUY",
-  "quantity": 10
-}
-```
-
-The `clientOrderId` must be a new UUID for each distinct order. Generate one with `crypto.randomUUID()` in the client. Reuse the same UUID only when retrying the same order after a network timeout. Do not send `price`, `charges`, `cashBalance` or holdings in the order request: the database retrieves and validates authoritative values.
-
-All `*_paise` fields are integer paise, not rupees. Convert to rupees for display by dividing by 100.
-
-## 6. Shared data contracts
-
-`src/lib/domain/types.ts` is the domain contract source of truth. The key contracts are:
-
-- `Company`
-- `SimulationSession`
-- `Holding`
-- `Transaction`
-- `PricePoint`
-- `MarketEvent`
-- `PortfolioState`
-- `PortfolioSnapshot`
-
-Coordinate any changes with Members 2-4 before changing these interfaces. In particular:
-
-- `Transaction.realisedPnlPaise` is zero for BUY and net realised P&L for SELL.
-- `Holding.totalCostPaise` includes buy-side charges.
-- `Transaction.cashDeltaPaise` is negative for BUY and positive for SELL.
-- `PricePoint.marketStep` is an integer simulation clock, not a real market timestamp.
-
-## 7. Project structure
-
-```text
-src/
-  app/
-    api/
-      health/route.ts
-      docs/route.ts
-      market/route.ts
-      sessions/route.ts
-      sessions/[sessionId]/route.ts
-      sessions/[sessionId]/portfolio/route.ts
-      sessions/[sessionId]/market/route.ts
-      sessions/[sessionId]/orders/route.ts
-      sessions/[sessionId]/transactions/route.ts
-      sessions/[sessionId]/market/advance/route.ts
-      sessions/[sessionId]/market/history/route.ts
-    login/
-    page.tsx
-  lib/
-    api/http.ts
-    domain/types.ts
-    market/catalog.ts
-    market/engine.ts
-    supabase/browser.ts
-    supabase/server.ts
-    trading/charges.ts
-    trading/engine.ts
-    trading/errors.ts
-supabase/
-  migrations/20261120000000_initial_schema.sql
-tests/
-  trading.test.ts
-  market.test.ts
-proxy.ts
-```
-
-## 8. Important integration boundaries
-
-- **Member 2:** consume the API endpoints and domain types; do not implement another copy of the trading calculations in React. API requests should use the authenticated browser session.
-- **Member 3:** consume `transactions`, `holdings`, and `price_points`. Indicators should remain evidence-based and handle insufficient history.
-- **Member 4:** use `companies` and `market_events` as the fictional market catalogue. Supply any new scenario events through an agreed migration/seed change.
-
-The endpoints in this package form Member 1's handoff. This package does not implement Member 2's full dashboard, Member 3's behavioural-analysis module or Member 4's Academy/calculators/CSV importer.
-
-## 9. Known limitations / production hardening
-
-- No real-money orders, brokerage integration, investment advice or stock tips.
-- Only market orders are supported.
-- The 10 bps charge is a demo assumption pending team approval.
-- The SQL migration must be applied to a Supabase project and tested with at least two authenticated users before presentation.
-- Email verification settings are controlled in Supabase Auth.
-- Before public production, add automated database integration tests, rate limiting, monitoring, backup/restore verification, abuse controls, and a reviewed Indian financial/privacy compliance position.
-- For a hackathon MVP, keep market-step advancement behind an admin control in Member 2's UI if participants should not advance it themselves.
+- Market orders only; limit orders are not implemented.
+- The demo charge rate is a configurable educational assumption, not a complete model of statutory Indian market fees.
+- CSV upload currently previews the file in the browser; persistent import is not implemented.
+- Market Mirror behavioural analysis is deferred.
+- The integration should be re-verified against the intended Supabase project before a public live demo.
