@@ -48,6 +48,7 @@ export default function MarketsPage() {
     price: point.pricePaise / 100,
   }));
   const activeChange = lastCandleChange(activeHistory);
+  const candleMinutes = Math.max(1, Math.round(market.scenario.interval_ms / 60000));
 
   return (
     <main className="min-h-screen bg-[#080D19] p-5 text-slate-100 md:p-8">
@@ -56,7 +57,7 @@ export default function MarketsPage() {
           <p className="text-xs tracking-[.25em] text-emerald-400">TILT / FICTIONAL EXCHANGE</p>
           <h1 className="mt-2 text-3xl font-bold">Markets</h1>
           <p className="mt-2 text-sm text-slate-400">
-            Eight fictional companies · Market step {market.marketStep} · Five-minute candles
+            Eight fictional companies · Market step {market.marketStep} · {candleMinutes}-minute candles
           </p>
         </header>
 
