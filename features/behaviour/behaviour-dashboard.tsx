@@ -9,16 +9,16 @@ import type { BehaviourReport } from "@/lib/behavioral-analysis/types";
 
 const indicatorMeta: Record<string, { title: string; subtitle: string }> = {
   PANIC_SELLING: {
-    title: "Panic-selling pattern",
-    subtitle: "Selling after a sharp short-term price decline",
+    title: "Post-decline exits",
+    subtitle: "Sells executed after sharp short-term price drops",
   },
   FOMO: {
-    title: "FOMO / momentum chasing",
-    subtitle: "Repeated buying after sharp short-term price rises",
+    title: "Rally-following buys",
+    subtitle: "Repeated purchases after sharp short-term price rises",
   },
   OVERTRADING: {
-    title: "Overtrading",
-    subtitle: "High trade frequency, clustering or transaction-cost drag",
+    title: "Trading frequency",
+    subtitle: "Trade frequency, clustered activity and transaction-cost drag",
   },
   CONCENTRATION: {
     title: "Portfolio concentration",
