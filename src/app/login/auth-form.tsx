@@ -1,12 +1,11 @@
 "use client";
 
 import { useState, type ChangeEvent, type FormEvent } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 export default function AuthForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,7 +25,7 @@ export default function AuthForm() {
       if (mode === "signup" && !result.data.session) {
         setMessage("Account created. Check your email to confirm the address, then sign in.");
       } else {
-        const requestedNext = searchParams.get("next");
+        const requestedNext = new URLSearchParams(window.location.search).get("next");
         const destination = requestedNext?.startsWith("/") && !requestedNext.startsWith("//")
           ? requestedNext
           : "/";
