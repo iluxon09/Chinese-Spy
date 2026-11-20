@@ -1,7 +1,7 @@
 "use client";
 
 import {useMemo,useState} from "react";
-import {ArrowDownRight,ArrowUpRight,Activity,Wallet,BriefcaseBusiness,Clock} from "lucide-react";
+import {ArrowDownRight,ArrowUpRight,BriefcaseBusiness,Clock} from "lucide-react";
 import {useTilt} from "@/features/shared/tilt-provider";
 
 const money=(p:number)=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:2}).format(p/100);
