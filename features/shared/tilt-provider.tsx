@@ -108,7 +108,7 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
     try {
       const result = await api<{sessions:Session[]}>("/api/sessions");
       setAuthenticated(true);
-      let selected = result.sessions?.[0];
+      const selected = result.sessions?.[0];
       if (!selected) {
         const created = await api<{session:{id:string}}>("/api/sessions", {
           method:"POST", headers:{"Content-Type":"application/json"},
@@ -139,7 +139,7 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
   },[sessionId,boot,loadSession]);
 
   useEffect(() => {
-    if (pathname === "/login") { setLoading(false); return; }
+    if (pathname === "/login") return;
     void boot();
   },[pathname,boot]);
 
