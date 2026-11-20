@@ -10,6 +10,8 @@ import {
   TrendingUp,
   Calculator,
   Upload,
+  BrainCircuit,
+  FileSpreadsheet,
 } from "lucide-react";
 
 import type { TradingState } from "@/features/trading/trading-engine";
@@ -126,7 +128,27 @@ export default function PortfolioDashboard() {
           </Link>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <Link href="/portfolio/insights" className="group flex items-center justify-between rounded-2xl border border-violet-500/20 bg-[#111a2b] p-5 hover:border-violet-400/50">
+            <div>
+              <div className="flex items-center gap-2 text-violet-300">
+                <BrainCircuit size={20} />
+                <span className="text-sm font-semibold">Trading Psychology</span>
+              </div>
+              <p className="mt-2 text-sm text-slate-400">Explore patterns in your simulated trading behaviour.</p>
+            </div>
+            <ArrowUpRight className="text-slate-500 group-hover:text-violet-300" />
+          </Link>
+          <Link href="/portfolio/history" className="group flex items-center justify-between rounded-2xl border border-cyan-500/20 bg-[#111a2b] p-5 hover:border-cyan-400/50">
+            <div>
+              <div className="flex items-center gap-2 text-cyan-300">
+                <FileSpreadsheet size={20} />
+                <span className="text-sm font-semibold">Trading History Analyzer</span>
+              </div>
+              <p className="mt-2 text-sm text-slate-400">Import a CSV and visualise your trading history.</p>
+            </div>
+            <ArrowUpRight className="text-slate-500 group-hover:text-cyan-300" />
+          </Link>
           <Link href="/portfolio/architect" className="group flex items-center justify-between rounded-2xl border border-blue-500/20 bg-[#111a2b] p-5 hover:border-blue-400/50">
             <div>
               <div className="flex items-center gap-2 text-blue-400">
