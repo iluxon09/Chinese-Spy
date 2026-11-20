@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import AppSidebar from "@/components/app-sidebar";
+import AppFrame from "@/components/app-frame";
 import { TiltDataProvider } from "@/features/shared/tilt-provider";
 import "./globals.css";
 
@@ -14,10 +14,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <body className="min-h-screen bg-[#080D19] text-slate-100 antialiased">
         <TiltDataProvider>
-          <div className="flex min-h-screen w-full">
-            <AppSidebar />
-            <div className="min-w-0 flex-1">{children}</div>
-          </div>
+          <AppFrame>{children}</AppFrame>
         </TiltDataProvider>
       </body>
     </html>
