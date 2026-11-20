@@ -31,7 +31,7 @@ Institutional benefits such as facilitated pilots, instructor guides and cohort 
 - `/pricing/demo-checkout?plan=cohort-pilot`: class or club pilot walkthrough.
 - `/pricing/demo-checkout?plan=site-licence`: annual institutional site-licence walkthrough.
 - `/pricing/demo-checkout?plan=broker-fintech`: later-stage broker / fintech walkthrough.
-- `/pricing/demo-checkout?plan=trading-firm`: later-stage broker / trading-firm walkthrough.
+- `/pricing/demo-checkout?plan=trading-firm`: later-stage trading / prop-firm walkthrough.
 
 ## Deliberate limitations
 

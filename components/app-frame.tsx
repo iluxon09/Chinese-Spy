@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import AppSidebar, { appNavigation } from "@/components/app-sidebar";
 import AccountControl from "@/components/account-control";
 import { isPublicPricingPath } from "@/lib/auth/redirect";
-import { useState } from "react";
 import { Menu, X } from "lucide-react";
 
 export default function AppFrame({ children }: { children: ReactNode }) {
