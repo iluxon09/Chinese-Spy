@@ -1,7 +1,7 @@
 "use client";
 
 import {useMemo,useState} from "react";
-import {ArrowDownRight,ArrowUpRight,Search,Star} from "lucide-react";
+import {Search,Star} from "lucide-react";
 import {Area,AreaChart,CartesianGrid,ResponsiveContainer,Tooltip,XAxis,YAxis} from "recharts";
 import {useTilt} from "@/features/shared/tilt-provider";
 
@@ -10,7 +10,7 @@ export default function MarketsPage(){
  const {loading,error,authenticated,market,histories}=useTilt();
  const [query,setQuery]=useState(""); const [sector,setSector]=useState("All");
  const [selected,setSelected]=useState(""); const [watch,setWatch]=useState<string[]>([]);
- const companies=market?.companies??[];
+ const companies=useMemo(()=>market?.companies??[],[market?.companies]);
  const active=companies.find(c=>c.symbol===selected)??companies[0];
  const sectors=["All",...Array.from(new Set(companies.map(c=>c.sector)))];
  const filtered=useMemo(()=>companies.filter(c=>(sector==="All"||c.sector===sector)&&`${c.symbol} ${c.name}`.toLowerCase().includes(query.toLowerCase())),[companies,sector,query]);
