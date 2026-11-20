@@ -1,0 +1,205 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import {
+  ArrowLeft,
+  Upload,
+  FileSpreadsheet,
+  CheckCircle2,
+  AlertCircle,
+  X,
+} from "lucide-react";
+
+export default function CSVUpload() {
+  const [file, setFile] = useState<File | null>(null);
+  const [rows, setRows] = useState<string[][]>([]);
+  const [error, setError] = useState("");
+
+  function handleFile(selected: File | undefined) {
+    setError("");
+    setRows([]);
+    setFile(null);
+
+    if (!selected) return;
+
+    if (!selected.name.toLowerCase().endsWith(".csv")) {
+      setError("Please upload a CSV file.");
+      return;
+    }
+
+    setFile(selected);
+
+    const reader = new FileReader();
+
+    reader.onload = (event) => {
+      const content = String(event.target?.result || "");
+      const parsed = content
+        .split(/\r?\n/)
+        .filter((line) => line.trim())
+        .map((line) => line.split(",").map((cell) => cell.trim()));
+
+      if (parsed.length < 2) {
+        setError("The CSV file does not contain enough data.");
+        setFile(null);
+        return;
+      }
+
+      setRows(parsed.slice(0, 6));
+    };
+
+    reader.onerror = () => {
+      setError("Unable to read this file.");
+      setFile(null);
+    };
+
+    reader.readAsText(selected);
+  }
+
+  return (
+    <main className="min-h-screen bg-[#080d18] px-5 py-8 text-white md:px-10">
+      <div className="mx-auto max-w-5xl">
+        <Link
+          href="/portfolio"
+          className="mb-8 inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white"
+        >
+          <ArrowLeft size={16} /> Back to Portfolio
+        </Link>
+
+        <div className="mb-8">
+          <div className="mb-3 flex items-center gap-2 text-blue-400">
+            <FileSpreadsheet size={20} />
+            <span className="text-sm font-semibold uppercase tracking-wider">
+              Portfolio Import
+            </span>
+          </div>
+
+          <h1 className="text-3xl font-bold md:text-4xl">
+            Import your portfolio.
+          </h1>
+
+          <p className="mt-3 text-slate-400">
+            Upload a CSV statement to preview your investment data.
+          </p>
+        </div>
+
+        <section className="rounded-2xl border border-white/10 bg-[#111a2b] p-6 md:p-8">
+          <label
+            htmlFor="csv-file"
+            className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-white/20 bg-[#0b1322] px-6 py-14 text-center transition hover:border-blue-500"
+          >
+            <div className="mb-4 rounded-full bg-blue-500/10 p-4">
+              <Upload size={28} className="text-blue-400" />
+            </div>
+
+            <h2 className="text-lg font-semibold">
+              Choose a CSV file
+            </h2>
+
+            <p className="mt-2 text-sm text-slate-400">
+              Select a portfolio export from your device
+            </p>
+
+            <span className="mt-5 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold">
+              Browse Files
+            </span>
+
+            <input
+              id="csv-file"
+              type="file"
+              accept=".csv,text/csv"
+              className="hidden"
+              onChange={(e) => handleFile(e.target.files?.[0])}
+            />
+          </label>
+
+          {error && (
+            <div className="mt-5 flex items-center gap-2 rounded-lg bg-red-500/10 p-4 text-sm text-red-400">
+              <AlertCircle size={18} />
+              {error}
+            </div>
+          )}
+
+          {file && (
+            <div className="mt-5 flex items-center justify-between rounded-lg border border-white/10 bg-[#0b1322] p-4">
+              <div className="flex items-center gap-3">
+                <FileSpreadsheet className="text-green-400" />
+                <div>
+                  <p className="text-sm font-medium">{file.name}</p>
+                  <p className="text-xs text-slate-500">
+                    {(file.size / 1024).toFixed(1)} KB
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  setFile(null);
+                  setRows([]);
+                  setError("");
+                }}
+                className="text-slate-400 hover:text-white"
+              >
+                <X size={18} />
+              </button>
+            </div>
+          )}
+        </section>
+
+        {rows.length > 0 && (
+          <section className="mt-6 rounded-2xl border border-white/10 bg-[#111a2b] p-6">
+            <div className="mb-5 flex items-center gap-2">
+              <CheckCircle2 className="text-green-400" size={20} />
+              <h2 className="text-lg font-semibold">
+                CSV Preview
+              </h2>
+            </div>
+
+            <p className="mb-4 text-sm text-slate-400">
+              Showing up to 5 data rows. This is a preview only; the file has
+              not been imported into your portfolio.
+            </p>
+
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[500px] text-left text-sm">
+                <thead>
+                  <tr className="border-b border-white/10 text-slate-400">
+                    {rows[0].map((header, index) => (
+                      <th key={index} className="px-4 py-3 font-medium">
+                        {header || `Column ${index + 1}`}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {rows.slice(1).map((row, rowIndex) => (
+                    <tr
+                      key={rowIndex}
+                      className="border-b border-white/5"
+                    >
+                      {rows[0].map((_, cellIndex) => (
+                        <td
+                          key={cellIndex}
+                          className="px-4 py-3 text-slate-300"
+                        >
+                          {row[cellIndex] || "—"}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+
+        <p className="mt-6 text-xs leading-6 text-slate-500">
+          Prototype interface: CSV parsing and preview are local to your
+          browser. Backend validation, portfolio mapping and persistent
+          import will be connected during integration.
+        </p>
+      </div>
+    </main>
+  );
+}
