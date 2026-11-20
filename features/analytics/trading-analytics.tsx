@@ -248,9 +248,9 @@ export default function TradingAnalytics({ mode }: { mode: "psychology" | "histo
                 <div className="rounded-xl bg-cyan-300/10 p-3 text-cyan-200"><FileSpreadsheet size={22} /></div>
                 <div><h2 className="font-semibold">Import your trading history</h2><p className="mt-1 max-w-xl text-xs leading-5 text-slate-400">CSV only. Required columns: symbol, side (BUY/SELL), quantity and price. Optional: date, total and P&L. Your file is processed in this browser and saved locally.</p></div>
               </div>
-              <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-200">
+              <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-200 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-cyan-300">
                 <Upload size={16} /> {busy ? "Analysing…" : "Upload CSV"}
-                <input type="file" accept=".csv,text/csv" className="hidden" disabled={busy} onChange={handleFile} />
+                <input type="file" accept=".csv,text/csv" className="sr-only" disabled={busy} onChange={handleFile} aria-label="Choose a trading history CSV file" />
               </label>
             </div>
             {message && <p className="mt-4 flex items-center gap-2 text-xs text-emerald-300"><CheckCircle2 size={15} />{message}</p>}
