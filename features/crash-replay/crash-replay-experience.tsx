@@ -242,7 +242,13 @@ export default function CrashReplayExperience() {
   }, [finishAttempt, loadComparison]);
 
   useEffect(() => {
-    void initialize();
+    let cancelled = false;
+    void Promise.resolve().then(() => {
+      if (!cancelled) void initialize();
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [initialize]);
 
   function updateAnswer<K extends keyof RiskQuestionnaireAnswers>(
