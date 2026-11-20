@@ -139,7 +139,8 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
 
   useEffect(() => {
     if (pathname === "/login") return;
-    void boot();
+    // Defer the initial state transition until after the effect has completed.
+    void Promise.resolve().then(boot);
   },[pathname,boot]);
 
   const createSession = useCallback(async () => {
