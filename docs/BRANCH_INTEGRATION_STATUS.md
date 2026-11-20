@@ -1,79 +1,41 @@
-# Team branch integration status
+# Team integration and release status
 
-This document records what was inspected and incorporated into `tilt-integration`. It is a handoff/status note, not a claim that every module is production verified.
+## Integration branches
 
-## Integration target
+- `tilt-integration`: main working integration target.
+- `member4-integration`: combined Members 3 and 4 feature review branch.
+- `frontend-hardening`: responsive shell, sign-in UI, provider lifecycle and CI hardening based on the combined branch.
+- `krish-backend`, `frontend`, `feature/market-mirror-member3`, and `member4-branch`: original team contribution branches; preserve them.
 
-- Combined application branch: `tilt-integration`
-- Review branch for Member 4 integration: `member4-integration`
-- Backend source branch: `krish-backend`
-- Frontend source branch: `frontend`
-- Member 3 branch: `feature/market-mirror-member3`
-- Member 4 branch: `member4-branch`
-- Shared/default branch: `main`
+## Member contributions
 
-## Branch-by-branch result
+### Member 1 — backend
+Supabase schema, authenticated API routes, integer-paise trading engine, market engine, portfolio calculations, idempotent order handling and session ownership checks.
 
-### Member 1 — `krish-backend`
+### Member 2 — frontend
+Dashboard, Markets, Trading, Portfolio, Simulator, Academy, Investment Architect and CSV preview screens. The screens use the backend data provider rather than a separate localStorage trading engine.
 
-The backend implementation is the base of `tilt-integration`. It contains the Supabase migration, authenticated API routes, domain types, market engine, financial engine, and tests.
+### Member 3 — Market Mirror
+Four read-only detectors: panic selling, FOMO-like buying, overtrading and concentration. The adapter converts live API values from paise to rupees and uses the current user's authenticated simulation data. Recommendations link to Member 4's stable Academy lesson IDs.
 
-### Member 2 — `frontend`
+### Member 4 — supporting modules
+Five Academy lessons, SIP and goal calculators, validated CSV parsing, and alternate fictional-company/event/scenario reference data. The alternate symbols/events are not seeded into the active Supabase market because they do not match the canonical eight symbols.
 
-The frontend screens are integrated into the working app and wired to Member 1's API provider: dashboard, fictional markets, BUY/SELL terminal, portfolio/P&L, market simulator, Finance Academy, Investment Architect and CSV preview.
+## Frontend hardening
 
-### Member 3 — `feature/market-mirror-member3`
-
-Contains four standalone behavioural detectors and a Vitest suite: FOMO, panic selling, overtrading and concentration.
-
-**Integrated on review branch `member4-integration` (alongside Member 3):**
-- The four detectors are copied into `src/lib/market-mirror`.
-- `engine.ts` adapts Member 1's authenticated portfolio API output to the detector input.
-- Execution prices, charges, holding prices and history prices are converted from integer paise to rupees exactly once at the adapter boundary.
-- Company sector labels are joined to current holdings from the existing market response.
-- Detector lesson recommendations map to Member 4's stable Academy IDs: `volatility`, `decision_discipline`, `transaction_costs`, and `diversification`.
-- The new `/behaviour` page reads the signed-in user's active simulation context and is linked in the sidebar.
-- The analysis is read-only; it adds no database writes, schema changes or trading RPCs.
-
-The original Member 3 detector tests are included under `tests/market-mirror`, with additional adapter tests.
-
-### Member 4 — `member4-branch`
-
-The branch contains two folders:
-
-1. `Chinese-Spy-frontend/` — a copied frontend tree based on Member 2's original UI. It includes a static/mock `/behaviour` screen; this screen is not a live detector integration and is not imported into the working app.
-2. `tilt-member4/` — distinct pure TypeScript modules for five Finance Academy lessons, SIP and goal calculators, a CSV transaction parser, ten fictional companies, eight market events, four demo scenario definitions, shared types and unit tests.
-
-**Integrated on review branch `member4-integration`:**
-- Five stable-ID Academy lessons and quiz content are wired into the existing Academy screens.
-- SIP and goal calculator screens call Member 4's validated pure functions.
-- CSV upload screen uses the validating parser and displays valid/invalid rows.
-- The pure TypeScript modules, content catalogue, demo scenarios and source tests are included under `src/lib/member4` and `tests/member4`.
-- The parser's day-first date parsing and data-row numbering have been hardened and tests added.
-- Member 4's stable Academy lesson IDs are now the recommendation targets for Member 3's Market Mirror detectors.
-
-**Intentionally inactive:** Member 4's ten-company catalogue and event/scenario content are not seeded into Supabase. They use different symbols and event IDs than the current eight-company live market (ASTE, NVMT, BGTC, HVFD, ZNFC, MEDX, URBN, LOGX). Activating those fixtures without a compatible database seed and scenario adapter would break order execution and price lookups.
-
-### `main`
-
-Keep `main` untouched while the integrated app is being validated. The deployment and team review should use the intended integration branch.
-
-## Verification still required
-
-Run on the local project after pulling `member4-integration` (contains Member 3 + Member 4 work):
-
-```cmd
-npm run lint
-npm run typecheck
-npm test
-npm run build
-```
-
-Also verify the login gate, Academy stable-ID routes, SIP/goal calculations, CSV preview, and the read-only Market Mirror dashboard in a browser. The review branch has been assembled through GitHub's source APIs; it has not been executed in the local Windows/Supabase environment.
+- Rebuilt the sign-in page with a responsive split layout, clearer sign-in/create-account modes, password visibility toggle, differentiated error/confirmation messaging and safe same-origin post-login redirects.
+- Added a shared account-control component for desktop and mobile sign-out.
+- Added responsive mobile navigation, active-route indication, a keyboard-accessible skip link and focus-visible styles.
+- Changed the shared data provider to bootstrap once per authenticated session instead of restarting on every route navigation. Sign-out clears in-memory session, portfolio, market and history data.
+- Fixed day-first CSV date parsing and changed the sample CSV to use an active market symbol.
+- Added safe redirect unit tests and a GitHub Actions workflow.
 
 ## Safety boundaries
 
-- Do not overwrite `main`, `krish-backend`, `frontend`, `member3` or `member4-branch`.
-- Never commit `.env.local`, Supabase service-role keys, or other secrets.
-- Keep Supabase as the source of truth for cash, holdings, orders, market prices and transaction history.
-- Do not import CSV rows directly into the live simulator until a dedicated, authenticated historical-import design exists.
+- No database migration or financial write logic is changed by the frontend-hardening work.
+- Market Mirror remains read-only.
+- CSV remains a preview only; it does not import or replay trades.
+- Never commit `.env.local`, Supabase service-role keys or other secrets.
+- Do not force-push or overwrite original member branches.
+- Merge to `tilt-integration` only after the exact PR head passes lint, typecheck, tests, build and a live Supabase smoke test.
+- Merge to `main` only after team approval.

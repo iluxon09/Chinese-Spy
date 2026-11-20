@@ -161,11 +161,11 @@ function parseDate(value: string, messages: string[]): string | null {
 
   // Parse DD/MM/YYYY and DD-MM-YYYY explicitly before Date.parse so that
   // dates such as 04/05/2026 are not silently interpreted as MM/DD/YYYY.
-  const dayFirst = trimmed.match(/^(\\d{1,2})[\\/\\-](\\d{1,2})[\\/\\-](\\d{4})$/);
+  const dayFirst = /^(\d{1,2})([\/-])(\d{1,2})\2(\d{4})$/.exec(trimmed);
   if (dayFirst) {
     const day = Number(dayFirst[1]);
-    const month = Number(dayFirst[2]);
-    const year = Number(dayFirst[3]);
+    const month = Number(dayFirst[3]);
+    const year = Number(dayFirst[4]);
     const parsed = new Date(Date.UTC(year, month - 1, day));
     const isValidCalendarDate =
       parsed.getUTCFullYear() === year &&
@@ -319,7 +319,7 @@ export function parseTransactionCsv(
 export function getCsvTemplate(): string {
   return [
     'date,symbol,side,quantity,price,charges,note',
-    '2026-03-01,AQUA,BUY,50,120.50,15.00,First purchase',
-    '2026-03-05,AQUA,SELL,20,135.00,12.00,',
+    '2026-03-01,ASTE,BUY,50,120.50,15.00,First purchase',
+    '2026-03-05,ASTE,SELL,20,135.00,12.00,',
   ].join('\n');
 }

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { parseTransactionCsv } from "../../src/lib/member4/import/csvParser.js";
 
-describe("Member 4 CSV parser integration hardening", () => {
-  it("parses day-first dates without US-style month/day ambiguity", () => {
+describe("Member 4 CSV parser hardening", () => {
+  it("parses DD/MM/YYYY without US month/day ambiguity", () => {
     const parsed = parseTransactionCsv(
       "date,symbol,side,quantity,price\n04/05/2026,ASTE,BUY,2,100"
     );
@@ -18,7 +18,7 @@ describe("Member 4 CSV parser integration hardening", () => {
     expect(parsed.invalid[0]?.messages.join(" ")).toMatch(/date format/i);
   });
 
-  it("preserves commas inside quoted CSV fields", () => {
+  it("preserves commas inside quoted fields", () => {
     const parsed = parseTransactionCsv(
       'date,symbol,side,quantity,price,note\n2026-05-04,ASTE,BUY,2,100,"first, long entry"'
     );

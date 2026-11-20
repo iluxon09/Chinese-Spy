@@ -1,57 +1,178 @@
 "use client";
 
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff, LoaderCircle, LockKeyhole, Mail, ShieldAlert, ShieldCheck } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { getSafeInternalPath } from "@/lib/auth/redirect";
+
+type FormMessage = { kind: "error" | "success"; text: string };
 
 export default function AuthForm() {
   const router = useRouter();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [message, setMessage] = useState<FormMessage | null>(null);
   const [busy, setBusy] = useState(false);
+
+  function changeMode(nextMode: "signin" | "signup") {
+    setMode(nextMode);
+    setMessage(null);
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setMessage("");
+    if (busy) return;
+
+    setMessage(null);
     setBusy(true);
+
     try {
       const supabase = createSupabaseBrowserClient();
-      const result = mode === "signin"
-        ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({ email, password });
-      if (result.error) throw result.error;
-      if (mode === "signup" && !result.data.session) {
-        setMessage("Account created. Check your email to confirm the address, then sign in.");
+      const normalizedEmail = email.trim().toLowerCase();
+
+      if (mode === "signin") {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: normalizedEmail,
+          password,
+        });
+        if (error) throw error;
       } else {
-        const requestedNext = new URLSearchParams(window.location.search).get("next");
-        const destination = requestedNext?.startsWith("/") && !requestedNext.startsWith("//")
-          ? requestedNext
-          : "/";
-        router.replace(destination);
-        router.refresh();
+        const { data, error } = await supabase.auth.signUp({
+          email: normalizedEmail,
+          password,
+        });
+        if (error) throw error;
+
+        if (!data.session) {
+          setMessage({
+            kind: "success",
+            text: "Your account has been created. Check your inbox for the confirmation email, then return here to sign in.",
+          });
+          setMode("signin");
+          setPassword("");
+          return;
+        }
       }
+
+      const requested = new URLSearchParams(window.location.search).get("next");
+      router.replace(getSafeInternalPath(requested));
+      router.refresh();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Authentication failed.");
+      const rawMessage = error instanceof Error ? error.message : "Authentication failed.";
+      setMessage({
+        kind: "error",
+        text: rawMessage.includes("Invalid login credentials")
+          ? "That email and password combination was not recognised. Check your details or create an account."
+          : rawMessage,
+      });
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <form className="auth-card" onSubmit={submit}>
-      <div className="auth-tabs" role="tablist" aria-label="Authentication mode">
-        <button type="button" className={mode === "signin" ? "active" : ""} onClick={() => setMode("signin")}>Sign in</button>
-        <button type="button" className={mode === "signup" ? "active" : ""} onClick={() => setMode("signup")}>Create account</button>
+    <form className="auth-form" onSubmit={submit} aria-busy={busy}>
+      <div className="auth-mode-switch" role="tablist" aria-label="Choose sign-in or registration">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === "signin"}
+          className={mode === "signin" ? "is-active" : ""}
+          onClick={() => changeMode("signin")}
+        >
+          Sign in
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === "signup"}
+          className={mode === "signup" ? "is-active" : ""}
+          onClick={() => changeMode("signup")}
+        >
+          Create account
+        </button>
       </div>
-      <label htmlFor="email">Email</label>
-      <input id="email" type="email" autoComplete="email" required value={email} onChange={(event: ChangeEvent<HTMLInputElement>) => setEmail(event.target.value)} />
-      <label htmlFor="password">Password</label>
-      <input id="password" type="password" minLength={8} autoComplete={mode === "signin" ? "current-password" : "new-password"} required value={password} onChange={(event: ChangeEvent<HTMLInputElement>) => setPassword(event.target.value)} />
-      <button className="primary-button" type="submit" disabled={busy}>{busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}</button>
-      {message ? <p className="form-message" role="status">{message}</p> : null}
-      <p className="form-hint">Authentication is handled by Supabase Auth. Do not share passwords or service-role keys.</p>
+
+      <div className="auth-field">
+        <label htmlFor="tilt-email">Email address</label>
+        <div className="auth-input-wrap">
+          <Mail size={17} aria-hidden="true" />
+          <input
+            id="tilt-email"
+            name="email"
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            autoCapitalize="none"
+            spellCheck={false}
+            placeholder="you@example.com"
+            required
+            maxLength={254}
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="auth-field">
+        <div className="auth-label-row">
+          <label htmlFor="tilt-password">Password</label>
+          <span>{mode === "signup" ? "8 characters minimum" : "Your account password"}</span>
+        </div>
+        <div className="auth-input-wrap">
+          <LockKeyhole size={17} aria-hidden="true" />
+          <input
+            id="tilt-password"
+            name="password"
+            type={showPassword ? "text" : "password"}
+            autoComplete={mode === "signin" ? "current-password" : "new-password"}
+            placeholder={mode === "signup" ? "Create a secure password" : "Enter your password"}
+            required
+            minLength={mode === "signup" ? 8 : undefined}
+            maxLength={128}
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+          />
+          <button
+            className="auth-password-toggle"
+            type="button"
+            onClick={() => setShowPassword((visible) => !visible)}
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            aria-pressed={showPassword}
+          >
+            {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+          </button>
+        </div>
+      </div>
+
+      {message && (
+        <div
+          className={`auth-message ${message.kind === "error" ? "is-error" : "is-success"}`}
+          role={message.kind === "error" ? "alert" : "status"}
+          aria-live="polite"
+        >
+          {message.kind === "error" ? <ShieldAlert size={17} /> : <ShieldCheck size={17} />}
+          <span>{message.text}</span>
+        </div>
+      )}
+
+      <button className="auth-submit" type="submit" disabled={busy}>
+        {busy ? (
+          <><LoaderCircle size={18} className="animate-spin" /> Please wait…</>
+        ) : mode === "signin" ? (
+          "Sign in to TILT"
+        ) : (
+          "Create your TILT account"
+        )}
+      </button>
+
+      <p className="auth-form-footnote">
+        Your account is secured by Supabase Authentication. TILT will never ask you to share
+        your password or private API keys.
+      </p>
     </form>
   );
 }
