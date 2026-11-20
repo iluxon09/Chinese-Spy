@@ -1,0 +1,122 @@
+184d1687-857b-4b23-b17a-fd6f470d0b95
+
+
+(async () => {
+  const sessionId = "184d1687-857b-4b23-b17a-fd6f470d0b95";
+
+  // Same UUID for both requests.
+  // Re-running this script will safely retry the same test order.
+  const clientOrderId = "cdb5a8ab-9d27-4ff0-9c25-4aab62f0f311";
+
+  const base = `/api/sessions/${sessionId}`;
+
+  async function getPortfolio() {
+    const r = await fetch(`${base}/portfolio`, {
+      credentials: "same-origin"
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(JSON.stringify(d));
+    return d;
+  }
+
+  async function submitOrder(quantity) {
+    const r = await fetch(`${base}/orders`, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        clientOrderId,
+        symbol: "ASTE",
+        side: "BUY",
+        quantity
+      })
+    });
+
+    const d = await r.json();
+
+    if (!r.ok) {
+      throw new Error(JSON.stringify(d));
+    }
+
+    return d;
+  }
+
+  // Record initial state.
+  const before = await getPortfolio();
+
+  const beforeCash = Number(before.snapshot.cashBalancePaise);
+  const beforeQty = Number(before.holdings.ASTE?.quantity ?? 0);
+  const beforeCount = before.transactions.length;
+
+  // First request: should execute.
+  const first = await submitOrder(10);
+
+  // Second request: exact same ID and payload.
+  const second = await submitOrder(10);
+
+  // Check the resulting state.
+  const after = await getPortfolio();
+
+  const afterCash = Number(after.snapshot.cashBalancePaise);
+  const afterQty = Number(after.holdings.ASTE?.quantity ?? 0);
+  const afterCount = after.transactions.length;
+
+  // Attempt to reuse the key with a different payload.
+  // This must be rejected.
+  const mismatchResponse = await fetch(`${base}/orders`, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      clientOrderId,
+      symbol: "ASTE",
+      side: "BUY",
+      quantity: 11
+    })
+  });
+
+  const mismatch = await mismatchResponse.json();
+
+  const transaction = first.result.transaction;
+  const expectedCost =
+    Number(transaction.gross_amount_paise) +
+    Number(transaction.charges_paise);
+
+  const checks = {
+    firstRequestExecuted: first.result.duplicate === false,
+    secondRequestWasDuplicate: second.result.duplicate === true,
+    sameTransactionReturned:
+      transaction.id === second.result.transaction.id,
+    onlyOneTransactionAdded: afterCount === beforeCount + 1,
+    cashDeductedOnlyOnce:
+      beforeCash - afterCash === expectedCost,
+    sharesAddedOnlyOnce: afterQty - beforeQty === 10,
+    differentPayloadRejected: mismatchResponse.status === 400
+  };
+
+  console.table(checks);
+
+  console.table({
+    cashBeforeRupees: beforeCash / 100,
+    cashAfterRupees: afterCash / 100,
+    cashDeductedRupees: (beforeCash - afterCash) / 100,
+    ASTEQuantityBefore: beforeQty,
+    ASTEQuantityAfter: afterQty,
+    transactionsBefore: beforeCount,
+    transactionsAfter: afterCount,
+    mismatchResponse: mismatch
+  });
+
+  console.log("Test Order ID:", clientOrderId);
+  console.log("First response:", first);
+  console.log("Second response:", second);
+
+  const passed = Object.values(checks).every(Boolean);
+
+  console.log(
+    passed
+      ? "IDEMPOTENCY TEST PASSED"
+      : "IDEMPOTENCY TEST FAILED"
+  );
+
+})().catch(console.error);
