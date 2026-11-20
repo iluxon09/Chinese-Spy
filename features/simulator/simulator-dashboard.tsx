@@ -45,7 +45,7 @@ export default function SimulatorDashboard() {
           <p className="text-xs tracking-[.25em] text-emerald-400">TILT / SIMULATION CONTROL</p>
           <h1 className="mt-2 text-3xl font-bold">Market Simulator</h1>
           <p className="mt-2 text-sm text-slate-400">
-            {market.scenario.name} · Five-minute candles · Deterministic price path
+            {market.scenario.name} · {candleMinutes}-minute candles · Continuous stochastic price path
           </p>
         </header>
 
@@ -82,7 +82,7 @@ export default function SimulatorDashboard() {
               </p>
             </article>
           )) : (
-            <p className="text-sm text-slate-500">No scheduled news this candle. Background market movement still applies.</p>
+            <p className="text-sm text-slate-500">No scheduled news this candle. Baseline market volatility continues.</p>
           )}
         </section>
 
