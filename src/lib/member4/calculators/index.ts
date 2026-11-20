@@ -4,7 +4,7 @@ export {
   type SipInput,
   type SipResult,
   type ValidationError as SipValidationError,
-} from './sip.js';
+} from './sip';
 
 export {
   calculateGoalSip,
@@ -12,4 +12,4 @@ export {
   type GoalInput,
   type GoalResult,
   type GoalValidationError,
-} from './goal.js';
+} from './goal';

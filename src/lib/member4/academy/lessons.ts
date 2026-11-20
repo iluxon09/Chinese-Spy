@@ -3,7 +3,7 @@
  * Lesson IDs must stay in sync with Member 3 recommendation.lessonId values.
  */
 
-import type { Lesson, LessonId, IndicatorId } from '../types/shared.js';
+import type { Lesson, LessonId, IndicatorId } from '../types/shared';
 
 export const LESSONS: readonly Lesson[] = [
   {

@@ -2,10 +2,10 @@ export {
   FICTIONAL_COMPANIES,
   getCompanyBySymbol,
   getCompaniesBySector,
-} from './companies.js';
+} from './companies';
 
 export {
   MARKET_EVENTS,
   getEventById,
   getEventsUpToStep,
-} from './newsEvents.js';
+} from './newsEvents';

@@ -5,7 +5,7 @@
  * Zero external dependencies — pure TypeScript parser.
  */
 
-import type { Transaction, OrderSide } from '../types/shared.js';
+import type { Transaction, OrderSide } from '../types/shared';
 
 /** Documented minimum columns the parser accepts */
 export const REQUIRED_COLUMNS = [

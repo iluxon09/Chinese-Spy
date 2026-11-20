@@ -6,4 +6,4 @@ export {
   type CsvParseOptions,
   type CsvParseResult,
   type CsvRowError,
-} from './csvParser.js';
+} from './csvParser';

@@ -18,7 +18,7 @@ export type {
   FictionalCompany,
   MarketEvent,
   DemoScenario,
-} from './types/shared.js';
+} from './types/shared';
 
 // Academy
 export {
@@ -28,7 +28,7 @@ export {
   getPrimaryLessonId,
   getAllLessons,
   INDICATOR_TO_PRIMARY_LESSON,
-} from './academy/index.js';
+} from './academy/index';
 
 // Calculators
 export {
@@ -42,7 +42,7 @@ export {
   type GoalInput,
   type GoalResult,
   type GoalValidationError,
-} from './calculators/index.js';
+} from './calculators/index';
 
 // CSV import
 export {
@@ -53,7 +53,7 @@ export {
   type CsvParseOptions,
   type CsvParseResult,
   type CsvRowError,
-} from './import/index.js';
+} from './import/index';
 
 // Content
 export {
@@ -63,11 +63,11 @@ export {
   MARKET_EVENTS,
   getEventById,
   getEventsUpToStep,
-} from './content/index.js';
+} from './content/index';
 
 // Demo scenarios
 export {
   DEMO_SCENARIOS,
   getScenarioById,
   getAllScenarios,
-} from './scenarios/index.js';
+} from './scenarios/index';

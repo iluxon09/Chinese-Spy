@@ -4,7 +4,7 @@
  * Member 2 / 3 can replay these for consistent demos.
  */
 
-import type { DemoScenario } from '../types/shared.js';
+import type { DemoScenario } from '../types/shared';
 
 export const DEMO_SCENARIOS: readonly DemoScenario[] = [
   {

@@ -3,7 +3,7 @@
  * Member 1 uses these definitions; price multipliers are deterministic.
  */
 
-import type { MarketEvent } from '../types/shared.js';
+import type { MarketEvent } from '../types/shared';
 
 export const MARKET_EVENTS: readonly MarketEvent[] = [
   {

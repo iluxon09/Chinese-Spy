@@ -3,7 +3,7 @@
  * Coordinate with Member 1 — these are the seed data they can import.
  */
 
-import type { FictionalCompany } from '../types/shared.js';
+import type { FictionalCompany } from '../types/shared';
 
 export const FICTIONAL_COMPANIES: readonly FictionalCompany[] = [
   {
