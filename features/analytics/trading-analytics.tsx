@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import Link from "next/link";
 import Papa from "papaparse";
 import {
-  Activity, AlertTriangle, ArrowDownRight, ArrowUpRight, Brain,
-  CheckCircle2, FileSpreadsheet, Info, RefreshCw, ShieldCheck, Upload,
+  Activity, AlertTriangle, Brain, CheckCircle2, FileSpreadsheet, Info,
+  ShieldCheck, Upload,
 } from "lucide-react";
 import {
   Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart,
