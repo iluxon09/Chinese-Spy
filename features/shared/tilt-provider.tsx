@@ -48,7 +48,7 @@ type MarketEvent = {
   effect_bps:number; symbol?:string|null; sector?:string|null;
 };
 type Market = {
-  scenario:{id:string;name:string;charge_rate_bps:number;minimum_charge_paise:number};
+  scenario:{id:string;name:string;start_at:string;interval_ms:number;charge_rate_bps:number;minimum_charge_paise:number};
   marketStep:number; companies:Company[]; events:MarketEvent[];
 };
 type PricePoint = PriceHistoryPoint;
