@@ -60,7 +60,7 @@ export type IndicatorId =
 export type IndicatorStatus = 'detected' | 'not_detected' | 'insufficient_data';
 
 /**
- * Report object returned by Behaviour Engine (Member 3).
+ * Report contract for the Behavioral Analysis engine (Member 3).
  * Member 4 lesson IDs must match the recommendation.lessonId values.
  */
 export interface BehaviourReport {
@@ -79,7 +79,7 @@ export interface BehaviourReport {
   };
 }
 
-/** Stable lesson identifiers used across Academy and Market Mirror */
+/** Stable lesson identifiers used across Academy and Behavioral Analysis */
 export type LessonId =
   | 'volatility'
   | 'diversification'
