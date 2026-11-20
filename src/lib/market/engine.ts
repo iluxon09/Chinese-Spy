@@ -12,12 +12,39 @@ export interface MarketAdvanceResult {
   pricePoints: PricePoint[];
 }
 
+// Keep this seed format and FNV-1a implementation in sync with
+// public.tilt_market_hash() in the Supabase market-volatility migration.
+function hash32(seed: string): number {
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < seed.length; index += 1) {
+    hash = Math.imul(hash ^ seed.charCodeAt(index), 0x01000193) >>> 0;
+  }
+  return hash;
+}
+
+/** Reproducible, random-looking baseline move for one company and market step. */
+export function baselineMarketMoveBps(
+  scenarioId: string,
+  marketStep: number,
+  symbol: string,
+  sector: string,
+): number {
+  const prefix = `tilt-market-v1:${scenarioId}:`;
+  const marketBps = (hash32(`${prefix}market:${marketStep}`) % 71) - 35;
+  const sectorBps = (hash32(`${prefix}sector:${marketStep}:${sector}`) % 41) - 20;
+  const companyBps = (hash32(`${prefix}company:${marketStep}:${symbol}`) % 241) - 120;
+  const combined = marketBps + sectorBps + companyBps;
+
+  // Do not produce an exactly flat candle for an active instrument.
+  return combined === 0 ? 1 : combined;
+}
+
 function applyBasisPointChange(pricePaise: number, effectBps: number): number {
   if (!Number.isSafeInteger(pricePaise) || pricePaise <= 0) {
     throw new Error("Every market price must be a positive integer number of paise.");
   }
   if (!Number.isSafeInteger(effectBps) || effectBps <= -10_000) {
-    throw new Error("Event effectBps must be an integer greater than -10000.");
+    throw new Error("Market movement must be an integer greater than -10000 basis points.");
   }
 
   // Round to the nearest paise, using integer arithmetic for reproducibility.
@@ -25,13 +52,15 @@ function applyBasisPointChange(pricePaise: number, effectBps: number): number {
   const result = (BigInt(pricePaise) * multiplier + 5_000n) / 10_000n;
   const nextPrice = Number(result);
   if (!Number.isSafeInteger(nextPrice) || nextPrice <= 0) {
-    throw new Error("Market event produced an invalid price.");
+    throw new Error("Market movement produced an invalid price.");
   }
   return nextPrice;
 }
 
 /**
- * Advances a market by exactly one step. No random values or wall-clock reads are used.
+ * Advances a market by exactly one step. Baseline movement is seeded from
+ * scenario + step + company, so it looks unpredictable but is identical for
+ * every session replaying that shared scenario. Scheduled news adds extra shocks.
  * timestamp is derived from scenarioStartIso + step * intervalMs.
  */
 export function advanceMarket(
@@ -58,17 +87,25 @@ export function advanceMarket(
     .filter((event) => event.scenarioId === current.scenarioId && event.marketStep === nextStep)
     .sort((a, b) => a.id.localeCompare(b.id));
 
-  for (const event of eventsApplied) {
-    const affectedCompanies = companies.filter((company) =>
+  for (const company of companies) {
+    const previousPrice = nextPrices[company.symbol];
+    if (previousPrice === undefined) throw new Error(`Missing current price for ${company.symbol}.`);
+
+    // Apply the always-on market, sector and company-specific price movement.
+    let nextPrice = applyBasisPointChange(
+      previousPrice,
+      baselineMarketMoveBps(current.scenarioId, nextStep, company.symbol, company.sector),
+    );
+
+    // Scripted news remains an additional shock on top of baseline volatility.
+    const companyEvents = eventsApplied.filter((event) =>
       (event.symbol !== undefined && company.symbol === event.symbol) ||
       (event.sector !== undefined && company.sector === event.sector),
     );
-
-    for (const company of affectedCompanies) {
-      const oldPrice = nextPrices[company.symbol];
-      if (oldPrice === undefined) throw new Error(`Missing current price for ${company.symbol}.`);
-      nextPrices[company.symbol] = applyBasisPointChange(oldPrice, event.effectBps);
+    for (const event of companyEvents) {
+      nextPrice = applyBasisPointChange(nextPrice, event.effectBps);
     }
+    nextPrices[company.symbol] = nextPrice;
   }
 
   const timestampMs = startMs + nextStep * intervalMs;
