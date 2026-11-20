@@ -4,7 +4,7 @@ import {
   createContext, useCallback, useContext, useEffect, useMemo, useRef, useState,
   type ReactNode,
 } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type Session = {
@@ -69,12 +69,8 @@ async function api<T>(url:string, init?:RequestInit):Promise<T> {
 
 export function TiltDataProvider({children}:{children:ReactNode}) {
   const pathname = usePathname();
-  const pathnameRef = useRef(pathname);
-  pathnameRef.current = pathname;
-
+  const router = useRouter();
   const bootedRef = useRef(false);
-  const bootRef = useRef<() => Promise<void>>(async () => {});
-
   const [authenticated,setAuthenticated] = useState(false);
   const [loading,setLoading] = useState(true);
   const [error,setError] = useState("");
@@ -143,16 +139,17 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not load TILT.";
       if (/sign in|unauthorized|401/i.test(message)) {
+        bootedRef.current = false;
         clearAccountData();
         setError("Sign in to access your simulation.");
+        router.replace("/login");
       } else {
         setError(message);
       }
     } finally {
       setLoading(false);
     }
-  },[clearAccountData,loadSession]);
-  bootRef.current = boot;
+  },[clearAccountData,loadSession,router]);
 
   // Boot once per authenticated session, not on every client-side route change.
   useEffect(() => {
@@ -167,17 +164,10 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) return;
 
     const supabase = createSupabaseBrowserClient();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, authSession) => {
-      if (event === "SIGNED_OUT" || !authSession) {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
         bootedRef.current = false;
         clearAccountData();
-      } else if (
-        event === "SIGNED_IN" &&
-        pathnameRef.current !== "/login" &&
-        !bootedRef.current
-      ) {
-        bootedRef.current = true;
-        void Promise.resolve().then(() => bootRef.current());
       }
     });
 
@@ -199,13 +189,14 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
         bootedRef.current = false;
         clearAccountData();
         setError("Your session has expired. Sign in again.");
+        router.replace("/login");
       } else {
         setError(message);
       }
     } finally {
       setLoading(false);
     }
-  },[sessionId,boot,loadSession,clearAccountData]);
+  },[sessionId,boot,loadSession,clearAccountData,router]);
 
   const createSession = useCallback(async () => {
     const created = await api<{session:{id:string}}>("/api/sessions", {
