@@ -154,10 +154,19 @@ export default function TradingAnalytics({ mode }: { mode: "psychology" | "histo
   const timeline = Object.entries(trades.reduce<Record<string, number>>((acc, trade) => {
     const parsed = new Date(trade.date);
     if (!trade.date || Number.isNaN(parsed.getTime())) return acc;
-    const day = parsed.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "2-digit" });
+    const day = parsed.toISOString().slice(0, 10);
     acc[day] = (acc[day] ?? 0) + 1;
     return acc;
-  }, {})).map(([date, count]) => ({ date, count })).slice(-14);
+  }, {}))
+    .sort(([left], [right]) => left.localeCompare(right))
+    .slice(-14)
+    .map(([day, count]) => ({
+      date: new Date(day + "T00:00:00").toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+      }),
+      count,
+    }));
   const avgTrade = trades.length ? totalVolume / trades.length : 0;
   const largest = [...trades].sort((a, b) => b.total - a.total)[0];
 
@@ -189,8 +198,12 @@ export default function TradingAnalytics({ mode }: { mode: "psychology" | "histo
     setBusy(true); setError(""); setMessage("");
     try {
       const rows = await parseCsv(file);
+      try {
+        localStorage.setItem(IMPORT_KEY, JSON.stringify(rows));
+      } catch {
+        throw new Error("The browser could not save this import. Clear some site storage and try again.");
+      }
       setImportedTrades(rows);
-      localStorage.setItem(IMPORT_KEY, JSON.stringify(rows));
       setMessage("Imported " + rows.length + " valid trades from " + file.name + ".");
     } catch (err) {
       setError(err instanceof Error ? err.message : "CSV import failed.");
@@ -201,10 +214,14 @@ export default function TradingAnalytics({ mode }: { mode: "psychology" | "histo
   }
 
   function clearImport() {
-    localStorage.removeItem(IMPORT_KEY);
-    setImportedTrades([]);
-    setMessage("Imported history cleared from this browser.");
-    setError("");
+    try {
+      localStorage.removeItem(IMPORT_KEY);
+      setImportedTrades([]);
+      setMessage("Imported history cleared from this browser.");
+      setError("");
+    } catch {
+      setError("The browser could not clear this saved import. Check your browser storage permissions.");
+    }
   }
 
   if (!loaded) return <main className="min-h-screen bg-[#080d18] p-8 text-slate-400">Loading your analytics…</main>;
