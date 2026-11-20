@@ -21,8 +21,8 @@ These are preserved verbatim as reference data, but are **not seeded into the li
 - `types/shared.ts` is kept under the Member 4 namespace. It is not a replacement for Member 1's paise-denominated API/domain types.
 - Member 4's calculator amounts and CSV prices/charges are rupee-denominated values.
 - The current trading API accepts order intent and calculates execution price/charges server-side in integer paise. Do not directly replay imported CSV transactions into that API.
-- Member 3's Market Mirror uses a separate behaviour-report shape. Map the Member 4 lesson IDs to Member 3 recommendations through an explicit adapter during the final Market Mirror integration.
-- The static behaviour dashboard in Member 4's copied frontend is a mock insight screen. It is intentionally not wired into the app; Market Mirror remains deferred until its actual detector engine is adapted and tested.
+- Member 3's Market Mirror report identifiers are mapped to these stable Member 4 lesson IDs by the adapter in `src/lib/market-mirror/engine.ts`.
+- The static behaviour dashboard in Member 4's copied frontend remains unused because it is a mock. The active `/behaviour` screen uses Member 3's detector engine and authenticated TILT data.
 
 ## Tests
 

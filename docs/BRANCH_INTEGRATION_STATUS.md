@@ -24,9 +24,18 @@ The frontend screens are integrated into the working app and wired to Member 1's
 
 ### Member 3 — `feature/market-mirror-member3`
 
-Contains four standalone behavioural detectors and tests: FOMO, panic selling, overtrading and concentration.
+Contains four standalone behavioural detectors and a Vitest suite: FOMO, panic selling, overtrading and concentration.
 
-**Status: deferred to the final phase.** Before connecting this module, adapt the detector's rupee-denominated prices/charges and holdings contract to Member 1's integer-paise API shapes, and map lower-case Member 4 lesson IDs to Member 3's recommendation IDs.
+**Integrated on review branch `member4-integration` (alongside Member 3):**
+- The four detectors are copied into `src/lib/market-mirror`.
+- `engine.ts` adapts Member 1's authenticated portfolio API output to the detector input.
+- Execution prices, charges, holding prices and history prices are converted from integer paise to rupees exactly once at the adapter boundary.
+- Company sector labels are joined to current holdings from the existing market response.
+- Detector lesson recommendations map to Member 4's stable Academy IDs: `volatility`, `decision_discipline`, `transaction_costs`, and `diversification`.
+- The new `/behaviour` page reads the signed-in user's active simulation context and is linked in the sidebar.
+- The analysis is read-only; it adds no database writes, schema changes or trading RPCs.
+
+The original Member 3 detector tests are included under `tests/market-mirror`, with additional adapter tests.
 
 ### Member 4 — `member4-branch`
 
@@ -41,6 +50,7 @@ The branch contains two folders:
 - CSV upload screen uses the validating parser and displays valid/invalid rows.
 - The pure TypeScript modules, content catalogue, demo scenarios and source tests are included under `src/lib/member4` and `tests/member4`.
 - The parser's day-first date parsing and data-row numbering have been hardened and tests added.
+- Member 4's stable Academy lesson IDs are now the recommendation targets for Member 3's Market Mirror detectors.
 
 **Intentionally inactive:** Member 4's ten-company catalogue and event/scenario content are not seeded into Supabase. They use different symbols and event IDs than the current eight-company live market (ASTE, NVMT, BGTC, HVFD, ZNFC, MEDX, URBN, LOGX). Activating those fixtures without a compatible database seed and scenario adapter would break order execution and price lookups.
 
@@ -50,7 +60,7 @@ Keep `main` untouched while the integrated app is being validated. The deploymen
 
 ## Verification still required
 
-Run on the local project after pulling `member4-integration`:
+Run on the local project after pulling `member4-integration` (contains Member 3 + Member 4 work):
 
 ```cmd
 npm run lint
@@ -59,7 +69,7 @@ npm test
 npm run build
 ```
 
-Also verify the login gate, Academy stable-ID routes, SIP/goal calculations and CSV preview in a browser. The review branch has been assembled through GitHub's source APIs; it has not been executed in the local Windows/Supabase environment.
+Also verify the login gate, Academy stable-ID routes, SIP/goal calculations, CSV preview, and the read-only Market Mirror dashboard in a browser. The review branch has been assembled through GitHub's source APIs; it has not been executed in the local Windows/Supabase environment.
 
 ## Safety boundaries
 

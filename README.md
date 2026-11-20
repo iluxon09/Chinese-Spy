@@ -8,7 +8,7 @@ TILT is an educational, virtual stock-market simulator. It combines a determinis
 
 - Repository: https://github.com/iluxon09/Chinese-Spy
 - Integrated application source: https://github.com/iluxon09/Chinese-Spy/tree/tilt-integration
-- Member 4 review branch: https://github.com/iluxon09/Chinese-Spy/tree/member4-integration
+- Combined Member 3 + Member 4 review branch: https://github.com/iluxon09/Chinese-Spy/tree/member4-integration
 - Integration guide: [docs/INTEGRATION.md](docs/INTEGRATION.md)
 - Vercel deployment guide: [docs/DEPLOY_VERCEL.md](docs/DEPLOY_VERCEL.md)
 - Team branch integration status: [docs/BRANCH_INTEGRATION_STATUS.md](docs/BRANCH_INTEGRATION_STATUS.md)
@@ -29,8 +29,9 @@ The production application is based on the integrated branch, not the repository
 - Five Finance Academy lessons with stable IDs, practical examples, takeaways and quizzes.
 - Validated SIP and goal-based SIP calculators with assumptions and educational disclaimers.
 - CSV transaction preview with row-level validation; preview only, no persistent import.
+- Market Mirror behavioural heuristics for panic-selling patterns, FOMO-like buying, overtrading and portfolio concentration, using the signed-in user's live simulation data.
 - Member 4's alternate fictional-company catalogue, event definitions and demo scenario fixtures are preserved as inactive reference modules until mapped to the active database symbols and event IDs.
-- Market Mirror behavioural analysis is intentionally deferred to the final integration phase.
+- Market Mirror uses the active eight-company market, converting paise values to rupees at a typed adapter boundary and linking reports to stable Finance Academy lessons.
 
 ## Technology
 
@@ -104,7 +105,7 @@ npm test
 npm run build
 ```
 
-The existing backend suite contains market and trading tests. The Member 4 test suite adds lesson, calculator, CSV parser and demo-scenario coverage. Run all checks on the exact branch you intend to deploy.
+The existing backend suite contains market and trading tests. The Member 4 test suite adds lesson, calculator, CSV parser and demo-scenario coverage. The Market Mirror suite covers four detectors and the live-data adapter. Run all checks on the exact branch you intend to deploy.
 
 ## Application routes
 
@@ -116,6 +117,7 @@ The existing backend suite contains market and trading tests. The Member 4 test 
 | `/trading` | BUY / SELL market orders, holdings and transaction history |
 | `/portfolio` | Portfolio value, allocation and P&L |
 | `/simulator` | Market-step and event controls |
+| `/behaviour` | Market Mirror behavioural analysis |
 | `/academy` | Five Finance Academy lessons |
 | `/academy/[lessonId]` | Lesson content and knowledge check |
 | `/portfolio/architect` | Validated illustrative SIP and goal calculator |
@@ -148,5 +150,5 @@ Authenticated API handlers validate the signed-in user and session ownership. Fi
 - The demo charge rate is a configurable educational assumption, not a complete model of statutory Indian market fees.
 - CSV upload currently validates and previews rows in the browser; persistent historical import is not implemented.
 - Member 4's alternate symbols/events/scenarios are preserved as inactive content because they do not match the active Supabase seed.
-- Market Mirror behavioural analysis is deferred until its data contracts are adapted and tested.
+- Market Mirror detectors are heuristic signals, not diagnoses or evidence of intent. They may return insufficient data and exclude uninvested cash from concentration calculations.
 - Re-verify authentication, trading and the production build against the intended Supabase project before a public demonstration.

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, ChartNoAxesCombined, Activity, BriefcaseBusiness,
-  BookOpen, Calculator, Upload, LogOut, UserRound, LoaderCircle,
+  BookOpen, Calculator, Upload, LogOut, UserRound, LoaderCircle, Brain,
 } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
@@ -15,6 +15,7 @@ const navigation = [
   { label: "Trading", href: "/trading", icon: Activity },
   { label: "Portfolio", href: "/portfolio", icon: BriefcaseBusiness },
   { label: "Simulator", href: "/simulator", icon: Activity },
+  { label: "Market Mirror", href: "/behaviour", icon: Brain },
   { label: "Finance Academy", href: "/academy", icon: BookOpen },
   { label: "Investment Architect", href: "/portfolio/architect", icon: Calculator },
   { label: "CSV Preview", href: "/portfolio/upload", icon: Upload },
