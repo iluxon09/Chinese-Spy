@@ -10,6 +10,7 @@ TILT is an educational, virtual stock-market simulator. It combines a determinis
 - Integrated application source: https://github.com/iluxon09/Chinese-Spy/tree/tilt-integration
 - Integration guide: [docs/INTEGRATION.md](docs/INTEGRATION.md)
 - Vercel deployment guide: [docs/DEPLOY_VERCEL.md](docs/DEPLOY_VERCEL.md)
+- Team branch integration status: [docs/BRANCH_INTEGRATION_STATUS.md](docs/BRANCH_INTEGRATION_STATUS.md)
 
 The integrated application is on the `tilt-integration` branch. The repository's default `main` branch is maintained separately; use the branch link above to review this version.
 
