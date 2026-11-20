@@ -6,6 +6,11 @@ import {
 } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import {
+  appendMarketPricePoints,
+  type AdvancedPricePoint,
+  type PriceHistoryPoint,
+} from "@/lib/simulation/market-history";
 
 type Session = {
   id: string;
@@ -46,8 +51,14 @@ type Market = {
   scenario:{id:string;name:string;charge_rate_bps:number;minimum_charge_paise:number};
   marketStep:number; companies:Company[]; events:MarketEvent[];
 };
-type PricePoint = {symbol:string;market_step:number;pricePaise:number;timestamp:string};
+type PricePoint = PriceHistoryPoint;
 type Portfolio = {session:Session; snapshot:Snapshot; holdings:Record<string,unknown>; transactions:Transaction[]};
+type MarketAdvanceResult = {
+  scenarioId: string;
+  marketStep: number;
+  eventsApplied: MarketEvent[];
+  pricePoints: AdvancedPricePoint[];
+};
 type TiltContextValue = {
   authenticated:boolean; loading:boolean; error:string; sessionId:string|null;
   session:Session|null; portfolio:Portfolio|null; market:Market|null;
@@ -55,7 +66,7 @@ type TiltContextValue = {
   refresh:()=>Promise<void>;
   createSession:()=>Promise<string>;
   placeOrder:(symbol:string,side:"BUY"|"SELL",quantity:number)=>Promise<unknown>;
-  advanceMarket:()=>Promise<unknown>;
+  advanceMarket:()=>Promise<MarketAdvanceResult>;
 };
 
 const TiltContext = createContext<TiltContextValue|null>(null);
@@ -71,6 +82,8 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
   const pathname = usePathname();
   const router = useRouter();
   const bootedRef = useRef(false);
+  const orderInFlightRef = useRef(false);
+  const marketAdvanceInFlightRef = useRef(false);
   const [authenticated,setAuthenticated] = useState(false);
   const [loading,setLoading] = useState(true);
   const [error,setError] = useState("");
@@ -91,32 +104,29 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
     setHistories({});
   }, []);
 
+  // A portfolio-only refresh is sufficient after orders and market advancement.
+  // It deliberately does not reload the unchanged market metadata or full history.
+  const refreshPortfolioSnapshot = useCallback(async (id:string) => {
+    const nextPortfolio = await api<Portfolio>(`/api/sessions/${id}/portfolio`);
+    setSession(nextPortfolio.session);
+    setPortfolio(nextPortfolio);
+    return nextPortfolio;
+  },[]);
+
   const loadSession = useCallback(async (id:string) => {
-    const [p,m] = await Promise.all([
+    const [p,m,h] = await Promise.all([
       api<Portfolio>(`/api/sessions/${id}/portfolio`),
       api<Market>(`/api/sessions/${id}/market`),
+      api<{histories:Record<string,PricePoint[]>}>(`/api/sessions/${id}/market/history`),
     ]);
 
-    const historyEntries = await Promise.all(m.companies.map(async company => {
-      try {
-        const h = await api<{history:Array<{symbol:string;market_step:number;price_paise:number|string;recorded_at:string}>}>(
-          `/api/sessions/${id}/market/history?symbol=${encodeURIComponent(company.symbol)}`
-        );
-        return [company.symbol,h.history.map(point => ({
-          symbol:point.symbol, market_step:point.market_step,
-          pricePaise:Number(point.price_paise), timestamp:point.recorded_at,
-        }))] as const;
-      } catch {
-        return [company.symbol,[]] as const;
-      }
-    }));
-
-    // Commit a coherent snapshot together, after all required data has loaded.
+    // Initial/full refresh now uses three concurrent reads, not one history
+    // request per company. History is fetched in bulk and cached client-side.
     setSessionId(id);
     setSession(p.session);
     setPortfolio(p);
     setMarket(m);
-    setHistories(Object.fromEntries(historyEntries));
+    setHistories(h.histories ?? {});
   },[]);
 
   const boot = useCallback(async () => {
@@ -210,22 +220,75 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
 
   const placeOrder = useCallback(async (symbol:string,side:"BUY"|"SELL",quantity:number) => {
     if (!sessionId) throw new Error("No active simulation session.");
-    const result = await api<{result:unknown}>(`/api/sessions/${sessionId}/orders`, {
-      method:"POST", headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({clientOrderId:crypto.randomUUID(),symbol,side,quantity}),
-    });
-    await loadSession(sessionId);
-    return result.result;
-  },[sessionId,loadSession]);
+    if (orderInFlightRef.current) throw new Error("An order is already being processed. Please wait.");
 
-  const advanceMarket = useCallback(async () => {
+    orderInFlightRef.current = true;
+    setError("");
+    try {
+      const result = await api<{result:unknown}>(`/api/sessions/${sessionId}/orders`, {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({clientOrderId:crypto.randomUUID(),symbol,side,quantity}),
+      });
+
+      // The order is committed at this point. If the following read fails, do
+      // not report the order itself as failed or encourage an unsafe resubmit.
+      try {
+        await refreshPortfolioSnapshot(sessionId);
+      } catch (refreshError) {
+        const message = refreshError instanceof Error ? refreshError.message : "Unknown refresh error.";
+        setError(`Order completed, but portfolio refresh failed: ${message}. Use Refresh to reconcile the display.`);
+      }
+
+      return result.result;
+    } finally {
+      orderInFlightRef.current = false;
+    }
+  },[sessionId,refreshPortfolioSnapshot]);
+
+  const advanceMarket = useCallback(async ():Promise<MarketAdvanceResult> => {
     if (!sessionId) throw new Error("No active simulation session.");
-    const result = await api<{result:unknown}>(`/api/sessions/${sessionId}/market/advance`, {
-      method:"POST",
-    });
-    await loadSession(sessionId);
-    return result.result;
-  },[sessionId,loadSession]);
+    if (marketAdvanceInFlightRef.current) throw new Error("Market advancement is already in progress.");
+
+    marketAdvanceInFlightRef.current = true;
+    setError("");
+    try {
+      const response = await api<{result:MarketAdvanceResult}>(`/api/sessions/${sessionId}/market/advance`, {
+        method:"POST",
+      });
+      const advanced = response.result;
+
+      // The atomic RPC already returns the committed market step, prices and
+      // events. Apply that payload directly instead of re-fetching the market
+      // and all eight historical series after every step.
+      setMarket((current) => current ? {
+        ...current,
+        marketStep: advanced.marketStep,
+        events: advanced.eventsApplied ?? [],
+        companies: current.companies.map((company) => {
+          const point = advanced.pricePoints.find((item) => item.symbol === company.symbol);
+          return point
+            ? { ...company, currentPrice: { pricePaise: Number(point.pricePaise), timestamp: point.timestamp } }
+            : company;
+        }),
+      } : current);
+
+      setSession((current) => current ? { ...current, market_step: advanced.marketStep } : current);
+      setHistories((current) => appendMarketPricePoints(current, advanced.pricePoints ?? []));
+
+      // Portfolio valuation is price-dependent, so refresh just this snapshot.
+      // If the read fails, keep the successfully advanced market state visible.
+      try {
+        await refreshPortfolioSnapshot(sessionId);
+      } catch (refreshError) {
+        const message = refreshError instanceof Error ? refreshError.message : "Unknown refresh error.";
+        setError(`Market advanced to step ${advanced.marketStep}, but portfolio refresh failed: ${message}. Use Refresh to reconcile the display.`);
+      }
+
+      return advanced;
+    } finally {
+      marketAdvanceInFlightRef.current = false;
+    }
+  },[sessionId,refreshPortfolioSnapshot]);
 
   const value = useMemo<TiltContextValue>(() => ({
     authenticated,loading,error,sessionId,session,portfolio,market,histories,
