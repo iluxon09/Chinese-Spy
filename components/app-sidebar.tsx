@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, ChartNoAxesCombined, Activity, BriefcaseBusiness,
-  BookOpen, Calculator, Upload, Brain, type LucideIcon,
+  BookOpen, Calculator, Brain, type LucideIcon,
 } from "lucide-react";
 import AccountControl from "@/components/account-control";
 
@@ -14,10 +14,9 @@ export const appNavigation: Array<{ label: string; href: string; icon: LucideIco
   { label: "Trading", href: "/trading", icon: Activity },
   { label: "Portfolio", href: "/portfolio", icon: BriefcaseBusiness },
   { label: "Simulator", href: "/simulator", icon: Activity },
-  { label: "Market Mirror", href: "/behaviour", icon: Brain },
+  { label: "Behavioral Analysis", href: "/behaviour", icon: Brain },
   { label: "Finance Academy", href: "/academy", icon: BookOpen },
   { label: "Investment Architect", href: "/portfolio/architect", icon: Calculator },
-  { label: "CSV Preview", href: "/portfolio/upload", icon: Upload },
 ];
 
 export default function AppSidebar() {
