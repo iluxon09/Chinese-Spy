@@ -6,6 +6,7 @@ on:
       - tilt-integration
   push:
     branches:
+      - tilt-integration
       - frontend-hardening
       - member4-integration
   workflow_dispatch:
@@ -35,12 +36,11 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "22.12.0"
           cache: npm
 
-      # package-lock.json in the imported backend branch predates the
-      # integrated frontend dependencies. npm install reconciles the lock
-      # against package.json before the clean install and checks below.
+      # The committed lockfile predates the integrated frontend dependencies.
+      # Reconcile it in the runner until the regenerated lockfile is committed.
       - name: Reconcile npm lockfile
         run: npm install --no-audit --no-fund
 
