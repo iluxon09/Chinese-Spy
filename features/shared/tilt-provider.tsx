@@ -1,10 +1,11 @@
 "use client";
 
 import {
-  createContext, useCallback, useContext, useEffect, useMemo, useState,
+  createContext, useCallback, useContext, useEffect, useMemo, useRef, useState,
   type ReactNode,
 } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type Session = {
   id: string;
@@ -68,6 +69,8 @@ async function api<T>(url:string, init?:RequestInit):Promise<T> {
 
 export function TiltDataProvider({children}:{children:ReactNode}) {
   const pathname = usePathname();
+  const router = useRouter();
+  const bootedRef = useRef(false);
   const [authenticated,setAuthenticated] = useState(false);
   const [loading,setLoading] = useState(true);
   const [error,setError] = useState("");
@@ -77,15 +80,22 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
   const [market,setMarket] = useState<Market|null>(null);
   const [histories,setHistories] = useState<Record<string,PricePoint[]>>({});
 
+  const clearAccountData = useCallback(() => {
+    setAuthenticated(false);
+    setLoading(false);
+    setError("");
+    setSessionId(null);
+    setSession(null);
+    setPortfolio(null);
+    setMarket(null);
+    setHistories({});
+  }, []);
+
   const loadSession = useCallback(async (id:string) => {
     const [p,m] = await Promise.all([
       api<Portfolio>(`/api/sessions/${id}/portfolio`),
       api<Market>(`/api/sessions/${id}/market`),
     ]);
-    setSessionId(id);
-    setSession(p.session);
-    setPortfolio(p);
-    setMarket(m);
 
     const historyEntries = await Promise.all(m.companies.map(async company => {
       try {
@@ -100,14 +110,22 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
         return [company.symbol,[]] as const;
       }
     }));
+
+    // Commit a coherent snapshot together, after all required data has loaded.
+    setSessionId(id);
+    setSession(p.session);
+    setPortfolio(p);
+    setMarket(m);
     setHistories(Object.fromEntries(historyEntries));
   },[]);
 
   const boot = useCallback(async () => {
+    setLoading(true);
+    setError("");
     try {
       const result = await api<{sessions:Session[]}>("/api/sessions");
-      setAuthenticated(true);
       const selected = result.sessions?.[0];
+
       if (!selected) {
         const created = await api<{session:{id:string}}>("/api/sessions", {
           method:"POST", headers:{"Content-Type":"application/json"},
@@ -117,31 +135,68 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
       } else {
         await loadSession(selected.id);
       }
+      setAuthenticated(true);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not load TILT.";
       if (/sign in|unauthorized|401/i.test(message)) {
-        setAuthenticated(false); setError("Sign in to access your simulation.");
+        bootedRef.current = false;
+        clearAccountData();
+        setError("Sign in to access your simulation.");
+        router.replace("/login");
       } else {
         setError(message);
       }
     } finally {
       setLoading(false);
     }
-  },[loadSession]);
+  },[clearAccountData,loadSession,router]);
 
-  const refresh = useCallback(async () => {
-    if (!sessionId) return boot();
-    setLoading(true); setError("");
-    try { await loadSession(sessionId); }
-    catch(err) { setError(err instanceof Error ? err.message : "Refresh failed."); }
-    finally { setLoading(false); }
-  },[sessionId,boot,loadSession]);
-
+  // Boot once per authenticated session, not on every client-side route change.
   useEffect(() => {
-    if (pathname === "/login") return;
-    // Defer the initial state transition until after the effect has completed.
+    if (pathname === "/login" || bootedRef.current) return;
+    bootedRef.current = true;
     void Promise.resolve().then(boot);
   },[pathname,boot]);
+
+  // Clear stale portfolio data on sign-out. A subsequent login will boot when
+  // the protected route becomes active again.
+  useEffect(() => {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) return;
+
+    const supabase = createSupabaseBrowserClient();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        bootedRef.current = false;
+        clearAccountData();
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  },[clearAccountData]);
+
+  const refresh = useCallback(async () => {
+    if (!sessionId) {
+      await boot();
+      return;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      await loadSession(sessionId);
+    } catch(err) {
+      const message = err instanceof Error ? err.message : "Refresh failed.";
+      if (/sign in|unauthorized|401/i.test(message)) {
+        bootedRef.current = false;
+        clearAccountData();
+        setError("Your session has expired. Sign in again.");
+        router.replace("/login");
+      } else {
+        setError(message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  },[sessionId,boot,loadSession,clearAccountData,router]);
 
   const createSession = useCallback(async () => {
     const created = await api<{session:{id:string}}>("/api/sessions", {
@@ -149,6 +204,7 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
       body:JSON.stringify({scenarioId:"tilt-demo-v1"}),
     });
     await loadSession(created.session.id);
+    setAuthenticated(true);
     return created.session.id;
   },[loadSession]);
 

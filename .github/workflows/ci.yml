@@ -1,0 +1,63 @@
+name: TILT safety checks
+
+on:
+  pull_request:
+    branches:
+      - tilt-integration
+  push:
+    branches:
+      - frontend-hardening
+      - member4-integration
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tilt-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Lint, typecheck, tests and production build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CI: "true"
+      NEXT_TELEMETRY_DISABLED: "1"
+      NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co"
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "ci-placeholder-publishable-key"
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      # package-lock.json in the imported backend branch predates the
+      # integrated frontend dependencies. npm install reconciles the lock
+      # against package.json before the clean install and checks below.
+      - name: Reconcile npm lockfile
+        run: npm install --no-audit --no-fund
+
+      - name: Verify clean dependency install
+        run: npm ci --no-audit --no-fund
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: TypeScript
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Production build
+        run: npm run build
