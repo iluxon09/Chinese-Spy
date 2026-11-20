@@ -61,3 +61,11 @@ npm run build
 - Market Mirror / behavioural analytics are intentionally deferred. `/behaviour` is only a placeholder and is not linked from the sidebar.
 - CSV upload is preview-only; persistent CSV import remains unimplemented.
 - The combined application has not yet been executed against the local Windows/Supabase environment. Complete the four local checks above and share any errors before considering the integration verified.
+
+## Authentication and logout
+
+- Every application page except `/login` is protected by the Next.js `proxy.ts` gate.
+- Unauthenticated visitors are redirected to `/login`; after successful sign-in they return to the originally requested internal path.
+- Authenticated visitors opening `/login` are redirected to the dashboard (or the validated internal `next` path).
+- The sidebar displays the authenticated user's email and a **Log out** control. Sign-out uses the Supabase browser client, clears the auth session, and navigates to `/login`.
+- API handlers retain their own authentication and session-ownership checks. The proxy does not replace API authorization.
