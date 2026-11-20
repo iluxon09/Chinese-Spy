@@ -58,10 +58,14 @@ export async function proxy(request: NextRequest) {
   if (authenticated && isLoginPage) {
     const destination = request.nextUrl.clone();
     const nextPath = destination.searchParams.get("next");
-    destination.pathname = nextPath?.startsWith("/") && !nextPath.startsWith("//")
-      ? nextPath
-      : "/";
-    destination.search = "";
+    if (nextPath?.startsWith("/") && !nextPath.startsWith("//")) {
+      const requestedDestination = new URL(nextPath, request.url);
+      destination.pathname = requestedDestination.pathname;
+      destination.search = requestedDestination.search;
+    } else {
+      destination.pathname = "/";
+      destination.search = "";
+    }
     const redirect = NextResponse.redirect(destination);
     response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
     return redirect;
