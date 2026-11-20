@@ -1,0 +1,21 @@
+"use client";
+
+import Link from "next/link";
+import {PieChart,Pie,Cell,ResponsiveContainer,Tooltip} from "recharts";
+import {useTilt} from "@/features/shared/tilt-provider";
+
+const money=(p:number)=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:2}).format(p/100);
+const colors=["#34D399","#60A5FA","#FBBF24","#F472B6","#A78BFA","#FB923C","#22D3EE","#F87171"];
+export default function PortfolioDashboard(){
+ const {loading,error,authenticated,portfolio}=useTilt();
+ if(loading)return <main className="p-8 text-slate-300">Loading portfolio…</main>;
+ if(!authenticated||!portfolio)return <main className="p-8 text-slate-400">{error||"Sign in to view your portfolio."}</main>;
+ const s=portfolio.snapshot;
+ return <main className="min-h-screen bg-[#080D19] p-5 text-slate-100 md:p-8"><div className="mx-auto max-w-7xl space-y-7">
+ <header><p className="text-xs tracking-[.25em] text-emerald-400">TILT / YOUR CAPITAL</p><h1 className="mt-2 text-3xl font-bold">Portfolio</h1><p className="mt-2 text-sm text-slate-400">Persisted positions and server-calculated performance.</p></header>
+ <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{[{name:"Portfolio value",v:s.portfolioValuePaise},{name:"Invested amount",v:s.investedAmountPaise},{name:"Available cash",v:s.cashBalancePaise},{name:"Total P&L",v:s.totalPnlPaise}].map(x=><article key={x.name} className="rounded-2xl border border-white/10 bg-[#101827] p-5"><p className="text-sm text-slate-400">{x.name}</p><p className="mt-3 text-2xl font-bold">{money(x.v)}</p></article>)}</section>
+ <section className="grid gap-6 xl:grid-cols-2"><article className="rounded-2xl border border-white/10 bg-[#101827] p-5"><h2 className="font-semibold">Company allocation</h2><div className="h-[300px]">{s.allocation.length?<ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={s.allocation.map(a=>({name:a.symbol,value:a.marketValuePaise/100}))} dataKey="value" nameKey="name" outerRadius={105} label>{s.allocation.map((a,i)=><Cell key={a.symbol} fill={colors[i%colors.length]}/>)}</Pie><Tooltip formatter={(v)=>money(Number(v)*100)}/></PieChart></ResponsiveContainer>:<p className="pt-12 text-sm text-slate-500">Allocation appears after your first purchase.</p>}</div></article>
+ <article className="rounded-2xl border border-white/10 bg-[#101827] p-5"><h2 className="font-semibold">Return breakdown</h2><div className="mt-5 space-y-4">{[{k:"Realised P&L",v:s.realisedPnlPaise},{k:"Unrealised P&L",v:s.unrealisedPnlPaise},{k:"Total P&L",v:s.totalPnlPaise}].map(x=><div key={x.k} className="flex justify-between border-b border-white/5 pb-3"><span className="text-slate-400">{x.k}</span><span className={x.v>=0?"text-emerald-400":"text-red-400"}>{money(x.v)}</span></div>)}<p className="text-sm text-slate-500">Return: {s.returnPercent.toFixed(2)}%</p></div></article></section>
+ <section className="overflow-hidden rounded-2xl border border-white/10 bg-[#101827]"><div className="flex flex-wrap justify-between gap-3 border-b border-white/10 p-5"><h2 className="font-semibold">Holdings</h2><Link href="/trading" className="text-sm text-emerald-400">Trade →</Link></div><div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="text-xs text-slate-500"><tr><th className="p-4">Company</th><th>Quantity</th><th>Avg. cost</th><th>Last price</th><th>Market value</th><th>Unrealised P&L</th></tr></thead><tbody>{s.holdings.map(h=><tr key={h.symbol} className="border-t border-white/5"><td className="p-4 font-semibold">{h.symbol}</td><td>{h.quantity}</td><td>{money(h.averagePurchasePricePaise)}</td><td>{money(h.currentPricePaise)}</td><td>{money(h.marketValuePaise)}</td><td className={h.unrealisedPnlPaise>=0?"text-emerald-400":"text-red-400"}>{money(h.unrealisedPnlPaise)}</td></tr>)}</tbody></table></div>{s.holdings.length===0&&<p className="p-8 text-center text-sm text-slate-500">Your portfolio is empty.</p>}</section>
+ </div></main>;
+}
