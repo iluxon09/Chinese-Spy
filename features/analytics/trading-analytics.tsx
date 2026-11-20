@@ -33,7 +33,9 @@ const COLORS = ["#34d399", "#60a5fa", "#a78bfa", "#fbbf24", "#fb7185", "#22d3ee"
 const money = (value: number) => "₹" + Math.round(value).toLocaleString("en-IN");
 const normalize = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, "");
 const parseNumber = (value: unknown) => {
-  const parsed = Number(String(value ?? "").replace(/[₹,\s]/g, ""));
+  const raw = String(value ?? "").replace(/[₹,\s]/g, "").trim();
+  if (!raw) return NaN;
+  const parsed = Number(raw);
   return Number.isFinite(parsed) ? parsed : NaN;
 };
 
@@ -52,13 +54,22 @@ function readSimulatorTrades(state: TradingState): AnalyticsTrade[] {
 
 function parseCsv(file: File): Promise<CsvTrade[]> {
   return new Promise((resolve, reject) => {
+    if (file.size > 5 * 1024 * 1024) {
+      reject(new Error("This CSV is larger than 5 MB. Export a smaller date range and try again."));
+      return;
+    }
+
     Papa.parse<Record<string, unknown>>(file, {
       header: true,
       skipEmptyLines: "greedy",
       transformHeader: (header) => normalize(header),
       complete: ({ data, errors, meta }) => {
-        if (errors.length && data.length === 0) {
-          reject(new Error("We couldn't read this CSV. Check its format and try again."));
+        if (errors.length) {
+          reject(new Error("The CSV contains formatting errors. Re-export it as a standard comma-separated CSV and try again."));
+          return;
+        }
+        if (data.length > 20000) {
+          reject(new Error("This file contains more than 20,000 rows. Import a smaller date range."));
           return;
         }
         const fields = meta.fields ?? [];
@@ -76,12 +87,12 @@ function parseCsv(file: File): Promise<CsvTrade[]> {
           const totalRaw = parseNumber(pick(row, ["total", "value", "tradevalue", "amount", "turnover"]));
           const total = Number.isFinite(totalRaw) ? Math.abs(totalRaw) : quantity * price;
           const rawDate = String(pick(row, ["date", "timestamp", "datetime", "tradedate", "orderdate"]) ?? "");
-          const parsedDate = rawDate ? new Date(rawDate) : new Date();
+          const parsedDate = rawDate ? new Date(rawDate) : null;
           const pnlRaw = parseNumber(pick(row, ["pnl", "profitloss", "realizedpnl", "realisedpnl", "profit"]));
           if (!symbol || !side || !Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(price) || price < 0 || !Number.isFinite(total)) continue;
           rows.push({
             id: "csv-" + index + "-" + symbol,
-            date: Number.isNaN(parsedDate.getTime()) ? new Date().toISOString() : parsedDate.toISOString(),
+            date: parsedDate && !Number.isNaN(parsedDate.getTime()) ? parsedDate.toISOString() : "",
             symbol, side, quantity, price, total,
             ...(Number.isFinite(pnlRaw) ? { pnl: pnlRaw } : {}),
           });
@@ -141,7 +152,9 @@ export default function TradingAnalytics({ mode }: { mode: "psychology" | "histo
     return acc;
   }, {})).map(([symbol, value]) => ({ symbol, value })).sort((a, b) => b.value - a.value).slice(0, 6);
   const timeline = Object.entries(trades.reduce<Record<string, number>>((acc, trade) => {
-    const day = new Date(trade.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
+    const parsed = new Date(trade.date);
+    if (!trade.date || Number.isNaN(parsed.getTime())) return acc;
+    const day = parsed.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "2-digit" });
     acc[day] = (acc[day] ?? 0) + 1;
     return acc;
   }, {})).map(([date, count]) => ({ date, count })).slice(-14);
@@ -284,7 +297,7 @@ export default function TradingAnalytics({ mode }: { mode: "psychology" | "histo
 
             <section className="rounded-2xl border border-white/10 bg-[#111a2b] p-5">
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-semibold">Recent recorded trades</h2><p className="mt-1 text-xs text-slate-500">Largest trade: {largest ? largest.symbol + " · " + money(largest.total) : "—"}</p></div><span className="rounded-full bg-cyan-300/10 px-3 py-1 text-[11px] text-cyan-200">{hasImported ? "Imported CSV" : "Simulator records"}</span></div>
-              <div className="overflow-x-auto"><table className="w-full min-w-[620px] text-left text-xs"><thead className="text-slate-500"><tr><th className="pb-3">Date</th><th className="pb-3">Symbol</th><th className="pb-3">Side</th><th className="pb-3">Quantity</th><th className="pb-3">Price</th><th className="pb-3">Value</th></tr></thead><tbody>{[...trades].slice().reverse().slice(0, 12).map((trade) => <tr key={trade.id} className="border-t border-white/5"><td className="py-3 text-slate-400">{new Date(trade.date).toLocaleDateString("en-IN")}</td><td className="font-semibold">{trade.symbol}</td><td className={trade.side === "BUY" ? "text-emerald-300" : "text-blue-300"}>{trade.side}</td><td>{trade.quantity}</td><td>{money(trade.price)}</td><td>{money(trade.total)}</td></tr>)}</tbody></table></div>
+              <div className="overflow-x-auto"><table className="w-full min-w-[620px] text-left text-xs"><thead className="text-slate-500"><tr><th className="pb-3">Date</th><th className="pb-3">Symbol</th><th className="pb-3">Side</th><th className="pb-3">Quantity</th><th className="pb-3">Price</th><th className="pb-3">Value</th></tr></thead><tbody>{[...trades].slice().reverse().slice(0, 12).map((trade) => <tr key={trade.id} className="border-t border-white/5"><td className="py-3 text-slate-400">{trade.date && !Number.isNaN(new Date(trade.date).getTime()) ? new Date(trade.date).toLocaleDateString("en-IN") : "Date unavailable"}</td><td className="font-semibold">{trade.symbol}</td><td className={trade.side === "BUY" ? "text-emerald-300" : "text-blue-300"}>{trade.side}</td><td>{trade.quantity}</td><td>{money(trade.price)}</td><td>{money(trade.total)}</td></tr>)}</tbody></table></div>
             </section>
           </>
         )}
