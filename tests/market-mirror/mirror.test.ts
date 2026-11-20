@@ -1,6 +1,20 @@
 import { describe, test, expect } from 'vitest';
-import { analyzeBehaviour, detectFomo, detectPanicSelling, detectOvertrading, detectConcentration } from '../../src/lib/market-mirror';
+import { detectFomo, detectPanicSelling, detectOvertrading, detectConcentration } from '../../src/lib/market-mirror';
 import type { Transaction, Holding, PricePoint } from '../../src/lib/market-mirror/types';
+
+function analyzeBehaviour(
+  transactions: Transaction[],
+  holdings: Holding[],
+  prices: PricePoint[],
+  totalMarketSteps: number,
+) {
+  return [
+    detectPanicSelling(transactions, prices, "volatility"),
+    detectFomo(transactions, prices, "decision_discipline"),
+    detectOvertrading(transactions, totalMarketSteps, "transaction_costs"),
+    detectConcentration(holdings, "diversification"),
+  ];
+}
 
 describe('Market Mirror - Complete Behavioural Engine', () => {
   test('detects all four indicators for a risky trading profile', () => {
