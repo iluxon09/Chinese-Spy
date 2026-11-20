@@ -67,6 +67,10 @@ type TiltContextValue = {
   createSession:()=>Promise<string>;
   placeOrder:(symbol:string,side:"BUY"|"SELL",quantity:number)=>Promise<unknown>;
   advanceMarket:()=>Promise<MarketAdvanceResult>;
+  marketAutoPlay:boolean;
+  setMarketAutoPlay:(enabled:boolean)=>void;
+  marketPlaybackIntervalMs:number;
+  setMarketPlaybackIntervalMs:(intervalMs:number)=>void;
 };
 
 const TiltContext = createContext<TiltContextValue|null>(null);
@@ -91,6 +95,9 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
   const [portfolio,setPortfolio] = useState<Portfolio|null>(null);
   const [market,setMarket] = useState<Market|null>(null);
   const [histories,setHistories] = useState<Record<string,PricePoint[]>>({});
+  const [marketAutoPlay,setMarketAutoPlay] = useState(false);
+  const [marketPlaybackIntervalMs,setMarketPlaybackIntervalMs] = useState(2500);
+  const [sessionMutationBusy,setSessionMutationBusy] = useState(false);
 
   const clearAccountData = useCallback(() => {
     setAuthenticated(false);
@@ -101,6 +108,8 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
     setPortfolio(null);
     setMarket(null);
     setHistories({});
+    setMarketAutoPlay(false);
+    setSessionMutationBusy(false);
   }, []);
 
   // A portfolio-only refresh is sufficient after orders and market advancement.
@@ -222,6 +231,7 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
     if (sessionMutationInFlightRef.current) throw new Error("Another simulation action is already being processed. Please wait.");
 
     sessionMutationInFlightRef.current = true;
+    setSessionMutationBusy(true);
     setError("");
     try {
       const result = await api<{result:unknown}>(`/api/sessions/${sessionId}/orders`, {
@@ -241,6 +251,7 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
       return result.result;
     } finally {
       sessionMutationInFlightRef.current = false;
+      setSessionMutationBusy(false);
     }
   },[sessionId,refreshPortfolioSnapshot]);
 
@@ -249,6 +260,7 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
     if (sessionMutationInFlightRef.current) throw new Error("Another simulation action is already being processed. Please wait.");
 
     sessionMutationInFlightRef.current = true;
+    setSessionMutationBusy(true);
     setError("");
     try {
       const response = await api<{result:MarketAdvanceResult}>(`/api/sessions/${sessionId}/market/advance`, {
@@ -286,13 +298,54 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
       return advanced;
     } finally {
       sessionMutationInFlightRef.current = false;
+      setSessionMutationBusy(false);
     }
   },[sessionId,refreshPortfolioSnapshot]);
+
+  // Global auto-play continues across Markets, Trading and Simulator routes.
+  // Each tick starts only after the previous write and snapshot refresh finish.
+  useEffect(() => {
+    if (
+      !marketAutoPlay ||
+      !authenticated ||
+      !sessionId ||
+      !market ||
+      loading ||
+      sessionMutationBusy ||
+      pathname === "/login" ||
+      pathname.startsWith("/crash-replay")
+    ) return;
+
+    const timer = window.setTimeout(() => {
+      void advanceMarket().catch((cause) => {
+        const message = cause instanceof Error ? cause.message : "Unknown market-advance error.";
+        setMarketAutoPlay(false);
+        setError(`Live market paused: ${message}`);
+      });
+    }, marketPlaybackIntervalMs);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    marketAutoPlay,
+    authenticated,
+    sessionId,
+    market,
+    loading,
+    sessionMutationBusy,
+    pathname,
+    marketPlaybackIntervalMs,
+    advanceMarket,
+  ]);
 
   const value = useMemo<TiltContextValue>(() => ({
     authenticated,loading,error,sessionId,session,portfolio,market,histories,
     refresh,createSession,placeOrder,advanceMarket,
-  }),[authenticated,loading,error,sessionId,session,portfolio,market,histories,refresh,createSession,placeOrder,advanceMarket]);
+    marketAutoPlay,setMarketAutoPlay,marketPlaybackIntervalMs,setMarketPlaybackIntervalMs,
+  }),[
+    authenticated,loading,error,sessionId,session,portfolio,market,histories,
+    refresh,createSession,placeOrder,advanceMarket,
+    marketAutoPlay,marketPlaybackIntervalMs,
+  ]);
 
   return <TiltContext.Provider value={value}>{children}</TiltContext.Provider>;
 }

@@ -12,6 +12,8 @@ export type PriceHistoryPoint = {
   timestamp: string;
 };
 
+export const MAX_CLIENT_HISTORY_POINTS = 500;
+
 export type AdvancedPricePoint = {
   symbol: string;
   marketStep: number;
@@ -19,7 +21,7 @@ export type AdvancedPricePoint = {
   timestamp: string;
 };
 
-/** Convert the database history response into the keyed client-side shape. */
+/** Convert the database history response into a bounded, keyed client-side shape. */
 export function groupMarketHistoryRows(
   rows: readonly MarketHistoryRow[],
 ): Record<string, PriceHistoryPoint[]> {
@@ -36,12 +38,15 @@ export function groupMarketHistoryRows(
 
   for (const points of Object.values(histories)) {
     points.sort((a, b) => a.market_step - b.market_step);
+    if (points.length > MAX_CLIENT_HISTORY_POINTS) {
+      points.splice(0, points.length - MAX_CLIENT_HISTORY_POINTS);
+    }
   }
 
   return histories;
 }
 
-/** Append one committed market step without duplicating an already-seen step. */
+/** Append a committed candle, replace any duplicate step, and cap client memory. */
 export function appendMarketPricePoints(
   histories: Record<string, PriceHistoryPoint[]>,
   pricePoints: readonly AdvancedPricePoint[],
@@ -59,9 +64,9 @@ export function appendMarketPricePoints(
       pricePaise: Number(point.pricePaise),
       timestamp: point.timestamp,
     });
-    next[point.symbol] = [...byStep.values()].sort(
-      (a, b) => a.market_step - b.market_step,
-    );
+    next[point.symbol] = [...byStep.values()]
+      .sort((a, b) => a.market_step - b.market_step)
+      .slice(-MAX_CLIENT_HISTORY_POINTS);
   }
 
   return next;

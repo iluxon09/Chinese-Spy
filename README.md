@@ -20,7 +20,7 @@ TILT is an educational, virtual stock-market simulator. It combines a determinis
 - Supabase email/password authentication, protected pages and account sign-out.
 - Responsive application shell with desktop navigation and an accessible mobile menu.
 - User-owned simulation sessions, each starting with ₹10,00,000 virtual capital.
-- Eight fictional companies, deterministic market progression, scripted news and price history.
+- Eight fictional companies with five-minute market candles, correlated market/sector/company price movement, occasional macro shocks, scripted news and auto-play controls.
 - BUY and SELL market orders with server-side validation, integer-paise accounting, configurable charges and idempotency.
 - Portfolio value, cash, holdings, average cost, realised/unrealised P&L and allocation.
 - Dashboard, market watch, trading terminal, portfolio and simulation controls.
@@ -74,13 +74,15 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=YOUR_SUPABASE_PUBLISHABLE_KEY
 
 Use the project's URL and publishable key from Supabase Project Settings. Never put a Supabase service-role key in client-side code, and never commit `.env.local`.
 
-### 3. Apply the database migration
+### 3. Apply database migrations
 
-In Supabase Dashboard → SQL Editor, run the migration only if the database has not already been migrated:
+In Supabase Dashboard → SQL Editor, apply migrations in timestamp order after taking a database backup:
 
-`supabase/migrations/20261120000000_initial_schema.sql`
+1. `supabase/migrations/20261120000000_initial_schema.sql` — initial TILT schema and RPCs.
+2. `supabase/migrations/20261121000100_crash_replay.sql` — risk assessment and deterministic crash replay.
+3. `supabase/migrations/20261121000200_intraday_market_volatility.sql` — five-minute price movement, company volatility settings and concurrent candle generation.
 
-Do not re-run migrations against a live database without reviewing the SQL and taking a backup.
+Run each migration only once and do not edit or re-run an already-applied migration against a live database. The intraday migration expects the regular TILT schema; apply the Crash Replay migration before it so the replay scenario is explicitly kept free of background volatility.
 
 ### 4. Start the app
 
@@ -125,10 +127,11 @@ The GitHub Actions workflow `.github/workflows/ci.yml` runs the same checks on p
 
 - Supabase PostgreSQL is the source of truth for sessions, cash, holdings, orders, market prices and transaction history.
 - Monetary values in the trading domain and API are integer paise (100 paise = ₹1).
-- The frontend has one shared `TiltDataProvider`. It loads the active session snapshot once per authenticated session; route changes do not restart the bootstrap. A sign-out clears in-memory account data.
+- The frontend has one shared `TiltDataProvider`. It loads the active session snapshot once per authenticated session; route changes do not restart the bootstrap. A sign-out clears in-memory account data. Simulator playback can advance five-minute candles automatically at a user-selected pace; the next tick is scheduled only after the previous market write and snapshot refresh finish.
 - Behavioral Analysis is a pure, read-only analysis layer. Its adapter converts backend paise values to rupees exactly once and maps pattern recommendations to stable Academy lesson IDs.
 - Crash Replay stores a self-reported risk questionnaire and links two isolated simulation sessions to the same deterministic five-step crash scenario. Both portfolios remain separate; the price path is shared and repeatable.
 - Crash Replay requires the additive migration `supabase/migrations/20261121000100_crash_replay.sql` to be applied to the connected Supabase project before the route can be used.
+- The intraday market model requires `supabase/migrations/20261121000200_intraday_market_volatility.sql`. It is deterministic by scenario/step so all sessions see the same stored prices; Crash Replay explicitly disables background noise to preserve its scripted path. See [docs/MARKET_MODEL.md](docs/MARKET_MODEL.md).
 - Behavioral Analysis uses configurable heuristics over the user's simulation history. It does not diagnose personality or infer intent; insufficient data is distinct from a negative finding.
 - Member 4's alternative company/scenario seed uses symbols that do not match the active eight-company database market; it is preserved as inactive reference data and is not seeded into Supabase.
 

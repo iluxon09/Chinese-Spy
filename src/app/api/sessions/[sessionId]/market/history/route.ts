@@ -5,6 +5,7 @@ import { getAuthenticatedSupabase } from "@/lib/supabase/server";
 
 type RouteContext = { params: Promise<{ sessionId: string }> };
 const HISTORY_PAGE_SIZE = 1000;
+const HISTORY_CANDLE_LIMIT = 500;
 
 export async function GET(request: Request, context: RouteContext) {
   try {
@@ -39,7 +40,8 @@ export async function GET(request: Request, context: RouteContext) {
         .from("price_points")
         .select("symbol,market_step,price_paise,recorded_at")
         .eq("scenario_id", session.scenario_id)
-        .lte("market_step", session.market_step);
+        .lte("market_step", session.market_step)
+        .gte("market_step", Math.max(0, session.market_step - HISTORY_CANDLE_LIMIT + 1));
 
       const query = (symbol
         ? baseQuery.eq("symbol", symbol)

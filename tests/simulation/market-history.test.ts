@@ -33,4 +33,24 @@ describe("simulation market history adapters", () => {
     expect(updated.NVMT).toHaveLength(1);
     expect(initial.ASTE).toHaveLength(1);
   });
+
+  it("bounds grouped and appended client histories to the latest 500 candles", () => {
+    const rows = Array.from({ length: 501 }, (_, index) => ({
+      symbol: "ASTE",
+      market_step: index,
+      price_paise: 10000 + index,
+      recorded_at: `t${index}`,
+    }));
+    const initial = groupMarketHistoryRows(rows);
+    expect(initial.ASTE).toHaveLength(500);
+    expect(initial.ASTE[0]?.market_step).toBe(1);
+    expect(initial.ASTE[initial.ASTE.length - 1]?.market_step).toBe(500);
+
+    const updated = appendMarketPricePoints(initial, [
+      { symbol: "ASTE", marketStep: 501, pricePaise: 10501, timestamp: "t501" },
+    ]);
+    expect(updated.ASTE).toHaveLength(500);
+    expect(updated.ASTE[0]?.market_step).toBe(2);
+    expect(updated.ASTE[updated.ASTE.length - 1]?.market_step).toBe(501);
+  });
 });
