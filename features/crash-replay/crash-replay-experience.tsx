@@ -397,7 +397,7 @@ export default function CrashReplayExperience() {
             <p className="text-xs font-semibold tracking-[.22em] text-emerald-300">TILT / DECISION LAB</p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight">Risk Assessment & Crash Replay</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-              Compare what you said you would do with what you actually do during the same scripted market shock.
+              Run two separate virtual portfolios through the same fixed five-step market shock. The first captures your baseline decisions; the second lets you test whether your approach changes.
             </p>
           </div>
           <Link href="/behaviour" className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm text-slate-300 hover:bg-white/5">

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { databaseErrorResponse, isUuid, jsonError, parseJsonObject } from "@/lib/api/http";
+import { crashReplayDatabaseErrorResponse } from "@/lib/crash-replay/errors";
+import { isUuid, jsonError, parseJsonObject } from "@/lib/api/http";
 import { getAuthenticatedSupabase } from "@/lib/supabase/server";
 
 type RouteContext = { params: Promise<{ runId: string }> };
@@ -23,7 +24,7 @@ export async function POST(request: Request, context: RouteContext) {
       p_attempt: attempt,
     });
 
-    if (error) return databaseErrorResponse(error);
+    if (error) return crashReplayDatabaseErrorResponse(error);
     return NextResponse.json({ run: data }, {
       headers: { "Cache-Control": "private, no-store" },
     });
