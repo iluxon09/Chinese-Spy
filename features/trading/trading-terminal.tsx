@@ -1,6 +1,6 @@
 "use client";
 
-import {useMemo,useState} from "react";
+import {useState} from "react";
 import {ArrowDownRight,ArrowUpRight,BriefcaseBusiness,Clock} from "lucide-react";
 import {useTilt} from "@/features/shared/tilt-provider";
 
