@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Area,AreaChart,CartesianGrid,ResponsiveContainer,Tooltip,XAxis,YAxis } from "recharts";
 import { ArrowUpRight,BriefcaseBusiness,ChartNoAxesCombined,Wallet } from "lucide-react";
@@ -8,7 +9,10 @@ import { useTilt } from "@/features/shared/tilt-provider";
 const money=(paise:number)=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:2}).format(paise/100);
 
 export default function DashboardOverview() {
-  const {authenticated,loading,error,portfolio,market,histories,sessionId}=useTilt();
+  const {authenticated,loading,error,portfolio,market,histories,sessionId,createSession}=useTilt();
+  const [creating,setCreating]=useState(false);
+  const [actionMessage,setActionMessage]=useState("");
+  async function startNewSimulation(){setCreating(true);setActionMessage("");try{const id=await createSession();setActionMessage("New simulation created: "+id.slice(0,8));}catch(e){setActionMessage(e instanceof Error?e.message:"Could not create simulation.");}finally{setCreating(false);}}
   if(loading) return <main className="p-8 text-slate-300">Loading your TILT portfolio…</main>;
   if(!authenticated) return <main className="p-8"><h1 className="text-3xl font-bold">Welcome to TILT</h1><p className="mt-3 text-slate-400">{error || "Sign in to begin your simulation."}</p><Link className="mt-6 inline-flex rounded-xl bg-emerald-400 px-5 py-3 font-semibold text-slate-950" href="/login">Sign in / Create account</Link></main>;
   if(!portfolio || !market) return <main className="p-8 text-red-300">{error || "Portfolio unavailable"}</main>;
@@ -22,7 +26,8 @@ export default function DashboardOverview() {
     {label:"Total P&L",value:money(s.totalPnlPaise),icon:ChartNoAxesCombined},
   ];
   return <main className="min-h-screen bg-[#080D19] text-slate-100">
-    <header className="border-b border-white/10 px-5 py-5 md:px-8"><p className="text-sm text-slate-400">Financial Universe / Overview</p><h1 className="mt-1 text-2xl font-semibold">Dashboard</h1><p className="mt-2 text-sm text-slate-500">Simulation {sessionId?.slice(0,8)} · Market step {market.marketStep}</p></header>
+    <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 px-5 py-5 md:px-8"><div><p className="text-sm text-slate-400">Financial Universe / Overview</p><h1 className="mt-1 text-2xl font-semibold">Dashboard</h1><p className="mt-2 text-sm text-slate-500">Simulation {sessionId?.slice(0,8)} · Market step {market.marketStep}</p></div><button onClick={startNewSimulation} disabled={creating} className="rounded-xl bg-emerald-400 px-4 py-3 text-sm font-semibold text-slate-950 disabled:opacity-50">{creating?"Creating…":"＋ New Simulation"}</button></header>
+      {actionMessage&&<p role="status" className="mx-5 mt-4 rounded-lg bg-white/5 p-3 text-sm text-slate-300 md:mx-8">{actionMessage}</p>}
     <div className="space-y-8 p-5 md:p-8">
       <div><p className="text-sm text-slate-400">Welcome back, Investor</p><h2 className="mt-1 text-3xl font-bold">Your financial universe.</h2><p className="mt-2 text-sm text-slate-500">Track your performance. Understand your decisions. Build your strategy.</p></div>
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{cards.map(c=>{const Icon=c.icon;return <article key={c.label} className="rounded-2xl border border-white/10 bg-[#101827] p-5"><div className="flex justify-between text-sm text-slate-400"><span>{c.label}</span><Icon size={19} className="text-emerald-400"/></div><p className="mt-5 text-2xl font-bold">{c.value}</p>{c.label==="Total P&L"&&<p className={`mt-2 flex items-center gap-1 text-sm ${s.totalPnlPaise>=0?"text-emerald-400":"text-red-400"}`}><ArrowUpRight size={15}/>{s.returnPercent.toFixed(2)}% return</p>}</article>})}</section>
