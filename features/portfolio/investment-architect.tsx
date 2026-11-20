@@ -3,9 +3,9 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  ArrowLeft, ArrowRight, BadgeIndianRupee, BrainCircuit, Check,
-  CircleHelp, Clock3, GraduationCap, ShieldCheck, Sparkles,
-  Wallet, AlertTriangle, RotateCcw,
+  ArrowLeft, ArrowRight, BrainCircuit, CircleHelp, Clock3,
+  GraduationCap, ShieldCheck, Wallet, AlertTriangle, RotateCcw,
+  ChartNoAxesCombined,
 } from "lucide-react";
 
 type Risk = "conservative" | "balanced" | "growth";
@@ -73,7 +73,8 @@ export default function InvestmentArchitect() {
   const [built, setBuilt] = useState(false);
 
   const principal = Math.max(0, Number(amount) || 0);
-  const effectiveRisk: Risk = horizon === "under-3" ? "conservative" : risk;
+  const effectiveRisk: Risk =
+    horizon === "under-3" || goal === "preserve" ? "conservative" : risk;
   const profile = profiles[effectiveRisk];
   const allocations = useMemo(
     () => profile.allocations.map((item) => ({ ...item, amount: principal * item.percent / 100 })),
@@ -146,6 +147,7 @@ export default function InvestmentArchitect() {
                 ] as const).map(([value, label]) => <button type="button" key={value} onClick={() => { setRisk(value); setBuilt(false); }} className={`rounded-xl border py-3 text-sm font-semibold transition ${risk === value ? "border-cyan-300/50 bg-cyan-300/10 text-cyan-200" : "border-white/10 bg-[#0b1322] text-slate-400 hover:border-white/20"}`}>{label}</button>)}
               </div>
               <p className="mt-2 text-xs leading-5 text-slate-500">Low = prefer smaller fluctuations. High = can tolerate larger temporary losses. Neither removes risk.</p>
+              {goal === "preserve" && <p className="mt-2 text-xs leading-5 text-amber-200">Your capital-preservation goal takes priority, so the illustration will use the conservative mix.</p>}
             </fieldset>
 
             <div className="mt-6 rounded-xl border border-white/10 bg-[#0b1322] p-4">
@@ -166,7 +168,7 @@ export default function InvestmentArchitect() {
             {!built ? (
               <div className="flex min-h-[560px] flex-col justify-between">
                 <div>
-                  <div className="mb-5 inline-flex rounded-xl bg-violet-400/10 p-3 text-violet-300"><Sparkles size={22} /></div>
+                  <div className="mb-5 inline-flex rounded-xl bg-violet-400/10 p-3 text-violet-300"><ChartNoAxesCombined size={22} /></div>
                   <p className="text-xs font-bold uppercase tracking-[0.18em] text-violet-300">Your plan preview</p>
                   <h2 className="mt-3 text-2xl font-bold">A plan that starts with you.</h2>
                   <p className="mt-3 max-w-md text-sm leading-6 text-slate-400">Answer the questions on the left to see an illustrative allocation, the role of each asset class, and the risks you should understand before making any real-world decision.</p>
@@ -185,7 +187,7 @@ export default function InvestmentArchitect() {
                   <button onClick={() => setBuilt(false)} className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-2 text-xs text-slate-400 hover:text-white"><RotateCcw size={13} /> Edit answers</button>
                 </div>
 
-                {horizon === "under-3" && <div className="mt-5 flex gap-2 rounded-xl border border-amber-300/20 bg-amber-300/[0.06] p-3 text-xs leading-5 text-amber-100"><AlertTriangle size={16} className="mt-0.5 shrink-0" />Because your horizon is under 3 years, this illustration uses the conservative mix even if you selected a higher risk preference. Equity can fall sharply over short periods.</div>}
+                {(horizon === "under-3" || goal === "preserve") && <div className="mt-5 flex gap-2 rounded-xl border border-amber-300/20 bg-amber-300/[0.06] p-3 text-xs leading-5 text-amber-100"><AlertTriangle size={16} className="mt-0.5 shrink-0" />{horizon === "under-3" ? "Because your horizon is under 3 years, this illustration uses the conservative mix even if you selected a higher risk preference. Equity can fall sharply over short periods." : "Because capital preservation is your stated priority, this illustration uses the conservative mix. It still includes market-linked assets and does not guarantee that your principal is protected."}</div>}
                 {emergencyReady !== "yes" && <div className="mt-3 rounded-xl border border-amber-300/20 bg-amber-300/[0.06] p-3 text-xs leading-5 text-amber-100">Consider building an accessible emergency reserve before investing money you may need unexpectedly. This plan does not set aside an emergency fund.</div>}
 
                 <p className="mt-5 text-sm leading-6 text-slate-400">{profile.description} {goal === "preserve" ? "You selected capital preservation, so consider whether any market-linked exposure is appropriate for your needs." : goal === "learn" ? "Use this as a learning exercise: compare the trade-offs before deciding whether any category belongs in your plan." : "A longer horizon can make market risk more manageable, but it never guarantees a positive outcome."}</p>
