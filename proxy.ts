@@ -12,15 +12,14 @@ export async function proxy(request: NextRequest) {
   const isLoginPage = pathname === "/login";
   const isApiRoute = pathname.startsWith("/api/");
 
-  // API route handlers perform their own authenticated-user/session checks.
-  if (isApiRoute) return response;
-
+  // API route handlers perform their own authorization checks. We still run
+  // Supabase cookie refresh below so expired browser sessions can be renewed.
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
   // Without configuration, only the login/setup page may be opened.
   if (!url || !key) {
-    if (isLoginPage) return response;
+    if (isLoginPage || isApiRoute) return response;
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
     loginUrl.search = "";
@@ -45,6 +44,9 @@ export async function proxy(request: NextRequest) {
   const { data, error } = await supabase.auth.getClaims();
   const authenticated = !error && Boolean(data?.claims?.sub);
 
+  // Keep API responses under their route-handler authorization logic.
+  if (isApiRoute) return response;
+
   if (!authenticated && !isLoginPage) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
@@ -60,8 +62,13 @@ export async function proxy(request: NextRequest) {
     const nextPath = destination.searchParams.get("next");
     if (nextPath?.startsWith("/") && !nextPath.startsWith("//")) {
       const requestedDestination = new URL(nextPath, request.url);
-      destination.pathname = requestedDestination.pathname;
-      destination.search = requestedDestination.search;
+      if (requestedDestination.origin === request.nextUrl.origin) {
+        destination.pathname = requestedDestination.pathname;
+        destination.search = requestedDestination.search;
+      } else {
+        destination.pathname = "/";
+        destination.search = "";
+      }
     } else {
       destination.pathname = "/";
       destination.search = "";
