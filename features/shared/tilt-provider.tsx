@@ -52,6 +52,7 @@ type TiltContextValue = {
   session:Session|null; portfolio:Portfolio|null; market:Market|null;
   histories:Record<string,PricePoint[]>;
   refresh:()=>Promise<void>;
+  createSession:()=>Promise<string>;
   placeOrder:(symbol:string,side:"BUY"|"SELL",quantity:number)=>Promise<unknown>;
   advanceMarket:()=>Promise<unknown>;
 };
@@ -142,6 +143,15 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
     void boot();
   },[pathname,boot]);
 
+  const createSession = useCallback(async () => {
+    const created = await api<{session:{id:string}}>("/api/sessions", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({scenarioId:"tilt-demo-v1"}),
+    });
+    await loadSession(created.session.id);
+    return created.session.id;
+  },[loadSession]);
+
   const placeOrder = useCallback(async (symbol:string,side:"BUY"|"SELL",quantity:number) => {
     if (!sessionId) throw new Error("No active simulation session.");
     const result = await api<{result:unknown}>(`/api/sessions/${sessionId}/orders`, {
@@ -163,8 +173,8 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
 
   const value = useMemo<TiltContextValue>(() => ({
     authenticated,loading,error,sessionId,session,portfolio,market,histories,
-    refresh,placeOrder,advanceMarket,
-  }),[authenticated,loading,error,sessionId,session,portfolio,market,histories,refresh,placeOrder,advanceMarket]);
+    refresh,createSession,placeOrder,advanceMarket,
+  }),[authenticated,loading,error,sessionId,session,portfolio,market,histories,refresh,createSession,placeOrder,advanceMarket]);
 
   return <TiltContext.Provider value={value}>{children}</TiltContext.Provider>;
 }
