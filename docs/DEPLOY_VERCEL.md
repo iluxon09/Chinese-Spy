@@ -66,11 +66,11 @@ Trigger a redeployment after changing environment variables.
 After Vercel gives you the public deployment URL, for example `https://your-tilt-project.vercel.app`:
 
 1. Open Supabase Dashboard → Authentication → URL Configuration.
-2. Set **Site URL** to the public Vercel URL.
-3. Add the public URL and local testing URL to the allowed Redirect URLs, for example:
-   - `https://your-tilt-project.vercel.app/**`
+2. Set **Site URL** to the exact public Vercel URL, for example `https://your-tilt-project.vercel.app`.
+3. Add the exact production site URL and local testing URL to the allowed Redirect URLs, for example:
+   - `https://your-tilt-project.vercel.app`
    - `http://localhost:3000/**`
-4. If you use Vercel preview deployments for authentication testing, add the appropriate Vercel preview wildcard URL for your account/team, following the Supabase Redirect URLs documentation.
+4. If you use Vercel preview deployments for authentication testing, add the preview wildcard matching your Vercel account/team, for example `https://*-<team-or-account-slug>.vercel.app/**`. Use the exact production URL for the primary Site URL.
 
 The app uses Supabase email/password authentication. If email confirmation is enabled, test the confirmation email and return URL after deployment.
 
