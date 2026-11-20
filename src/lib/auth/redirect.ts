@@ -12,3 +12,12 @@ export function getSafeInternalPath(requested: string | null | undefined): strin
     return "/";
   }
 }
+
+/**
+ * Public revenue-model pages must remain reachable without an account.
+ * Keep this allowlist narrow; the workspace and all other application routes
+ * continue to require Supabase authentication.
+ */
+export function isPublicPricingPath(pathname: string): boolean {
+  return pathname === "/pricing" || pathname.startsWith("/pricing/");
+}

@@ -1,8 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isPublicPricingPath } from "@/lib/auth/redirect";
 
 /**
- * Refresh Supabase cookies and enforce authentication for application pages.
+ * Refresh Supabase cookies and enforce authentication for workspace pages.
+ * Pricing is intentionally public so students, faculty and reviewers can inspect
+ * the revenue model and no-charge checkout without creating an account.
  * API handlers keep their own authorization checks; /api/health and /api/docs
  * remain public for health checks and integration documentation.
  */
@@ -11,13 +14,18 @@ export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isLoginPage = pathname === "/login";
   const isApiRoute = pathname.startsWith("/api/");
+  const isPublicPricingRoute = isPublicPricingPath(pathname);
+
+  // The revenue-model walkthrough is static/demo-only. It needs neither an
+  // authenticated session nor Supabase configuration and does not refresh data.
+  if (isPublicPricingRoute) return response;
 
   // API route handlers perform their own authorization checks. We still run
   // Supabase cookie refresh below so expired browser sessions can be renewed.
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-  // Without configuration, only the login/setup page may be opened.
+  // Without configuration, only the login/setup page and public APIs may be opened.
   if (!url || !key) {
     if (isLoginPage || isApiRoute) return response;
     const loginUrl = request.nextUrl.clone();

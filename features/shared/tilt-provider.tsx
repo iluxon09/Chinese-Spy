@@ -6,13 +6,12 @@ import {
 } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { isPublicPricingPath } from "@/lib/auth/redirect";
 import {
   appendMarketPricePoints,
   type AdvancedPricePoint,
   type PriceHistoryPoint,
-} from "@/lib/simulation/market-history";
-
-type Session = {
+} from "@/lib/simulation/market-history";type Session = {
   id: string;
   scenario_id: string;
   starting_capital_paise: number | string;
@@ -169,9 +168,15 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
     }
   },[clearAccountData,loadSession,router]);
 
-  // Boot once per authenticated session, not on every client-side route change.
+  // Public pricing routes do not create sessions or trigger the trading-data bootstrap.
+  // Boot once per authenticated workspace session, not on every route change.
   useEffect(() => {
-    if (pathname === "/login" || pathname.startsWith("/crash-replay") || bootedRef.current) return;
+    if (
+      pathname === "/login" ||
+      isPublicPricingPath(pathname) ||
+      pathname.startsWith("/crash-replay") ||
+      bootedRef.current
+    ) return;
     bootedRef.current = true;
     void Promise.resolve().then(boot);
   },[pathname,boot]);
@@ -239,8 +244,6 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
         body:JSON.stringify({clientOrderId:crypto.randomUUID(),symbol,side,quantity}),
       });
 
-      // The order is committed at this point. If the following read fails, do
-      // not report the order itself as failed or encourage an unsafe resubmit.
       try {
         await refreshPortfolioSnapshot(sessionId);
       } catch (refreshError) {
@@ -268,9 +271,6 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
       });
       const advanced = response.result;
 
-      // The atomic RPC already returns the committed market step, prices and
-      // events. Apply that payload directly instead of re-fetching the market
-      // and all eight historical series after every step.
       setMarket((current) => current ? {
         ...current,
         marketStep: advanced.marketStep,
@@ -286,8 +286,6 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
       setSession((current) => current ? { ...current, market_step: advanced.marketStep } : current);
       setHistories((current) => appendMarketPricePoints(current, advanced.pricePoints ?? []));
 
-      // Portfolio valuation is price-dependent, so refresh just this snapshot.
-      // If the read fails, keep the successfully advanced market state visible.
       try {
         await refreshPortfolioSnapshot(sessionId);
       } catch (refreshError) {
@@ -303,7 +301,7 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
   },[sessionId,refreshPortfolioSnapshot]);
 
   // Global auto-play continues across Markets, Trading and Simulator routes.
-  // Each tick starts only after the previous write and snapshot refresh finish.
+  // The pricing and crash-replay routes are deliberate pause points.
   useEffect(() => {
     if (
       !marketAutoPlay ||
@@ -313,6 +311,7 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
       loading ||
       sessionMutationBusy ||
       pathname === "/login" ||
+      isPublicPricingPath(pathname) ||
       pathname.startsWith("/crash-replay")
     ) return;
 

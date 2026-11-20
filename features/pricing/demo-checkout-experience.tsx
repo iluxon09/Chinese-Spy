@@ -50,8 +50,8 @@ export default function DemoCheckoutExperience({ plan }: { plan: DemoCheckoutPla
             {finished ? "Demo preview complete" : "Preview a future checkout"}
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">
-            This is a walkthrough of a possible future payment step. It does not create
-            a quote, commercial order or account change.
+            This is a UI walkthrough only. It does not submit a pilot enquiry, contact the TILT team,
+            create a quote or commercial order, or change an account.
           </p>
         </header>
 
@@ -78,7 +78,7 @@ export default function DemoCheckoutExperience({ plan }: { plan: DemoCheckoutPla
               {cohortSize !== null ? (
                 <> scoped to <strong>{cohortSize.toLocaleString("en-IN")} learners</strong></>
               ) : null}.
-              No quote or commercial order was created, no money was charged, and no
+              No enquiry, quote or commercial order was created, no money was charged, and no
               paid benefit or account access changed.
             </p>
             <div className="mt-3 text-sm font-semibold text-emerald-300">Amount charged: ₹0</div>
