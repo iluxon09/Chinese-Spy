@@ -10,6 +10,8 @@ import {
   CircleDollarSign,
   BookOpen,
   Settings,
+  BrainCircuit,
+  FileSpreadsheet,
 } from "lucide-react";
 
 const navigation = [
@@ -18,6 +20,8 @@ const navigation = [
   { label: "Trading", href: "/trading", icon: Activity },
   { label: "Portfolio", href: "/portfolio", icon: BriefcaseBusiness },
   { label: "Behaviour", href: "/behaviour", icon: CircleDollarSign },
+  { label: "Trading Psychology", href: "/portfolio/insights", icon: BrainCircuit },
+  { label: "Trade Analyzer", href: "/portfolio/history", icon: FileSpreadsheet },
   { label: "Simulator", href: "/simulator", icon: Activity },
   { label: "Academy", href: "/academy", icon: BookOpen },
 ];
@@ -35,20 +39,16 @@ export default function AppSidebar() {
           FINANCIAL UNIVERSE
         </p>
       </Link>
-
       <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-slate-500">
         Workspace
       </p>
-
       <nav className="space-y-2">
         {navigation.map((item) => {
           const Icon = item.icon;
           const active =
             item.href === "/"
               ? pathname === "/"
-              : pathname === item.href ||
-                pathname.startsWith(item.href + "/");
-
+              : pathname === item.href || pathname.startsWith(item.href + "/");
           return (
             <Link
               key={item.href}
@@ -65,13 +65,10 @@ export default function AppSidebar() {
           );
         })}
       </nav>
-
       <div className="mt-auto rounded-2xl border border-white/10 bg-white/[0.03] p-4">
         <Settings size={18} className="mb-3 text-slate-400" />
         <p className="text-sm font-medium">Simulation Mode</p>
-        <p className="mt-1 text-xs text-emerald-400">
-          Virtual environment active
-        </p>
+        <p className="mt-1 text-xs text-emerald-400">Virtual environment active</p>
       </div>
     </aside>
   );
