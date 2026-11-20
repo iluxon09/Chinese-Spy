@@ -82,8 +82,7 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
   const pathname = usePathname();
   const router = useRouter();
   const bootedRef = useRef(false);
-  const orderInFlightRef = useRef(false);
-  const marketAdvanceInFlightRef = useRef(false);
+  const sessionMutationInFlightRef = useRef(false);
   const [authenticated,setAuthenticated] = useState(false);
   const [loading,setLoading] = useState(true);
   const [error,setError] = useState("");
@@ -117,7 +116,7 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
     const [p,m,h] = await Promise.all([
       api<Portfolio>(`/api/sessions/${id}/portfolio`),
       api<Market>(`/api/sessions/${id}/market`),
-      api<{histories:Record<string,PricePoint[]>}>(`/api/sessions/${id}/market/history`),
+      api<{histories:Record<string,PricePoint[]>}>(`/api/sessions/${id}/market/history`).catch(() => ({histories:{}})),
     ]);
 
     // Initial/full refresh now uses three concurrent reads, not one history
@@ -220,9 +219,9 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
 
   const placeOrder = useCallback(async (symbol:string,side:"BUY"|"SELL",quantity:number) => {
     if (!sessionId) throw new Error("No active simulation session.");
-    if (orderInFlightRef.current) throw new Error("An order is already being processed. Please wait.");
+    if (sessionMutationInFlightRef.current) throw new Error("Another simulation action is already being processed. Please wait.");
 
-    orderInFlightRef.current = true;
+    sessionMutationInFlightRef.current = true;
     setError("");
     try {
       const result = await api<{result:unknown}>(`/api/sessions/${sessionId}/orders`, {
@@ -241,15 +240,15 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
 
       return result.result;
     } finally {
-      orderInFlightRef.current = false;
+      sessionMutationInFlightRef.current = false;
     }
   },[sessionId,refreshPortfolioSnapshot]);
 
   const advanceMarket = useCallback(async ():Promise<MarketAdvanceResult> => {
     if (!sessionId) throw new Error("No active simulation session.");
-    if (marketAdvanceInFlightRef.current) throw new Error("Market advancement is already in progress.");
+    if (sessionMutationInFlightRef.current) throw new Error("Another simulation action is already being processed. Please wait.");
 
-    marketAdvanceInFlightRef.current = true;
+    sessionMutationInFlightRef.current = true;
     setError("");
     try {
       const response = await api<{result:MarketAdvanceResult}>(`/api/sessions/${sessionId}/market/advance`, {
@@ -286,7 +285,7 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
 
       return advanced;
     } finally {
-      marketAdvanceInFlightRef.current = false;
+      sessionMutationInFlightRef.current = false;
     }
   },[sessionId,refreshPortfolioSnapshot]);
 
