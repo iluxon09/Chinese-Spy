@@ -162,7 +162,7 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
 
   // Boot once per authenticated session, not on every client-side route change.
   useEffect(() => {
-    if (pathname === "/login" || bootedRef.current) return;
+    if (pathname === "/login" || pathname.startsWith("/crash-replay") || bootedRef.current) return;
     bootedRef.current = true;
     void Promise.resolve().then(boot);
   },[pathname,boot]);

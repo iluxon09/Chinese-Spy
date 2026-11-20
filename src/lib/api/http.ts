@@ -39,6 +39,13 @@ export function databaseErrorResponse(error: { message?: string | null; code?: s
       PREVIOUS_PRICE_STEP_INCOMPLETE: "The previous market step is incomplete. Contact the project administrator.",
       PRICE_STEP_PARTIAL_DATA: "The target market step contains partial data. Contact the project administrator.",
       INVALID_MARKET_PRICE: "A market event generated an invalid price.",
+      INVALID_CRASH_REPLAY_QUESTIONNAIRE: "Complete the risk assessment before starting the replay.",
+      INVALID_CRASH_REPLAY_PROFILE: "The calculated risk profile is invalid. Restart the assessment.",
+      INVALID_CRASH_REPLAY_LIMIT: "The selected risk limits are invalid. Restart the assessment.",
+      CRASH_REPLAY_NOT_FOUND: "Crash replay was not found.",
+      CRASH_REPLAY_ATTEMPT_INVALID: "Invalid replay attempt.",
+      CRASH_REPLAY_BASELINE_INCOMPLETE: "Complete the baseline attempt before starting reassessment.",
+      CRASH_REPLAY_STEP_INCOMPLETE: "Advance through all five market steps before completing this attempt.",
     };
     const code = message.replace(/^.*?:\s*/, "").trim();
     return jsonError(known[code] ?? "The requested operation was rejected.", 400);

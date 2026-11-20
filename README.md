@@ -27,6 +27,7 @@ TILT is an educational, virtual stock-market simulator. It combines a determinis
 - Five Finance Academy lessons with stable IDs, practical examples, key takeaways and quizzes.
 - SIP and goal-based SIP calculators with validation, assumptions and educational disclaimers.
 - Behavioral Analysis of the signed-in user's simulation activity: entry/exit timing, trading frequency, transaction-cost drag and portfolio concentration, with evidence-backed pattern summaries.
+- Risk assessment and a deterministic same-crash replay with two independent portfolios and a stated-vs-revealed comparison.
 
 ## Technology
 
@@ -114,6 +115,7 @@ The GitHub Actions workflow `.github/workflows/ci.yml` runs the same checks on p
 | `/trading` | BUY / SELL terminal and transactions |
 | `/portfolio` | Portfolio value, allocation and P&L |
 | `/simulator` | Market-step and event controls |
+| `/crash-replay` | Risk assessment, baseline crash simulation and identical reassessment replay |
 | `/behaviour` | Personal Behavioral Analysis |
 | `/academy` | Five Finance Academy lessons |
 | `/academy/[lessonId]` | Lesson content and knowledge check |
@@ -125,6 +127,8 @@ The GitHub Actions workflow `.github/workflows/ci.yml` runs the same checks on p
 - Monetary values in the trading domain and API are integer paise (100 paise = ₹1).
 - The frontend has one shared `TiltDataProvider`. It loads the active session snapshot once per authenticated session; route changes do not restart the bootstrap. A sign-out clears in-memory account data.
 - Behavioral Analysis is a pure, read-only analysis layer. Its adapter converts backend paise values to rupees exactly once and maps pattern recommendations to stable Academy lesson IDs.
+- Crash Replay stores a self-reported risk questionnaire and links two isolated simulation sessions to the same deterministic five-step crash scenario. Both portfolios remain separate; the price path is shared and repeatable.
+- Crash Replay requires the additive migration `supabase/migrations/20261121000100_crash_replay.sql` to be applied to the connected Supabase project before the route can be used.
 - Behavioral Analysis uses configurable heuristics over the user's simulation history. It does not diagnose personality or infer intent; insufficient data is distinct from a negative finding.
 - Member 4's alternative company/scenario seed uses symbols that do not match the active eight-company database market; it is preserved as inactive reference data and is not seeded into Supabase.
 

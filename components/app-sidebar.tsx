@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, ChartNoAxesCombined, Activity, BriefcaseBusiness,
-  BookOpen, Calculator, Brain, type LucideIcon,
+  BookOpen, Calculator, Brain, ShieldCheck, type LucideIcon,
 } from "lucide-react";
 import AccountControl from "@/components/account-control";
 
@@ -13,7 +13,7 @@ export const appNavigation: Array<{ label: string; href: string; icon: LucideIco
   { label: "Markets", href: "/markets", icon: ChartNoAxesCombined },
   { label: "Trading", href: "/trading", icon: Activity },
   { label: "Portfolio", href: "/portfolio", icon: BriefcaseBusiness },
-  { label: "Simulator", href: "/simulator", icon: Activity },
+  { label: "Simulator", href: "/simulator", icon: Activity },\n  { label: "Crash Replay", href: "/crash-replay", icon: ShieldCheck },
   { label: "Behavioral Analysis", href: "/behaviour", icon: Brain },
   { label: "Finance Academy", href: "/academy", icon: BookOpen },
   { label: "Investment Architect", href: "/portfolio/architect", icon: Calculator },
