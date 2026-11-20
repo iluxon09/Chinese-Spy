@@ -44,20 +44,20 @@ export default function InvestmentArchitect() {
   return (
     <main className="min-h-screen bg-[#080d18] px-5 py-8 text-white md:px-10">
       <div className="mx-auto max-w-6xl">
-        <Link href="/portfolio" className="mb-7 inline-flex items-center gap-2 text-sm text-slate-400">
-          <ArrowLeft size={16} /> Back to Portfolio
+        <Link href="/portfolio/architect" className="mb-7 inline-flex items-center gap-2 text-sm text-slate-400">
+          <ArrowLeft size={16} /> Back to Allocation Planner
         </Link>
 
         <header className="mb-8">
           <div className="mb-3 flex items-center gap-2 text-blue-400">
             <Target size={20} />
             <span className="text-sm font-semibold uppercase tracking-wider">
-              Investment Architect
+              SIP & Goal Calculator
             </span>
           </div>
-          <h1 className="text-3xl font-bold md:text-4xl">Plan your financial future.</h1>
+          <h1 className="text-3xl font-bold md:text-4xl">Estimate a monthly SIP for your goal.</h1>
           <p className="mt-3 text-slate-400">
-            Estimate a regular monthly investment and the contribution required for a target.
+            Explore how regular contributions, time and an assumed return interact. All projections are illustrative, not guaranteed.
           </p>
         </header>
 

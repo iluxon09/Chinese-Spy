@@ -1,2 +1,2 @@
-import InvestmentArchitect from "@/features/portfolio/investment-architect";
-export default function ArchitectPage() { return <InvestmentArchitect />; }
+import InvestmentAllocationPlanner from "@/features/portfolio/investment-allocation-planner";
+export default function ArchitectPage() { return <InvestmentAllocationPlanner />; }
