@@ -2,40 +2,297 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Area,AreaChart,CartesianGrid,ResponsiveContainer,Tooltip,XAxis,YAxis } from "recharts";
-import { ArrowUpRight,BriefcaseBusiness,ChartNoAxesCombined,Wallet } from "lucide-react";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
+  ArrowDownRight,
+  ArrowUpRight,
+  Activity,
+  BriefcaseBusiness,
+  ChartNoAxesCombined,
+  Plus,
+  Wallet,
+} from "lucide-react";
 import { useTilt } from "@/features/shared/tilt-provider";
 
-const money=(paise:number)=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:2}).format(paise/100);
+const money = (paise: number) =>
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 2,
+  }).format(paise / 100);
+
+const compactMoney = (rupees: number) =>
+  new Intl.NumberFormat("en-IN", {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(rupees);
 
 export default function DashboardOverview() {
-  const {authenticated,loading,error,portfolio,market,histories,sessionId,createSession}=useTilt();
-  const [creating,setCreating]=useState(false);
-  const [actionMessage,setActionMessage]=useState("");
-  async function startNewSimulation(){setCreating(true);setActionMessage("");try{const id=await createSession();setActionMessage("New simulation created: "+id.slice(0,8));}catch(e){setActionMessage(e instanceof Error?e.message:"Could not create simulation.");}finally{setCreating(false);}}
-  if(loading) return <main className="p-8 text-slate-300">Loading your TILT portfolio…</main>;
-  if(!authenticated) return <main className="p-8"><h1 className="text-3xl font-bold">Welcome to TILT</h1><p className="mt-3 text-slate-400">{error || "Sign in to begin your simulation."}</p><Link className="mt-6 inline-flex rounded-xl bg-emerald-400 px-5 py-3 font-semibold text-slate-950" href="/login">Sign in / Create account</Link></main>;
-  if(!portfolio || !market) return <main className="p-8 text-red-300">{error || "Portfolio unavailable"}</main>;
-  const s=portfolio.snapshot;
-  const lead=market.companies[0];
-  const chart=(lead ? histories[lead.symbol] ?? [] : []).map(p=>({step:`Step ${p.market_step}`,price:p.pricePaise/100}));
-  const cards=[
-    {label:"Portfolio value",value:money(s.portfolioValuePaise),icon:Wallet},
-    {label:"Invested amount",value:money(s.investedAmountPaise),icon:BriefcaseBusiness},
-    {label:"Available cash",value:money(s.cashBalancePaise),icon:Wallet},
-    {label:"Total P&L",value:money(s.totalPnlPaise),icon:ChartNoAxesCombined},
+  const {
+    authenticated,
+    loading,
+    error,
+    portfolio,
+    market,
+    histories,
+    sessionId,
+    createSession,
+  } = useTilt();
+  const [creating, setCreating] = useState(false);
+  const [actionMessage, setActionMessage] = useState("");
+
+  async function startNewSimulation() {
+    setCreating(true);
+    setActionMessage("");
+    try {
+      const id = await createSession();
+      setActionMessage("New simulation created: " + id.slice(0, 8));
+    } catch (e) {
+      setActionMessage(e instanceof Error ? e.message : "Could not create simulation.");
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <main className="dashboard-state">
+        <span className="dashboard-state-kicker">TILT / FINANCIAL UNIVERSE</span>
+        <p>Loading your portfolio…</p>
+      </main>
+    );
+  }
+
+  if (!authenticated) {
+    return (
+      <main className="dashboard-state">
+        <span className="dashboard-state-kicker">TILT / FINANCIAL UNIVERSE</span>
+        <h1>Make your next move count.</h1>
+        <p>{error || "Sign in to begin your simulation."}</p>
+        <Link className="dashboard-primary-link" href="/login">Sign in / Create account</Link>
+      </main>
+    );
+  }
+
+  if (!portfolio || !market) {
+    return (
+      <main className="dashboard-state">
+        <span className="dashboard-state-kicker">TILT / FINANCIAL UNIVERSE</span>
+        <p role="alert">{error || "Portfolio unavailable"}</p>
+      </main>
+    );
+  }
+
+  const snapshot = portfolio.snapshot;
+  const lead = market.companies[0];
+  const chart = (lead ? histories[lead.symbol] ?? [] : []).map((point) => ({
+    step: `Step ${point.market_step}`,
+    price: point.pricePaise / 100,
+  }));
+  const cards = [
+    { label: "Portfolio value", value: money(snapshot.portfolioValuePaise), icon: Wallet, detail: "Cash + holdings" },
+    { label: "Invested capital", value: money(snapshot.investedAmountPaise), icon: BriefcaseBusiness, detail: "Total cost of open positions" },
+    { label: "Available cash", value: money(snapshot.cashBalancePaise), icon: Activity, detail: "Ready to deploy" },
+    { label: "Total P&L", value: money(snapshot.totalPnlPaise), icon: ChartNoAxesCombined, detail: `${snapshot.returnPercent >= 0 ? "+" : ""}${snapshot.returnPercent.toFixed(2)}% overall return`, pnl: true },
   ];
-  return <main className="min-h-screen bg-[#080D19] text-slate-100">
-    <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 px-5 py-5 md:px-8"><div><p className="text-sm text-slate-400">Financial Universe / Overview</p><h1 className="mt-1 text-2xl font-semibold">Dashboard</h1><p className="mt-2 text-sm text-slate-500">Simulation {sessionId?.slice(0,8)} · Market step {market.marketStep}</p></div><button onClick={startNewSimulation} disabled={creating} className="rounded-xl bg-emerald-400 px-4 py-3 text-sm font-semibold text-slate-950 disabled:opacity-50">{creating?"Creating…":"＋ New Simulation"}</button></header>
-      {actionMessage&&<p role="status" className="mx-5 mt-4 rounded-lg bg-white/5 p-3 text-sm text-slate-300 md:mx-8">{actionMessage}</p>}
-    <div className="space-y-8 p-5 md:p-8">
-      <div><p className="text-sm text-slate-400">Welcome back, Investor</p><h2 className="mt-1 text-3xl font-bold">Your financial universe.</h2><p className="mt-2 text-sm text-slate-500">Track your performance. Understand your decisions. Build your strategy.</p></div>
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{cards.map(c=>{const Icon=c.icon;return <article key={c.label} className="rounded-2xl border border-white/10 bg-[#101827] p-5"><div className="flex justify-between text-sm text-slate-400"><span>{c.label}</span><Icon size={19} className="text-emerald-400"/></div><p className="mt-5 text-2xl font-bold">{c.value}</p>{c.label==="Total P&L"&&<p className={`mt-2 flex items-center gap-1 text-sm ${s.totalPnlPaise>=0?"text-emerald-400":"text-red-400"}`}><ArrowUpRight size={15}/>{s.returnPercent.toFixed(2)}% return</p>}</article>})}</section>
-      <section className="grid gap-6 xl:grid-cols-2">
-        <article className="rounded-2xl border border-white/10 bg-[#101827] p-5"><h3 className="font-semibold">Market price history{lead? ` · ${lead.symbol}`:""}</h3><p className="mt-1 text-xs text-slate-500">Persisted simulated prices, not fabricated portfolio history</p><div className="mt-5 h-[270px]">{chart.length?<ResponsiveContainer width="100%" height="100%"><AreaChart data={chart}><CartesianGrid stroke="#ffffff10" vertical={false}/><XAxis dataKey="step" stroke="#64748b"/><YAxis stroke="#64748b"/><Tooltip/><Area dataKey="price" stroke="#34D399" fill="#34D399" fillOpacity={.12}/></AreaChart></ResponsiveContainer>:<p className="pt-12 text-sm text-slate-500">No price history yet.</p>}</div></article>
-        <article className="rounded-2xl border border-white/10 bg-[#101827] p-5"><h3 className="font-semibold">Market watchlist</h3><div className="mt-5 space-y-4">{market.companies.slice(0,5).map(c=><div key={c.symbol} className="flex justify-between gap-3"><div><p className="font-semibold">{c.symbol}</p><p className="text-xs text-slate-500">{c.name} · {c.sector}</p></div><p className="font-medium">{money(c.currentPrice?.pricePaise ?? c.initialPricePaise)}</p></div>)}</div><Link href="/markets" className="mt-6 inline-flex text-sm text-emerald-400">Explore all companies →</Link></article>
-      </section>
-      <section className="rounded-2xl border border-white/10 bg-[#101827] p-5"><div className="flex items-center justify-between"><h3 className="font-semibold">Recent transactions</h3><Link href="/portfolio" className="text-sm text-emerald-400">View portfolio →</Link></div>{portfolio.transactions.length===0?<p className="mt-5 text-sm text-slate-500">No trades yet. Open the market and place your first virtual order.</p>:<div className="mt-4 overflow-x-auto"><table className="w-full text-left text-sm"><thead className="text-slate-500"><tr><th className="py-3">Symbol</th><th>Side</th><th>Qty</th><th>Execution</th><th>Charges</th><th>Step</th></tr></thead><tbody>{portfolio.transactions.slice(-5).reverse().map(t=><tr key={t.id} className="border-t border-white/5"><td className="py-3 font-semibold">{t.symbol}</td><td className={t.side==="BUY"?"text-emerald-400":"text-red-400"}>{t.side}</td><td>{t.quantity}</td><td>{money(t.executionPricePaise)}</td><td>{money(t.chargesPaise)}</td><td>{t.marketStep}</td></tr>)}</tbody></table></div>}</section>
-    </div>
-  </main>;
+
+  return (
+    <main className="dashboard-page">
+      <header className="dashboard-topbar">
+        <div>
+          <div className="dashboard-breadcrumb">Workspace <span>/</span> Overview</div>
+          <h1>Dashboard</h1>
+          <p className="dashboard-session-meta">
+            <span className="dashboard-live-dot" />
+            Simulation <strong>{sessionId?.slice(0, 8) ?? "—"}</strong>
+            <span className="dashboard-meta-divider" />
+            Market step <strong>{market.marketStep}</strong>
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={startNewSimulation}
+          disabled={creating}
+          className="dashboard-primary-button"
+        >
+          <Plus size={16} strokeWidth={2.4} />
+          {creating ? "Creating…" : "New simulation"}
+        </button>
+      </header>
+
+      {actionMessage && <p role="status" className="dashboard-notice">{actionMessage}</p>}
+
+      <div className="dashboard-content">
+        <section className="dashboard-intro">
+          <div>
+            <p className="dashboard-eyebrow">YOUR MONEY, IN MOTION</p>
+            <h2>Good to see you back.</h2>
+            <p>A clear view of your virtual portfolio, market activity and investment decisions.</p>
+          </div>
+          <Link href="/markets" className="dashboard-text-link">
+            Explore markets <ArrowUpRight size={15} />
+          </Link>
+        </section>
+
+        <section className="dashboard-metrics" aria-label="Portfolio summary">
+          {cards.map((card) => {
+            const Icon = card.icon;
+            return (
+              <article className="dashboard-metric" key={card.label}>
+                <div className="dashboard-metric-top">
+                  <span>{card.label}</span>
+                  <Icon size={17} aria-hidden="true" />
+                </div>
+                <p className="dashboard-metric-value">{card.value}</p>
+                <p className={card.pnl ? `dashboard-metric-detail ${snapshot.totalPnlPaise >= 0 ? "is-positive" : "is-negative"}` : "dashboard-metric-detail"}>
+                  {card.pnl && (snapshot.totalPnlPaise >= 0 ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />)}
+                  {card.detail}
+                </p>
+              </article>
+            );
+          })}
+        </section>
+
+        <section className="dashboard-main-grid">
+          <article className="dashboard-panel dashboard-chart-panel">
+            <div className="dashboard-panel-heading">
+              <div>
+                <p className="dashboard-section-label">MARKET ACTIVITY</p>
+                <h3>Price history <span>{lead ? lead.symbol : ""}</span></h3>
+                <p>Recorded simulated market prices by market step.</p>
+              </div>
+              <span className="dashboard-panel-tag">HISTORY</span>
+            </div>
+            <div className="dashboard-chart">
+              {chart.length ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chart} margin={{ top: 12, right: 8, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="tiltPriceFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#42c9a0" stopOpacity={0.22} />
+                        <stop offset="95%" stopColor="#42c9a0" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid stroke="#243143" strokeDasharray="3 5" vertical={false} />
+                    <XAxis dataKey="step" axisLine={false} tickLine={false} tick={{ fill: "#78879a", fontSize: 11 }} minTickGap={28} />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      width={58}
+                      tick={{ fill: "#78879a", fontSize: 11 }}
+                      tickFormatter={(value: number) => `₹${compactMoney(value)}`}
+                      domain={["auto", "auto"]}
+                    />
+                    <Tooltip
+                      contentStyle={{ background: "#111d2b", border: "1px solid #2a3a4d", borderRadius: 8, color: "#edf4f7", fontSize: 12 }}
+                      labelStyle={{ color: "#93a3b5", marginBottom: 4 }}
+                      formatter={(value) => [money(Number(value) * 100), "Price"]}
+                    />
+                    <Area type="monotone" dataKey="price" stroke="#42c9a0" strokeWidth={2} fill="url(#tiltPriceFill)" activeDot={{ r: 4, fill: "#42c9a0", stroke: "#0d1724", strokeWidth: 2 }} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="dashboard-empty-chart">
+                  <Activity size={22} />
+                  <span>Price history will appear after market activity.</span>
+                </div>
+              )}
+            </div>
+            <p className="dashboard-chart-footnote">Source: persisted simulation price history · Not live exchange data</p>
+          </article>
+
+          <article className="dashboard-panel dashboard-watch-panel">
+            <div className="dashboard-panel-heading">
+              <div>
+                <p className="dashboard-section-label">KEEP AN EYE ON</p>
+                <h3>Market watch</h3>
+                <p>Selected companies in your universe.</p>
+              </div>
+              <Link href="/markets" className="dashboard-icon-link" aria-label="View all markets">
+                <ArrowUpRight size={17} />
+              </Link>
+            </div>
+            <div className="dashboard-watch-list">
+              {market.companies.slice(0, 5).map((company) => (
+                <div className="dashboard-watch-row" key={company.symbol}>
+                  <div className="dashboard-company-symbol">{company.symbol.slice(0, 2)}</div>
+                  <div className="dashboard-company-name">
+                    <strong>{company.symbol}</strong>
+                    <span>{company.name}</span>
+                  </div>
+                  <div className="dashboard-company-price">
+                    <strong>{money(company.currentPrice?.pricePaise ?? company.initialPricePaise)}</strong>
+                    <span>{company.sector}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <Link href="/markets" className="dashboard-panel-footer-link">
+              View all companies <ArrowUpRight size={14} />
+            </Link>
+          </article>
+        </section>
+
+        <section className="dashboard-panel dashboard-transactions">
+          <div className="dashboard-panel-heading dashboard-transactions-heading">
+            <div>
+              <p className="dashboard-section-label">ACCOUNT ACTIVITY</p>
+              <h3>Recent transactions</h3>
+              <p>Your latest executed virtual orders.</p>
+            </div>
+            <Link href="/portfolio" className="dashboard-text-link">
+              Full portfolio <ArrowUpRight size={15} />
+            </Link>
+          </div>
+          {portfolio.transactions.length === 0 ? (
+            <div className="dashboard-empty-transactions">
+              <p>No transactions yet.</p>
+              <span>When you place your first virtual order, it will appear here.</span>
+              <Link href="/trading">Go to trading <ArrowUpRight size={14} /></Link>
+            </div>
+          ) : (
+            <div className="dashboard-table-wrap">
+              <table className="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Company</th>
+                    <th>Side</th>
+                    <th>Quantity</th>
+                    <th>Execution price</th>
+                    <th>Charges</th>
+                    <th>Market step</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {portfolio.transactions.slice(-5).reverse().map((transaction) => (
+                    <tr key={transaction.id}>
+                      <td className="dashboard-table-symbol">{transaction.symbol}</td>
+                      <td><span className={transaction.side === "BUY" ? "dashboard-side is-buy" : "dashboard-side is-sell"}>{transaction.side}</span></td>
+                      <td>{transaction.quantity}</td>
+                      <td>{money(transaction.executionPricePaise)}</td>
+                      <td>{money(transaction.chargesPaise)}</td>
+                      <td>#{transaction.marketStep}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        <footer className="dashboard-disclaimer">
+          <span>SIMULATION ENVIRONMENT</span>
+          <span>Virtual capital only · No real-money trading</span>
+        </footer>
+      </div>
+    </main>
+  );
 }
