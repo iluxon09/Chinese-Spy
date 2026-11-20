@@ -104,7 +104,6 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
   },[]);
 
   const boot = useCallback(async () => {
-    setLoading(true); setError("");
     try {
       const result = await api<{sessions:Session[]}>("/api/sessions");
       setAuthenticated(true);
