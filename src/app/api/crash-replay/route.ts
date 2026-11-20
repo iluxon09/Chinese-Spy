@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { databaseErrorResponse, jsonError } from "@/lib/api/http";
+import { crashReplayDatabaseErrorResponse } from "@/lib/crash-replay/errors";
+import { jsonError } from "@/lib/api/http";
 import { parseRiskQuestionnaire, deriveRiskProfile } from "@/lib/crash-replay/risk-profile";
 import { getAuthenticatedSupabase } from "@/lib/supabase/server";
 
@@ -15,7 +16,7 @@ export async function GET() {
       .limit(1)
       .maybeSingle();
 
-    if (error) return jsonError("Could not load your crash replay.", 500);
+    if (error) return crashReplayDatabaseErrorResponse(error);
     return NextResponse.json({ run: data }, {
       headers: { "Cache-Control": "private, no-store" },
     });
@@ -45,7 +46,7 @@ export async function POST(request: Request) {
       p_max_position_bps: derived.maxPositionBps,
     });
 
-    if (error) return databaseErrorResponse(error);
+    if (error) return crashReplayDatabaseErrorResponse(error);
     return NextResponse.json({ run: data }, { status: 201, headers: { "Cache-Control": "private, no-store" } });
   } catch {
     return jsonError("Could not start crash replay. Check server configuration and migration status.", 500);

@@ -1,11 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import {
-  ArrowLeft, ArrowRight, BrainCircuit, CircleHelp, Clock3,
-  GraduationCap, ShieldCheck, Wallet, AlertTriangle, RotateCcw,
+  AlertTriangle,
+  ArrowLeft,
+  ArrowRight,
   ChartNoAxesCombined,
+  Clock3,
+  Info,
+  RotateCcw,
+  ShieldCheck,
+  Wallet,
 } from "lucide-react";
 
 type Risk = "conservative" | "balanced" | "growth";
@@ -14,45 +20,60 @@ type Horizon = "under-3" | "3-5" | "5-10" | "10-plus";
 
 type Allocation = {
   name: string;
-  type: string;
+  category: string;
   percent: number;
   risk: string;
-  access: string;
-  why: string;
+  liquidity: string;
+  role: string;
   color: string;
 };
 
-const profiles: Record<Risk, { title: string; description: string; allocations: Allocation[] }> = {
+type Profile = {
+  title: string;
+  summary: string;
+  allocations: Allocation[];
+};
+
+const profiles: Record<Risk, Profile> = {
   conservative: {
-    title: "Capital-first learner",
-    description: "A more cautious mix that gives greater weight to stability and access to money.",
+    title: "Lower-volatility illustration",
+    summary: "A relatively cautious mix. It still includes market-linked exposure and does not protect every rupee of principal.",
     allocations: [
-      { name: "Bank fixed deposits", type: "Fixed-income", percent: 40, risk: "Low (subject to bank and deposit limits)", access: "Premature withdrawal rules apply", why: "A predictable interest rate can make this easier to understand while you learn.", color: "bg-emerald-400" },
-      { name: "Short-duration debt funds", type: "Mutual fund", percent: 30, risk: "Low to moderate; NAV can fall", access: "Usually redeemable on business days", why: "Adds a diversified debt-fund component, while still carrying interest-rate and credit risk.", color: "bg-sky-400" },
-      { name: "Broad-market index fund", type: "Equity mutual fund", percent: 20, risk: "High; market-linked", access: "Usually redeemable on business days", why: "A smaller equity allocation introduces long-term market participation.", color: "bg-violet-400" },
-      { name: "Gold ETF / fund", type: "Commodity-linked fund", percent: 10, risk: "High; price can fluctuate", access: "Depends on product and market hours", why: "A different return driver can diversify the mix, but gold prices are volatile too.", color: "bg-amber-400" },
+      { name: "Bank fixed deposits", category: "Fixed income", percent: 40, risk: "Low, subject to bank risk and deposit limits", liquidity: "Premature withdrawal rules may apply", role: "A defined interest rate can make returns easier to understand when held to maturity.", color: "bg-emerald-400" },
+      { name: "Short-duration debt funds", category: "Debt mutual fund", percent: 30, risk: "Low to moderate; NAV can fall", liquidity: "Redemption and settlement terms vary", role: "Adds diversified debt exposure, with interest-rate and credit risk.", color: "bg-sky-400" },
+      { name: "Broad-market index fund", category: "Equity mutual fund", percent: 25, risk: "High; market-linked", liquidity: "Market-linked; settlement rules apply", role: "Introduces diversified equity exposure rather than a single-stock bet.", color: "bg-violet-400" },
+      { name: "Gold ETF / fund", category: "Commodity-linked fund", percent: 5, risk: "High; gold prices fluctuate", liquidity: "Product and market-hour dependent", role: "Adds a different return driver, but gold can also fall in value.", color: "bg-amber-400" },
     ],
   },
   balanced: {
-    title: "Balanced builder",
-    description: "A middle-ground educational example combining stability, diversification and growth exposure.",
+    title: "Balanced growth illustration",
+    summary: "A mixed example balancing fixed-income exposure with a larger allocation to diversified equities.",
     allocations: [
-      { name: "Bank fixed deposits", type: "Fixed-income", percent: 20, risk: "Low (subject to bank and deposit limits)", access: "Premature withdrawal rules apply", why: "A stable component can help balance the ups and downs elsewhere.", color: "bg-emerald-400" },
-      { name: "Short-duration debt funds", type: "Mutual fund", percent: 20, risk: "Low to moderate; NAV can fall", access: "Usually redeemable on business days", why: "Adds diversified fixed-income exposure, without implying a guaranteed return.", color: "bg-sky-400" },
-      { name: "Broad-market index fund", type: "Equity mutual fund", percent: 45, risk: "High; market-linked", access: "Usually redeemable on business days", why: "Broad diversification across many companies, rather than betting on one stock.", color: "bg-violet-400" },
-      { name: "Gold ETF / fund", type: "Commodity-linked fund", percent: 15, risk: "High; price can fluctuate", access: "Depends on product and market hours", why: "Provides exposure to a different asset class; it can still lose value.", color: "bg-amber-400" },
+      { name: "Bank fixed deposits", category: "Fixed income", percent: 20, risk: "Low, subject to bank risk and deposit limits", liquidity: "Premature withdrawal rules may apply", role: "A more predictable component can temper volatility elsewhere in the mix.", color: "bg-emerald-400" },
+      { name: "Short-duration debt funds", category: "Debt mutual fund", percent: 20, risk: "Low to moderate; NAV can fall", liquidity: "Redemption and settlement terms vary", role: "Provides diversified fixed-income exposure without a guaranteed return.", color: "bg-sky-400" },
+      { name: "Broad-market index fund", category: "Equity mutual fund", percent: 50, risk: "High; market-linked", liquidity: "Market-linked; settlement rules apply", role: "Provides broad equity-market participation across many companies.", color: "bg-violet-400" },
+      { name: "Gold ETF / fund", category: "Commodity-linked fund", percent: 10, risk: "High; gold prices fluctuate", liquidity: "Product and market-hour dependent", role: "Adds an asset class with a different set of price drivers.", color: "bg-amber-400" },
     ],
   },
   growth: {
-    title: "Long-horizon explorer",
-    description: "A growth-oriented illustration with greater market risk. It is not suitable for money needed soon.",
+    title: "Growth-oriented illustration",
+    summary: "A higher-volatility example. It may experience substantial declines and is not designed for money needed soon.",
     allocations: [
-      { name: "Bank fixed deposits", type: "Fixed-income", percent: 10, risk: "Low (subject to bank and deposit limits)", access: "Premature withdrawal rules apply", why: "Keeps a smaller, more predictable portion in the mix.", color: "bg-emerald-400" },
-      { name: "Short-duration debt funds", type: "Mutual fund", percent: 10, risk: "Low to moderate; NAV can fall", access: "Usually redeemable on business days", why: "Adds a debt allocation, though returns and principal are not guaranteed.", color: "bg-sky-400" },
-      { name: "Broad-market index fund", type: "Equity mutual fund", percent: 60, risk: "High; market-linked", access: "Usually redeemable on business days", why: "A larger diversified equity allocation aims for long-term participation, with meaningful downside risk.", color: "bg-violet-400" },
-      { name: "Gold ETF / fund", type: "Commodity-linked fund", percent: 20, risk: "High; price can fluctuate", access: "Depends on product and market hours", why: "Adds a non-equity asset class, but does not protect against every market fall.", color: "bg-amber-400" },
+      { name: "Bank fixed deposits", category: "Fixed income", percent: 10, risk: "Low, subject to bank risk and deposit limits", liquidity: "Premature withdrawal rules may apply", role: "Retains a smaller fixed-income component.", color: "bg-emerald-400" },
+      { name: "Short-duration debt funds", category: "Debt mutual fund", percent: 10, risk: "Low to moderate; NAV can fall", liquidity: "Redemption and settlement terms vary", role: "Maintains some diversified debt exposure, with no guaranteed principal.", color: "bg-sky-400" },
+      { name: "Broad-market index fund", category: "Equity mutual fund", percent: 70, risk: "High; market-linked", liquidity: "Market-linked; settlement rules apply", role: "Makes diversified equity the dominant source of potential long-term growth and volatility.", color: "bg-violet-400" },
+      { name: "Gold ETF / fund", category: "Commodity-linked fund", percent: 10, risk: "High; gold prices fluctuate", liquidity: "Product and market-hour dependent", role: "Adds a non-equity asset class without guaranteeing downside protection.", color: "bg-amber-400" },
     ],
   },
+};
+
+const shortHorizonProfile: Profile = {
+  title: "Short-horizon stability illustration",
+  summary: "Because this money may be needed within three years, this example excludes equity and gold exposure. Debt funds still carry NAV, credit and interest-rate risk.",
+  allocations: [
+    { name: "Bank fixed deposits", category: "Fixed income", percent: 70, risk: "Low, subject to bank risk and deposit limits", liquidity: "Premature withdrawal rules may apply", role: "A maturity date can help align cash availability with a known spending date.", color: "bg-emerald-400" },
+    { name: "Short-duration debt funds", category: "Debt mutual fund", percent: 30, risk: "Low to moderate; NAV can fall", liquidity: "Redemption and settlement terms vary", role: "Adds diversified debt exposure, but it is not a bank deposit or capital guarantee.", color: "bg-sky-400" },
+  ],
 };
 
 const horizonLabels: Record<Horizon, string> = {
@@ -62,164 +83,358 @@ const horizonLabels: Record<Horizon, string> = {
   "10-plus": "More than 10 years",
 };
 
-const money = (n: number) => "₹" + Math.round(n).toLocaleString("en-IN");
+const money = (value: number) =>
+  "₹" + Math.round(value).toLocaleString("en-IN", { maximumFractionDigits: 0 });
 
 export default function InvestmentAllocationPlanner() {
   const [amount, setAmount] = useState("20000");
   const [risk, setRisk] = useState<Risk>("balanced");
   const [goal, setGoal] = useState<Goal>("grow");
   const [horizon, setHorizon] = useState<Horizon>("5-10");
-  const [emergencyReady, setEmergencyReady] = useState("yes");
+  const [emergencyReady, setEmergencyReady] = useState<"yes" | "not-yet" | "unsure">("yes");
   const [built, setBuilt] = useState(false);
 
-  const principal = Math.max(0, Number(amount) || 0);
-  const effectiveRisk: Risk =
-    horizon === "under-3" || goal === "preserve" ? "conservative" : risk;
-  const profile = profiles[effectiveRisk];
-  const allocations = useMemo(
-    () => profile.allocations.map((item) => ({ ...item, amount: principal * item.percent / 100 })),
-    [profile, principal],
-  );
+  const numericAmount = amount.trim() === "" ? 0 : Number(amount);
+  const validAmount = Number.isFinite(numericAmount) && numericAmount >= 500 && numericAmount <= 100000000;
+  const shortHorizon = horizon === "under-3";
+  const stabilityLed = shortHorizon || goal === "preserve";
+  const profile = shortHorizon ? shortHorizonProfile : profiles[goal === "preserve" ? "conservative" : risk];
+  const profileTitle = goal === "preserve" && !shortHorizon
+    ? "Capital-stability illustration"
+    : profile.title;
+  const allocations = profile.allocations.map((item) => ({
+    ...item,
+    amount: numericAmount * item.percent / 100,
+  }));
+  const selectedRiskLabel = stabilityLed ? "Stability-led" : risk === "growth" ? "Higher volatility" : risk === "balanced" ? "Moderate volatility" : "Lower volatility";
 
-  const canBuild = principal >= 500 && principal <= 100000000;
+  function updateInput(update: () => void) {
+    update();
+    setBuilt(false);
+  }
+
+  function buildPlan(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (validAmount) setBuilt(true);
+  }
+
+  function resetPlanner() {
+    setAmount("20000");
+    setRisk("balanced");
+    setGoal("grow");
+    setHorizon("5-10");
+    setEmergencyReady("yes");
+    setBuilt(false);
+  }
 
   return (
-    <main className="min-h-screen bg-[#080d18] px-4 py-7 text-white md:px-8">
-      <div className="mx-auto max-w-6xl">
-        <Link href="/portfolio" className="mb-7 inline-flex items-center gap-2 text-sm text-slate-400 transition hover:text-white">
-          <ArrowLeft size={16} /> Back to Portfolio
-        </Link>
-
-        <header className="mb-8">
-          <div className="mb-3 flex items-center gap-2 text-cyan-300">
-            <BrainCircuit size={19} />
-            <span className="text-xs font-bold uppercase tracking-[0.2em]">TILT · Investment Architect</span>
-            <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-2 py-1 text-[10px] font-semibold text-cyan-200">NEW EXPERIENCE</span>
-          </div>
-          <h1 className="max-w-3xl text-3xl font-bold tracking-tight md:text-5xl">Give your money a <span className="text-cyan-300">clearer direction.</span></h1>
-          <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-400 md:text-base">
-            Tell us what you are working with. TILT will turn the basics into an easy-to-understand, educational allocation plan.
-          </p>
-          <Link href="/portfolio/architect/sip" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-cyan-300 transition hover:text-cyan-100">
-            Explore the SIP and goal calculator <ArrowRight size={16} />
+    <main className="min-h-screen bg-[#0b111a] px-4 py-7 text-slate-100 md:px-8">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5">
+          <Link href="/portfolio" className="inline-flex items-center gap-2 text-sm text-slate-400 transition hover:text-white">
+            <ArrowLeft size={16} /> Portfolio
           </Link>
+          <div className="flex items-center gap-4 text-sm">
+            <span className="hidden text-xs font-semibold uppercase tracking-[.15em] text-slate-500 sm:inline">TILT / Learning tools</span>
+            <Link href="/portfolio/architect/sip" className="inline-flex items-center gap-2 text-cyan-300 transition hover:text-cyan-100">
+              SIP & goal calculator <ArrowRight size={15} />
+            </Link>
+          </div>
+        </div>
+
+        <header className="mb-8 max-w-4xl">
+          <p className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[.19em] text-cyan-300">
+            <ChartNoAxesCombined size={16} /> Investment allocation worksheet
+          </p>
+          <h1 className="text-3xl font-semibold tracking-tight text-white md:text-5xl">Build an allocation framework.</h1>
+          <p className="mt-4 max-w-3xl text-sm leading-6 text-slate-400 md:text-base">
+            Explore how amount, time horizon and tolerance for volatility change an illustrative mix of asset classes. This is a transparent rule-based learning tool, not a personal investment recommendation.
+          </p>
         </header>
 
-        <div className="grid gap-6 lg:grid-cols-[0.92fr_1.08fr]">
-          <section className="rounded-2xl border border-white/10 bg-[#111a2b] p-5 md:p-7">
-            <div className="mb-6 flex items-center gap-3">
-              <div className="rounded-xl bg-cyan-400/10 p-2.5 text-cyan-300"><Wallet size={20} /></div>
-              <div><h2 className="font-semibold">Your starting point</h2><p className="text-xs text-slate-500">A few details help shape the illustration</p></div>
-            </div>
-
-            <label className="mb-2 block text-sm font-medium text-slate-300" htmlFor="investment-amount">How much are you looking to invest?</label>
-            <div className="flex items-center rounded-xl border border-white/10 bg-[#0b1322] px-4 focus-within:border-cyan-400/60">
-              <span className="text-xl text-slate-500">₹</span>
-              <input id="investment-amount" type="number" min="500" max="100000000" value={amount} onChange={(e) => { setAmount(e.target.value); setBuilt(false); }} className="w-full bg-transparent px-3 py-4 text-2xl font-bold outline-none" />
-            </div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {[5000, 10000, 20000, 50000, 100000].map((v) => <button key={v} onClick={() => { setAmount(String(v)); setBuilt(false); }} className={`rounded-full border px-3 py-1.5 text-xs transition ${Number(amount) === v ? "border-cyan-300/50 bg-cyan-300/10 text-cyan-200" : "border-white/10 text-slate-400 hover:border-white/30"}`}>{money(v)}</button>)}
-            </div>
-
-            <div className="my-7 border-t border-white/10" />
-            <fieldset>
-              <legend className="mb-3 text-sm font-medium text-slate-300">What matters most to you?</legend>
-              <div className="grid gap-2">
-                {([
-                  ["preserve", "Protect what I have", "I prefer stability over high growth."],
-                  ["grow", "Grow my money over time", "I can accept some ups and downs."],
-                  ["learn", "I'm exploring and learning", "Help me understand the options first."],
-                ] as const).map(([value, title, desc]) => <button type="button" key={value} onClick={() => { setGoal(value); setBuilt(false); }} className={`rounded-xl border p-3 text-left transition ${goal === value ? "border-cyan-300/50 bg-cyan-300/[0.07]" : "border-white/10 bg-[#0b1322] hover:border-white/20"}`}><span className="block text-sm font-semibold">{title}</span><span className="mt-1 block text-xs text-slate-500">{desc}</span></button>)}
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(320px,.82fr)_minmax(0,1.18fr)]">
+          <form onSubmit={buildPlan} className="border border-white/10 bg-[#111b29]">
+            <div className="flex items-center gap-3 border-b border-white/10 px-5 py-4">
+              <div className="grid size-9 place-items-center border border-cyan-300/20 bg-cyan-300/5 text-cyan-300">
+                <Wallet size={17} />
               </div>
-            </fieldset>
-
-            <div className="mt-6">
-              <label className="mb-3 block text-sm font-medium text-slate-300" htmlFor="horizon">When might you need this money?</label>
-              <select id="horizon" value={horizon} onChange={(e) => { setHorizon(e.target.value as Horizon); setBuilt(false); }} className="w-full rounded-xl border border-white/10 bg-[#0b1322] px-4 py-3 text-sm text-white outline-none focus:border-cyan-400/60">
-                {Object.entries(horizonLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-              </select>
-            </div>
-
-            <fieldset className="mt-6">
-              <legend className="mb-3 text-sm font-medium text-slate-300">How comfortable are you with market ups and downs?</legend>
-              <div className="grid grid-cols-3 gap-2">
-                {([
-                  ["conservative", "Low"],
-                  ["balanced", "Medium"],
-                  ["growth", "High"],
-                ] as const).map(([value, label]) => <button type="button" key={value} onClick={() => { setRisk(value); setBuilt(false); }} className={`rounded-xl border py-3 text-sm font-semibold transition ${risk === value ? "border-cyan-300/50 bg-cyan-300/10 text-cyan-200" : "border-white/10 bg-[#0b1322] text-slate-400 hover:border-white/20"}`}>{label}</button>)}
-              </div>
-              <p className="mt-2 text-xs leading-5 text-slate-500">Low = prefer smaller fluctuations. High = can tolerate larger temporary losses. Neither removes risk.</p>
-              {goal === "preserve" && <p className="mt-2 text-xs leading-5 text-amber-200">Your capital-preservation goal takes priority, so the illustration will use the conservative mix.</p>}
-            </fieldset>
-
-            <div className="mt-6 rounded-xl border border-white/10 bg-[#0b1322] p-4">
-              <p className="text-sm font-medium text-slate-300">Do you already have emergency savings?</p>
-              <div className="mt-3 flex gap-2">
-                {(["yes", "not-yet", "unsure"] as const).map((v) => <button key={v} onClick={() => { setEmergencyReady(v); setBuilt(false); }} className={`rounded-lg border px-3 py-2 text-xs ${emergencyReady === v ? "border-cyan-300/50 bg-cyan-300/10 text-cyan-200" : "border-white/10 text-slate-400"}`}>{v === "yes" ? "Yes" : v === "not-yet" ? "Not yet" : "Not sure"}</button>)}
+              <div>
+                <p className="text-sm font-semibold text-slate-100">Planning assumptions</p>
+                <p className="mt-0.5 text-xs text-slate-500">Set the inputs for your illustration</p>
               </div>
             </div>
 
-            <button disabled={!canBuild} onClick={() => setBuilt(true)} className="mt-7 flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-300 px-5 py-4 text-sm font-bold text-slate-950 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-40">
-              Build my learning plan <ArrowRight size={17} />
-            </button>
-            {!canBuild && <p className="mt-2 text-xs text-rose-300">Enter an amount between ₹500 and ₹10 crore.</p>}
-            <p className="mt-3 text-center text-[11px] text-slate-600">No account linking · No real-money transactions · No guaranteed returns</p>
-          </section>
-
-          <section className="rounded-2xl border border-white/10 bg-[#111a2b] p-5 md:p-7">
-            {!built ? (
-              <div className="flex min-h-[560px] flex-col justify-between">
-                <div>
-                  <div className="mb-5 inline-flex rounded-xl bg-violet-400/10 p-3 text-violet-300"><ChartNoAxesCombined size={22} /></div>
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-violet-300">Your plan preview</p>
-                  <h2 className="mt-3 text-2xl font-bold">A plan that starts with you.</h2>
-                  <p className="mt-3 max-w-md text-sm leading-6 text-slate-400">Answer the questions on the left to see an illustrative allocation, the role of each asset class, and the risks you should understand before making any real-world decision.</p>
+            <div className="space-y-7 p-5">
+              <section>
+                <label htmlFor="investment-amount" className="mb-2 block text-xs font-semibold uppercase tracking-[.12em] text-slate-400">01 / Initial amount</label>
+                <div className="flex items-center border border-white/15 bg-[#0b131e] px-3 focus-within:border-cyan-300/60">
+                  <span className="text-lg text-slate-500">₹</span>
+                  <input
+                    id="investment-amount"
+                    type="number"
+                    inputMode="numeric"
+                    min="500"
+                    max="100000000"
+                    step="500"
+                    value={amount}
+                    onChange={(event) => updateInput(() => setAmount(event.target.value))}
+                    className="min-w-0 w-full bg-transparent px-3 py-3.5 text-xl font-semibold tabular-nums text-white outline-none"
+                    aria-describedby="amount-hint"
+                  />
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-xl border border-white/10 bg-[#0b1322] p-4"><ShieldCheck className="mb-3 text-emerald-300" size={20} /><p className="text-sm font-semibold">Risk-aware</p><p className="mt-1 text-xs leading-5 text-slate-500">The time horizon and risk preference shape the example mix.</p></div>
-                  <div className="rounded-xl border border-white/10 bg-[#0b1322] p-4"><GraduationCap className="mb-3 text-sky-300" size={20} /><p className="text-sm font-semibold">Beginner-friendly</p><p className="mt-1 text-xs leading-5 text-slate-500">Understand what each category does and what can go wrong.</p></div>
-                  <div className="rounded-xl border border-white/10 bg-[#0b1322] p-4"><Clock3 className="mb-3 text-amber-300" size={20} /><p className="text-sm font-semibold">Time horizon matters</p><p className="mt-1 text-xs leading-5 text-slate-500">Money needed soon should not be treated like long-term money.</p></div>
-                  <div className="rounded-xl border border-white/10 bg-[#0b1322] p-4"><CircleHelp className="mb-3 text-violet-300" size={20} /><p className="text-sm font-semibold">Transparent limits</p><p className="mt-1 text-xs leading-5 text-slate-500">No invented live prices or claims of AI market analysis.</p></div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {[5000, 10000, 20000, 50000, 100000].map((value) => (
+                    <button
+                      type="button"
+                      key={value}
+                      onClick={() => updateInput(() => setAmount(String(value)))}
+                      className={"border px-2.5 py-1.5 text-[11px] tabular-nums transition " + (Number(amount) === value ? "border-cyan-300/50 bg-cyan-300/10 text-cyan-100" : "border-white/10 text-slate-400 hover:border-white/25 hover:text-white")}
+                    >
+                      {money(value)}
+                    </button>
+                  ))}
+                </div>
+                <p id="amount-hint" className="mt-2 text-[11px] text-slate-600">Enter ₹500–₹10 crore. Amounts are rounded to whole rupees in the illustration.</p>
+                {!validAmount && <p className="mt-2 text-xs text-rose-300">Enter a valid amount within the stated range.</p>}
+              </section>
+
+              <section>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-[.12em] text-slate-400">02 / Primary objective</p>
+                <div className="divide-y divide-white/10 border-y border-white/10">
+                  {([
+                    ["preserve", "Capital stability", "Prioritise lower volatility; returns are not guaranteed."],
+                    ["grow", "Long-term growth", "Accept market fluctuations in pursuit of growth."],
+                    ["learn", "Understand the trade-offs", "Explore how different risk settings change the mix."],
+                  ] as const).map(([value, title, description]) => (
+                    <label key={value} className="flex cursor-pointer items-start gap-3 py-3">
+                      <input
+                        type="radio"
+                        name="objective"
+                        value={value}
+                        checked={goal === value}
+                        onChange={() => updateInput(() => setGoal(value))}
+                        className="mt-1 accent-cyan-300"
+                      />
+                      <span>
+                        <span className="block text-sm font-medium text-slate-200">{title}</span>
+                        <span className="mt-1 block text-xs leading-5 text-slate-500">{description}</span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </section>
+
+              <section>
+                <label htmlFor="horizon" className="mb-3 block text-xs font-semibold uppercase tracking-[.12em] text-slate-400">03 / When might you need this money?</label>
+                <select
+                  id="horizon"
+                  value={horizon}
+                  onChange={(event) => updateInput(() => setHorizon(event.target.value as Horizon))}
+                  className="w-full border border-white/15 bg-[#0b131e] px-3 py-3 text-sm text-slate-100 outline-none focus:border-cyan-300/60"
+                >
+                  {Object.entries(horizonLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
+                <p className="mt-2 text-[11px] leading-5 text-slate-600">A short time horizon takes priority over the selected risk setting in this worksheet.</p>
+              </section>
+
+              <section>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-[.12em] text-slate-400">04 / Tolerance for volatility</p>
+                <div className="grid grid-cols-3 border border-white/10">
+                  {([
+                    ["conservative", "Lower"],
+                    ["balanced", "Medium"],
+                    ["growth", "Higher"],
+                  ] as const).map(([value, label]) => (
+                    <button
+                      type="button"
+                      key={value}
+                      aria-pressed={risk === value}
+                      onClick={() => updateInput(() => setRisk(value))}
+                      className={"border-r border-white/10 py-3 text-xs font-semibold last:border-r-0 " + (risk === value ? "bg-cyan-300/10 text-cyan-100" : "text-slate-400 transition hover:bg-white/[.03] hover:text-white")}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              <section className="border-t border-white/10 pt-5">
+                <p className="text-xs font-semibold uppercase tracking-[.12em] text-slate-400">05 / Emergency savings</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">This worksheet does not reserve an emergency fund from the amount above.</p>
+                <div className="mt-3 flex flex-wrap gap-4">
+                  {([
+                    ["yes", "Already set aside"],
+                    ["not-yet", "Not yet"],
+                    ["unsure", "Not sure"],
+                  ] as const).map(([value, label]) => (
+                    <label key={value} className="inline-flex items-center gap-2 text-xs text-slate-300">
+                      <input
+                        type="radio"
+                        name="emergency"
+                        value={value}
+                        checked={emergencyReady === value}
+                        onChange={() => updateInput(() => setEmergencyReady(value))}
+                        className="accent-cyan-300"
+                      />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </section>
+
+              <button
+                type="submit"
+                disabled={!validAmount}
+                className="flex w-full items-center justify-center gap-2 bg-cyan-300 px-4 py-3.5 text-sm font-semibold text-[#07131a] transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Generate illustration <ArrowRight size={16} />
+              </button>
+            </div>
+          </form>
+
+          <section className="min-w-0 border border-white/10 bg-[#111b29]">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
+              <div className="flex items-center gap-3">
+                <div className="grid size-9 place-items-center border border-violet-300/20 bg-violet-300/5 text-violet-300">
+                  <ChartNoAxesCombined size={17} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-100">Allocation illustration</p>
+                  <p className="mt-0.5 text-xs text-slate-500">Rule-based example · No live market data</p>
+                </div>
+              </div>
+              <span className={"border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[.1em] " + (built ? "border-emerald-300/20 bg-emerald-300/5 text-emerald-200" : "border-white/10 text-slate-500")}>
+                {built ? "Generated" : "Preview"}
+              </span>
+            </div>
+
+            {!built ? (
+              <div className="flex min-h-[570px] flex-col justify-between p-6 md:p-8">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[.16em] text-violet-300">Before you begin</p>
+                  <h2 className="mt-3 max-w-lg text-2xl font-semibold leading-tight text-white">An allocation is a set of trade-offs, not a prediction.</h2>
+                  <p className="mt-3 max-w-xl text-sm leading-6 text-slate-400">
+                    Choose an amount, objective and time horizon. The worksheet will show how a fixed set of rules changes the illustrative weights across asset classes.
+                  </p>
+                </div>
+                <div className="mt-10 grid gap-0 border-y border-white/10 sm:grid-cols-2">
+                  <div className="border-b border-white/10 py-5 sm:border-r sm:pr-5">
+                    <ShieldCheck size={19} className="mb-3 text-emerald-300" />
+                    <p className="text-sm font-semibold text-slate-200">Risk is visible</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">Each asset class includes its principal risks and liquidity considerations.</p>
+                  </div>
+                  <div className="py-5 sm:pl-5">
+                    <Clock3 size={19} className="mb-3 text-amber-300" />
+                    <p className="text-sm font-semibold text-slate-200">Horizon comes first</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">A horizon below three years switches to a stability-led example without equity exposure.</p>
+                  </div>
+                </div>
+                <div className="mt-6 flex items-start gap-3 border border-white/10 bg-[#0b131e] p-4 text-xs leading-5 text-slate-500">
+                  <Info size={16} className="mt-0.5 shrink-0 text-cyan-300" />
+                  The model uses fixed example percentages. It does not evaluate income, liabilities, taxes, existing assets, product costs or current market conditions.
                 </div>
               </div>
             ) : (
-              <div>
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">Your illustrative allocation</p><h2 className="mt-2 text-2xl font-bold">{money(principal)}</h2><p className="mt-1 text-sm text-slate-400">{profile.title} · {horizonLabels[horizon]}</p></div>
-                  <button onClick={() => setBuilt(false)} className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-2 text-xs text-slate-400 hover:text-white"><RotateCcw size={13} /> Edit answers</button>
+              <div className="p-5 md:p-7">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[.15em] text-cyan-300">Illustrative portfolio</p>
+                    <h2 className="mt-2 text-3xl font-semibold tracking-tight tabular-nums text-white">{money(numericAmount)}</h2>
+                    <p className="mt-2 text-sm text-slate-400">{profileTitle} <span className="px-1 text-slate-600">/</span> {horizonLabels[horizon]}</p>
+                  </div>
+                  <button type="button" onClick={() => setBuilt(false)} className="inline-flex items-center gap-2 border border-white/15 px-3 py-2 text-xs text-slate-300 transition hover:border-white/30 hover:text-white">
+                    <RotateCcw size={13} /> Edit inputs
+                  </button>
                 </div>
 
-                {(horizon === "under-3" || goal === "preserve") && <div className="mt-5 flex gap-2 rounded-xl border border-amber-300/20 bg-amber-300/[0.06] p-3 text-xs leading-5 text-amber-100"><AlertTriangle size={16} className="mt-0.5 shrink-0" />{horizon === "under-3" ? "Because your horizon is under 3 years, this illustration uses the conservative mix even if you selected a higher risk preference. Equity can fall sharply over short periods." : "Because capital preservation is your stated priority, this illustration uses the conservative mix. It still includes market-linked assets and does not guarantee that your principal is protected."}</div>}
-                {emergencyReady !== "yes" && <div className="mt-3 rounded-xl border border-amber-300/20 bg-amber-300/[0.06] p-3 text-xs leading-5 text-amber-100">Consider building an accessible emergency reserve before investing money you may need unexpectedly. This plan does not set aside an emergency fund.</div>}
+                <div className="mt-6 grid grid-cols-2 divide-x divide-white/10 border-y border-white/10 py-4">
+                  <div className="pr-4">
+                    <p className="text-[10px] font-semibold uppercase tracking-[.12em] text-slate-500">Objective</p>
+                    <p className="mt-1 text-sm font-medium text-slate-200">{goal === "preserve" ? "Capital stability" : goal === "grow" ? "Long-term growth" : "Learning / exploration"}</p>
+                  </div>
+                  <div className="pl-4">
+                    <p className="text-[10px] font-semibold uppercase tracking-[.12em] text-slate-500">Risk setting</p>
+                    <p className="mt-1 text-sm font-medium text-slate-200">{selectedRiskLabel}</p>
+                  </div>
+                </div>
 
-                <p className="mt-5 text-sm leading-6 text-slate-400">{profile.description} {goal === "preserve" ? "You selected capital preservation, so consider whether any market-linked exposure is appropriate for your needs." : goal === "learn" ? "Use this as a learning exercise: compare the trade-offs before deciding whether any category belongs in your plan." : "A longer horizon can make market risk more manageable, but it never guarantees a positive outcome."}</p>
+                <p className="mt-5 text-sm leading-6 text-slate-400">{profile.summary}</p>
 
-                <div className="mt-6 space-y-4">
-                  {allocations.map((item) => (
-                    <div key={item.name} className="rounded-xl border border-white/10 bg-[#0b1322] p-4">
-                      <div className="flex items-start justify-between gap-3"><div><p className="font-semibold">{item.name}</p><p className="mt-1 text-xs text-slate-500">{item.type}</p></div><div className="text-right"><p className="font-bold">{money(item.amount)}</p><p className="text-xs text-cyan-300">{item.percent}%</p></div></div>
-                      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10"><div className={`h-full rounded-full ${item.color}`} style={{ width: item.percent + "%" }} /></div>
-                      <p className="mt-3 text-xs leading-5 text-slate-400">{item.why}</p>
-                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-500"><span>Risk: {item.risk}</span><span>Access: {item.access}</span></div>
-                    </div>
+                <div className="mt-6">
+                  <div className="mb-2 flex items-center justify-between text-[10px] font-semibold uppercase tracking-[.12em] text-slate-500">
+                    <span>Asset mix</span><span>100% allocated</span>
+                  </div>
+                  <div className="flex h-3 w-full overflow-hidden bg-white/5" aria-label="Illustrative asset allocation">
+                    {allocations.map((item) => (
+                      <div key={item.name} title={item.name + ": " + item.percent + "%"} className={item.color} style={{ width: item.percent + "%" }} />
+                    ))}
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
+                    {allocations.map((item) => (
+                      <span key={item.name} className="inline-flex items-center gap-2 text-[11px] text-slate-400">
+                        <span className={"size-2 " + item.color} />{item.name} {item.percent}%
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-7 border-t border-white/10">
+                  {allocations.map((item, index) => (
+                    <article key={item.name} className="grid gap-3 border-b border-white/10 py-4 sm:grid-cols-[minmax(0,1fr)_auto]">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] tabular-nums text-slate-600">0{index + 1}</span>
+                          <h3 className="text-sm font-semibold text-slate-100">{item.name}</h3>
+                        </div>
+                        <p className="mt-1 pl-6 text-[11px] text-slate-500">{item.category}</p>
+                        <p className="mt-2 pl-6 text-xs leading-5 text-slate-400">{item.role}</p>
+                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 pl-6 text-[10px] leading-5 text-slate-500">
+                          <span>Risk: {item.risk}</span>
+                          <span>Liquidity: {item.liquidity}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-baseline justify-between gap-4 sm:block sm:text-right">
+                        <p className="text-base font-semibold tabular-nums text-white">{money(item.amount)}</p>
+                        <p className="mt-1 text-xs tabular-nums text-cyan-300">{item.percent}%</p>
+                      </div>
+                    </article>
                   ))}
                 </div>
 
-                <div className="mt-5 rounded-xl border border-cyan-300/20 bg-cyan-300/[0.05] p-4">
-                  <p className="text-sm font-semibold text-cyan-100">What this plan does—and doesn't do</p>
-                  <p className="mt-2 text-xs leading-5 text-slate-400">This is a rule-based educational illustration, not an AI-generated or live-market recommendation. It does not compare current FD rates, fund expense ratios, NAVs, taxes or product suitability. Those checks require verified, up-to-date data and a proper suitability process.</p>
+                <div className="mt-6 space-y-3">
+                  {stabilityLed && (
+                    <div className="flex items-start gap-3 border border-amber-300/20 bg-amber-300/[.04] p-3 text-xs leading-5 text-amber-100">
+                      <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+                      {shortHorizon
+                        ? "A short horizon takes priority over your selected risk setting. This example excludes equity and gold, but fixed deposits and debt funds still carry risks and may not match every spending need."
+                        : "You selected capital stability, so this example excludes equity and gold. It is not a capital guarantee; bank deposits and debt funds have different risks and withdrawal conditions."}
+                    </div>
+                  )}
+                  {emergencyReady !== "yes" && (
+                    <div className="flex items-start gap-3 border border-amber-300/20 bg-amber-300/[.04] p-3 text-xs leading-5 text-amber-100">
+                      <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+                      You have not confirmed that emergency savings are set aside. This illustration allocates the full amount entered; it does not create an emergency reserve.
+                    </div>
+                  )}
                 </div>
-                <button onClick={() => { setAmount("20000"); setRisk("balanced"); setGoal("grow"); setHorizon("5-10"); setEmergencyReady("yes"); setBuilt(false); }} className="mt-5 text-xs text-slate-500 underline decoration-slate-700 underline-offset-4 hover:text-white">Reset the planner</button>
+
+                <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-5">
+                  <p className="text-[11px] leading-5 text-slate-500">Rule set: objective + horizon + self-selected volatility. No product selection or return forecast.</p>
+                  <button type="button" onClick={resetPlanner} className="inline-flex items-center gap-2 text-xs text-slate-400 transition hover:text-white">
+                    <RotateCcw size={13} /> Reset worksheet
+                  </button>
+                </div>
               </div>
             )}
           </section>
         </div>
 
-        <div className="mt-6 flex gap-3 rounded-xl border border-white/10 bg-[#111a2b] p-4 text-xs leading-5 text-slate-500">
-          <AlertTriangle size={17} className="mt-0.5 shrink-0 text-amber-300" />
-          <p><strong className="text-slate-300">Important:</strong> TILT is an educational simulator. The percentages above are illustrative examples, not personal financial advice or a recommendation to buy any product. Investments can lose value; mutual funds and ETFs are not deposits. Verify product documents, fees, taxes, liquidity and risks independently before making financial decisions.</p>
-        </div>
+        <footer className="mt-7 flex items-start gap-3 border-t border-white/10 pt-5 text-xs leading-6 text-slate-500">
+          <AlertTriangle size={17} className="mt-1 shrink-0 text-amber-300" />
+          <p>
+            <strong className="text-slate-300">Educational use only.</strong> The percentages are fixed examples, not personalised advice or a recommendation to buy a product. The worksheet does not consider income, debts, existing assets, tax position, investment costs or current product terms. Investments can lose value; mutual funds and ETFs are not bank deposits. Check official product documents and consult a qualified adviser before making decisions.
+          </p>
+        </footer>
       </div>
     </main>
   );
