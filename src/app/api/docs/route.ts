@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 export function GET() {
   return NextResponse.json({
-    service: "TILT Member 1 API",
+    service: "TILT Financial Universe API",
     authentication: "Supabase Auth cookie session required for all routes except /api/health and /api/docs.",
     moneyUnit: "All monetary fields ending in _paise are integer paise; 100 paise = ₹1.",
     endpoints: [
@@ -15,7 +15,8 @@ export function GET() {
       { method: "GET", path: "/api/sessions/{sessionId}/market", purpose: "Read current session market prices, current-step news events and scenario charge metadata." },
       { method: "POST", path: "/api/sessions/{sessionId}/orders", body: { clientOrderId: "UUID", symbol: "ASTE", side: "BUY", quantity: 10 }, purpose: "Execute an idempotent market order at the saved simulated market price." },
       { method: "GET", path: "/api/sessions/{sessionId}/transactions?limit=100", purpose: "Read the latest transactions; limit is capped at 500." },
-      { method: "POST", path: "/api/sessions/{sessionId}/market/advance", purpose: "Advance the user's market by one deterministic step." },
+      { method: "POST", path: "/api/sessions/{sessionId}/market/advance", purpose: "Advance the shared fictional market by one deterministic step; sessions are capped at 10,000 steps." },
+      { method: "POST", path: "/api/ai/chat", purpose: "Authenticated Gemini Risk Coach stream; limited to 6 requests per minute and 50 requests per UTC day per user." },
       { method: "GET", path: "/api/sessions/{sessionId}/market/history?symbol=ASTE", purpose: "Read symbol history up to the session's current market step." },
     ],
     orderRules: [
