@@ -13,7 +13,7 @@ This is the active integration branch for TILT — Financial Universe. It combin
 | Route | Access | Purpose |
 |---|---|---|
 | `/` | Authenticated | Dashboard and recent simulation activity |
-| `/markets` | Authenticated | Fictional companies, prices, events and market history |
+| `/markets` | Authenticated | Fictional market plus separately sourced Indian market news and insights |
 | `/trading` | Authenticated | BUY/SELL market orders |
 | `/portfolio` | Authenticated | Virtual cash, holdings, P&L and allocation |
 | `/simulator` | Authenticated | Manual market advancement and auto-play controls |
@@ -29,7 +29,8 @@ This is the active integration branch for TILT — Financial Universe. It combin
 
 - Supabase PostgreSQL is the source of truth for authenticated sessions, cash, holdings, orders, charges, market prices and transaction history.
 - Monetary values in the trading API and database are integer paise. The server derives execution prices and transaction charges; clients submit order intent and an idempotency UUID only.
-- The active market is fictional and deterministic by scenario and step. Market, sector, company and macro factors generate recurring upward and downward movement; scheduled news events apply additional shocks. All users converge on the same stored price rows for a scenario/step.
+- The active market is fictional and deterministic by scenario and step. Market, sector, company and macro factors generate recurring upward and downward movement; scheduled news and generated per-stock catalysts apply additional shocks. Each stock has a 14% synthetic catalyst probability per five-minute candle (maximum 3.00% effect); a broad-market shock has a 1.5% probability (maximum 2.50%). All users converge on the same stored price rows and events for a scenario/step.
+- `/markets` also displays a Google Search-grounded Indian market briefing with citations. It is separate from the fictional simulation and never changes virtual prices. Refreshes are limited to one per five minutes and twenty per UTC day per user.
 - `TiltDataProvider` loads the active session and shared market state. Market playback advances only after the previous write and portfolio refresh have completed.
 - A database trigger caps each simulation session at 10,000 market steps to bound shared price-history growth.
 - Behavioral Analysis is read-only and analyses observable simulation activity. Its thresholds are configurable educational heuristics, not empirically validated predictors or psychological diagnoses.
@@ -38,7 +39,7 @@ This is the active integration branch for TILT — Financial Universe. It combin
 
 ## Local setup (Windows PowerShell or CMD)
 
-Requirements: Node.js 22.12.x or a later 22.x release, npm 10 or newer, a Supabase project, and a Gemini API key for the AI Coach.
+Requirements: Node.js 22.12.x or a later 22.x release, npm 10 or newer, a Supabase project, and a Gemini API key with Google Search grounding enabled for live market research.
 
 ```cmd
 git fetch origin
@@ -62,8 +63,9 @@ Apply migrations once, in timestamp order, on a fresh database:
 5. `20261121000300_remove_crash_replay.sql`
 6. `20261121000400_ai_coach_rate_limits.sql`
 7. `20261121000500_market_step_cap.sql`
+8. `20261121000600_dynamic_market_events_and_insights.sql`
 
-For a database that already has migrations through `20261121000300`, apply only migrations 00400 and 00500. Inspect the database's actual migration history before applying anything to an existing project. Do not re-run already-applied migrations; take a backup before schema changes.
+For a database already migrated through `20261121000500`, apply only migration 00600. For a database already migrated through `20261121000300`, apply migrations 00400, 00500 and 00600 in order. Inspect the database's actual migration history before applying anything to an existing project. Do not re-run already-applied migrations; take a backup before schema changes.
 
 ## Run and verify
 
@@ -87,6 +89,8 @@ The current automated tests cover pure logic. There is not yet a full browser en
 6. Open Behavioral Analysis and confirm it presents read-only observations or an explicit insufficient-data state.
 7. Open the AI Risk Coach and send a prompt; verify a complete streamed response. The coach requires migration 00400.
 8. Confirm the market-step ceiling migration 00500 is applied; the API should return HTTP 409 after the session reaches 10,000 steps.
+9. Open `/markets` and verify the real-market briefing renders source citations and external links. This requires Gemini API Google Search grounding access and quota.
+10. Run auto-play and verify stock-specific simulated catalysts appear on some candles, prices move in both directions, and each stock displays last-candle and since-start percentage changes.
 9. Sign out and verify protected pages return to the login route.
 
 ## Known product boundaries
