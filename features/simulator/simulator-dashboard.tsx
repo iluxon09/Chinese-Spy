@@ -5,6 +5,10 @@ import { ArrowRight, RefreshCw, TrendingDown, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { useTilt } from "@/features/shared/tilt-provider";
 import MarketPlaybackControls from "@/features/shared/market-playback-controls";
+import {
+  calculateLastCandleChange,
+  calculateSinceStartChange,
+} from "@/lib/market/returns";
 
 const money = (paise: number) => new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -12,52 +16,6 @@ const money = (paise: number) => new Intl.NumberFormat("en-IN", {
   maximumFractionDigits: 2,
 }).format(paise / 100);
 
-function percentChange(currentPaise: number, referencePaise: number): number | null {
-  if (
-    !Number.isFinite(currentPaise) ||
-    !Number.isFinite(referencePaise) ||
-    currentPaise < 0 ||
-    referencePaise <= 0
-  ) {
-    return null;
-  }
-
-  return ((currentPaise - referencePaise) / referencePaise) * 100;
-}
-
-function lastCandleChange(
-  points: readonly { market_step: number; pricePaise: number }[],
-  currentStep: number,
-  currentPricePaise: number,
-  initialPricePaise: number,
-): number | null {
-  let previousPricePaise: number | null = null;
-  let previousStep = -1;
-
-  for (const point of points) {
-    if (
-      Number.isSafeInteger(point.market_step) &&
-      point.market_step < currentStep &&
-      point.market_step > previousStep
-    ) {
-      previousStep = point.market_step;
-      previousPricePaise = point.pricePaise;
-    }
-  }
-
-  // On the first candle, step zero is the opening/initial price. Use it even
-  // if a partially loaded history response omitted that single row.
-  if (previousPricePaise === null && currentStep === 1) {
-    previousPricePaise = initialPricePaise;
-  }
-
-  // Never label a comparison to an older, gapped data point as the last candle.
-  if (previousStep !== currentStep - 1 && currentStep !== 1) return null;
-
-  return previousPricePaise === null || previousPricePaise <= 0
-    ? null
-    : percentChange(currentPricePaise, previousPricePaise);
-}
 
 export default function SimulatorDashboard() {
   const { loading, error, authenticated, market, histories, advanceMarket, marketAutoPlay } = useTilt();
@@ -145,13 +103,13 @@ export default function SimulatorDashboard() {
             {market.companies.map((company) => {
               const points = histories[company.symbol] ?? [];
               const currentPrice = company.currentPrice?.pricePaise ?? company.initialPricePaise;
-              const candleChange = lastCandleChange(
+              const candleChange = calculateLastCandleChange(
                 points,
                 market.marketStep,
                 currentPrice,
                 company.initialPricePaise,
               );
-              const sinceStartChange = percentChange(
+              const sinceStartChange = calculateSinceStartChange(
                 currentPrice,
                 company.initialPricePaise,
               );
