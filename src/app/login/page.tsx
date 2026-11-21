@@ -1,4 +1,5 @@
 import AuthForm from "./auth-form";
+import TiltLogo from "@/components/tilt-logo";
 import { ArrowUpRight, ChartNoAxesCombined, ShieldCheck, WalletCards } from "lucide-react";
 
 const benefits = [
@@ -25,10 +26,7 @@ export default function LoginPage() {
       <div className="auth-grid">
         <section className="auth-intro" aria-labelledby="welcome-heading">
           <div className="auth-brand">
-            <span className="auth-brand-mark">T</span>
-            <span className="auth-brand-name">TILT<span>.</span></span>
-            <span className="auth-brand-divider" />
-            <span className="auth-brand-caption">FINANCIAL UNIVERSE</span>
+            <TiltLogo className="tilt-logo-auth" priority />
           </div>
 
           <div className="auth-intro-copy">

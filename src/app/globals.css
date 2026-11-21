@@ -1982,3 +1982,41 @@ body {
     scroll-behavior: auto;
   }
 }
+
+
+/* Unified TILT logo asset */
+.tilt-logo {
+  display: block;
+  height: auto;
+  max-width: 100%;
+  flex: 0 0 auto;
+  border-radius: 10px;
+  object-fit: contain;
+}
+
+.app-sidebar-brand {
+  display: block;
+  margin: 3px 0 34px;
+  padding: 0 2px;
+  line-height: 0;
+}
+
+.tilt-logo-sidebar { width: min(100%, 224px); }
+.tilt-logo-public { width: 164px; }
+.tilt-logo-mobile { width: 130px; }
+.tilt-logo-auth { width: min(210px, 100%); }
+
+.mobile-app-brand {
+  gap: 0;
+  line-height: 0;
+  letter-spacing: normal;
+}
+
+.auth-brand {
+  gap: 0;
+  line-height: 0;
+}
+
+@media (max-width: 390px) {
+  .tilt-logo-mobile { width: 112px; }
+}
