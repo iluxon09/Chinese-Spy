@@ -166,8 +166,9 @@ export default function MarketsPage() {
           <section className="rounded-2xl border border-amber-400/20 bg-amber-400/5 p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold tracking-[.18em] text-amber-300">MARKET NEWS</p>
-                <h2 className="mt-1 text-lg font-semibold">Events affecting this candle</h2>
+                <p className="text-xs font-semibold tracking-[.18em] text-amber-300">TILT SIMULATED NEWS & CATALYSTS</p>
+                <h2 className="mt-1 text-lg font-semibold">Fictional events affecting this candle</h2>
+                <p className="mt-1 text-xs text-slate-400">These generated headlines affect virtual prices only. Real Indian market news is shown in the panel above.</p>
               </div>
               <span className="rounded-full bg-amber-300/10 px-3 py-1 text-xs text-amber-200">
                 {market.events.length} event{market.events.length === 1 ? "" : "s"}
