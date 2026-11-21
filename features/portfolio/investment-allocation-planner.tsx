@@ -128,7 +128,7 @@ export default function InvestmentAllocationPlanner() {
   }
 
   return (
-    <main className="min-h-screen bg-[#0b111a] px-4 py-7 text-slate-100 md:px-8">
+    <main className="terminal-subpage min-h-screen bg-[#0b111a] px-4 py-7 text-slate-100 md:px-8">
       <div className="mx-auto max-w-7xl">
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5">
           <Link href="/portfolio" className="inline-flex items-center gap-2 text-sm text-slate-400 transition hover:text-white">
