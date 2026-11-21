@@ -5,13 +5,16 @@ import Link from "next/link";
 import {
   Activity,
   ArrowDownRight,
-  ArrowUpRight,
   ArrowRight,
+  ArrowUpRight,
+  BarChart3,
   BriefcaseBusiness,
+  CalendarClock,
   ChartNoAxesCombined,
   Clock3,
   Plus,
   RefreshCw,
+  Search,
   Wallet,
 } from "lucide-react";
 import {
@@ -22,15 +25,16 @@ import {
   LineChart,
   ResponsiveContainer,
   Tooltip,
-  XAxis,
-  YAxis,
 } from "recharts";
 import { useTilt } from "@/features/shared/tilt-provider";
 import RealMarketIntelligence from "@/features/market/real-market-intelligence";
 import {
   calculateLastCandleChange,
+  calculatePercentChange,
   calculateSinceStartChange,
 } from "@/lib/market/returns";
+
+type TrendPoint = { step: string; value: number | null };
 
 const money = (paise: number) =>
   new Intl.NumberFormat("en-IN", {
@@ -43,7 +47,7 @@ const percent = (value: number | null) =>
   value === null ? "—" : `${value > 0 ? "+" : ""}${value.toFixed(2)}%`;
 
 const tone = (value: number | null) =>
-  value === null ? "text-[#7b8490]" : value > 0 ? "text-[#3dd6a0]" : value < 0 ? "text-[#ff727b]" : "text-[#a1a1aa]";
+  value === null ? "terminal-neutral" : value > 0 ? "terminal-up" : value < 0 ? "terminal-down" : "terminal-neutral";
 
 function LocalDate() {
   const date = new Intl.DateTimeFormat("en-IN", {
@@ -55,6 +59,90 @@ function LocalDate() {
   }).format(new Date());
 
   return <span>{date}</span>;
+}
+
+function MiniTrend({
+  data,
+  color,
+  area = false,
+  label,
+}: {
+  data: TrendPoint[];
+  color: string;
+  area?: boolean;
+  label: string;
+}) {
+  const hasData = data.filter((point) => point.value !== null).length > 1;
+
+  if (!hasData) {
+    return (
+      <div className="terminal-mini-empty">
+        <Activity size={14} />
+        <span>Waiting for recorded candles</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="terminal-mini-chart" role="img" aria-label={label}>
+      <ResponsiveContainer width="100%" height="100%">
+        {area ? (
+          <AreaChart data={data}>
+            <defs>
+              <linearGradient id="terminalMiniArea" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={color} stopOpacity={0.22} />
+                <stop offset="100%" stopColor={color} stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <Tooltip
+              contentStyle={{
+                background: "#101010",
+                border: "1px solid #333",
+                borderRadius: 6,
+                color: "#eee",
+                fontSize: 10,
+              }}
+              labelStyle={{ color: "#888" }}
+              formatter={(value) => [value === null ? "No data" : `${Number(value).toFixed(2)}%`, label]}
+            />
+            <Area
+              type="monotone"
+              dataKey="value"
+              stroke={color}
+              strokeWidth={1.6}
+              fill="url(#terminalMiniArea)"
+              connectNulls={false}
+              dot={false}
+              isAnimationActive={false}
+            />
+          </AreaChart>
+        ) : (
+          <LineChart data={data}>
+            <Tooltip
+              contentStyle={{
+                background: "#101010",
+                border: "1px solid #333",
+                borderRadius: 6,
+                color: "#eee",
+                fontSize: 10,
+              }}
+              labelStyle={{ color: "#888" }}
+              formatter={(value) => [value === null ? "No data" : `${Number(value).toFixed(2)}%`, label]}
+            />
+            <Line
+              type="monotone"
+              dataKey="value"
+              stroke={color}
+              strokeWidth={1.6}
+              dot={false}
+              connectNulls={false}
+              isAnimationActive={false}
+            />
+          </LineChart>
+        )}
+      </ResponsiveContainer>
+    </div>
+  );
 }
 
 export default function DashboardOverview() {
@@ -110,49 +198,182 @@ export default function DashboardOverview() {
           company.initialPricePaise,
         ),
         chart: points.map((point) => ({
-          step: point.market_step,
-          price: point.pricePaise / 100,
+          step: `#${point.market_step}`,
+          value: calculatePercentChange(point.pricePaise, company.initialPricePaise),
         })),
       };
     });
   }, [histories, market]);
 
-  const composite = useMemo(() => {
-    if (!market || marketRows.length === 0) return [];
-
-    const stepSet = new Set<number>([0]);
-    const historyMaps = new Map<string, Map<number, number>>();
-
-    for (const company of marketRows) {
-      const rows = new Map<number, number>();
-      for (const point of histories[company.symbol] ?? []) {
-        rows.set(point.market_step, point.pricePaise);
-        stepSet.add(point.market_step);
-      }
-      historyMaps.set(company.symbol, rows);
+  const analytics = useMemo(() => {
+    if (marketRows.length === 0) {
+      return {
+        composite: [] as TrendPoint[],
+        breadth: [] as TrendPoint[],
+        volatility: [] as TrendPoint[],
+        currentAdvances: 0,
+        currentDeclines: 0,
+        currentUnchanged: 0,
+        currentSamples: 0,
+      };
     }
 
-    return [...stepSet]
-      .sort((a, b) => a - b)
-      .map((step) => {
-        const returns = marketRows.flatMap((company) => {
-          const price =
-            step === 0
-              ? company.initialPricePaise
-              : historyMaps.get(company.symbol)?.get(step);
-          return price && company.initialPricePaise > 0
-            ? [(price / company.initialPricePaise) * 100]
-            : [];
-        });
+    const historyBySymbol = new Map<string, Map<number, number>>();
+    const steps = new Set<number>([0]);
 
-        return {
-          step: `#${step}`,
-          index: returns.length
-            ? returns.reduce((sum, value) => sum + value, 0) / returns.length
-            : 100,
-        };
+    for (const company of marketRows) {
+      const byStep = new Map<number, number>();
+      for (const point of histories[company.symbol] ?? []) {
+        if (
+          Number.isSafeInteger(point.market_step) &&
+          Number.isFinite(point.pricePaise) &&
+          point.pricePaise > 0
+        ) {
+          byStep.set(point.market_step, point.pricePaise);
+          steps.add(point.market_step);
+        }
+      }
+      historyBySymbol.set(company.symbol, byStep);
+    }
+
+    const orderedSteps = [...steps].sort((a, b) => a - b);
+    const composite: TrendPoint[] = [];
+    const breadth: TrendPoint[] = [];
+    const volatility: TrendPoint[] = [];
+    let currentAdvances = 0;
+    let currentDeclines = 0;
+    let currentUnchanged = 0;
+    let currentSamples = 0;
+
+    for (const step of orderedSteps) {
+      if (step === 0) {
+        composite.push({ step: "#0", value: 0 });
+        continue;
+      }
+
+      const totalReturns: number[] = [];
+      const candleReturns: number[] = [];
+      let advances = 0;
+      let declines = 0;
+      let unchanged = 0;
+
+      for (const company of marketRows) {
+        const byStep = historyBySymbol.get(company.symbol);
+        const currentPrice = byStep?.get(step);
+        const previousPrice =
+          step === 1
+            ? company.initialPricePaise
+            : byStep?.get(step - 1);
+
+        if (currentPrice === undefined) continue;
+
+        const sinceStart = calculatePercentChange(
+          currentPrice,
+          company.initialPricePaise,
+        );
+        if (sinceStart !== null) totalReturns.push(sinceStart);
+
+        if (previousPrice === undefined) continue;
+        const candleReturn = calculatePercentChange(currentPrice, previousPrice);
+        if (candleReturn === null) continue;
+
+        candleReturns.push(candleReturn);
+        if (candleReturn > 0) advances += 1;
+        else if (candleReturn < 0) declines += 1;
+        else unchanged += 1;
+      }
+
+      composite.push({
+        step: `#${step}`,
+        value: totalReturns.length === marketRows.length
+          ? totalReturns.reduce((sum, value) => sum + value, 0) / totalReturns.length
+          : null,
       });
-  }, [histories, market, marketRows]);
+
+      breadth.push({
+        step: `#${step}`,
+        value: candleReturns.length > 0 ? advances - declines : null,
+      });
+
+      // RMS one-candle return is a transparent realised-movement measure,
+      // not an implied VIX or a forecast of future volatility.
+      volatility.push({
+        step: `#${step}`,
+        value: candleReturns.length > 0
+          ? Math.sqrt(
+              candleReturns.reduce((sum, value) => sum + value * value, 0) /
+                candleReturns.length,
+            )
+          : null,
+      });
+
+      if (step === orderedSteps[orderedSteps.length - 1]) {
+        currentAdvances = advances;
+        currentDeclines = declines;
+        currentUnchanged = unchanged;
+        currentSamples = candleReturns.length;
+      }
+    }
+
+    return {
+      composite,
+      breadth,
+      volatility,
+      currentAdvances,
+      currentDeclines,
+      currentUnchanged,
+      currentSamples,
+    };
+  }, [histories, marketRows]);
+
+  const sectorStats = useMemo(() => {
+    const groups = new Map<string, { total: number; count: number }>();
+
+    for (const company of marketRows) {
+      if (company.scenarioChange === null) continue;
+      const current = groups.get(company.sector) ?? { total: 0, count: 0 };
+      current.total += company.scenarioChange;
+      current.count += 1;
+      groups.set(company.sector, current);
+    }
+
+    return [...groups.entries()]
+      .map(([sector, values]) => ({
+        sector,
+        change: values.count ? values.total / values.count : null,
+      }))
+      .sort((a, b) => (b.change ?? -Infinity) - (a.change ?? -Infinity));
+  }, [marketRows]);
+
+  const movers = useMemo(
+    () => [...marketRows].sort(
+      (a, b) => (b.scenarioChange ?? -Infinity) - (a.scenarioChange ?? -Infinity),
+    ),
+    [marketRows],
+  );
+  const topGainer = movers.find((company) => company.scenarioChange !== null) ?? null;
+  const topLaggard = [...movers].reverse().find((company) => company.scenarioChange !== null) ?? null;
+
+  const positionRows = useMemo(() => {
+    if (!portfolio) return [];
+    return portfolio.snapshot.holdings
+      .filter((holding) => holding.quantity > 0)
+      .slice()
+      .sort((a, b) => b.marketValuePaise - a.marketValuePaise)
+      .slice(0, 5);
+  }, [portfolio]);
+
+  const mostActive = useMemo(() => {
+    if (!portfolio) return [];
+    return Object.entries(
+      portfolio.transactions.reduce<Record<string, number>>((counts, transaction) => {
+        counts[transaction.symbol] = (counts[transaction.symbol] ?? 0) + 1;
+        return counts;
+      }, {}),
+    )
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+  }, [portfolio]);
 
   if (loading) {
     return (
@@ -187,25 +408,20 @@ export default function DashboardOverview() {
   }
 
   const snapshot = portfolio.snapshot;
-  const advancing = marketRows.filter((company) => (company.scenarioChange ?? 0) > 0);
-  const declining = marketRows.filter((company) => (company.scenarioChange ?? 0) < 0);
-  const unchanged = marketRows.filter((company) => company.scenarioChange === 0);
-  const gainers = [...marketRows].sort(
-    (a, b) => (b.scenarioChange ?? -Infinity) - (a.scenarioChange ?? -Infinity),
+  const compositeCurrent = analytics.composite.length
+    ? analytics.composite[analytics.composite.length - 1].value
+    : null;
+  const volatilityCurrent = analytics.volatility.length
+    ? analytics.volatility[analytics.volatility.length - 1].value
+    : null;
+  const largestSectorMove = Math.max(
+    0.25,
+    ...sectorStats.map((item) => Math.abs(item.change ?? 0)),
   );
-  const laggards = [...marketRows].sort(
-    (a, b) => (a.scenarioChange ?? Infinity) - (b.scenarioChange ?? Infinity),
-  );
-  const mostActive = Object.entries(
-    portfolio.transactions.reduce<Record<string, number>>((counts, transaction) => {
-      counts[transaction.symbol] = (counts[transaction.symbol] ?? 0) + 1;
-      return counts;
-    }, {}),
-  )
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5);
   const latestTransactions = [...portfolio.transactions].slice(-6).reverse();
-  const valueCards = [
+  const marketWatch = marketRows.slice(0, 5);
+
+  const metricCards = [
     {
       label: "Portfolio value",
       value: money(snapshot.portfolioValuePaise),
@@ -235,11 +451,11 @@ export default function DashboardOverview() {
 
   return (
     <main className="terminal-dashboard">
-      <div className="terminal-dashboard-inner">
-        <header className="terminal-page-heading">
+      <div className="terminal-dashboard-inner terminal-dashboard-dense">
+        <header className="terminal-page-heading terminal-market-heading">
           <div>
-            <p className="terminal-kicker">TILT / MARKET WORKSPACE</p>
-            <h1>Welcome back, Trader</h1>
+            <p className="terminal-kicker">TILT / FINANCIAL UNIVERSE</p>
+            <h1>Welcome, Trader</h1>
             <p className="terminal-date"><LocalDate /></p>
             <div className="terminal-session-line">
               <span className="terminal-status-dot" />
@@ -250,305 +466,302 @@ export default function DashboardOverview() {
               <span>MARKET STEP <strong>{market.marketStep.toLocaleString("en-IN")}</strong></span>
             </div>
           </div>
-          <div className="terminal-page-actions">
+          <div className="terminal-page-actions terminal-market-actions">
+            <Link href="/coach" className="terminal-secondary-button">
+              <Plus size={14} /> Create research
+            </Link>
+            <Link href="/markets" className="terminal-secondary-button">
+              <Search size={14} /> Search ticker
+            </Link>
             <button
               type="button"
               onClick={startNewSimulation}
               disabled={creating}
               className="terminal-primary-button"
             >
-              <Plus size={15} />
+              <Plus size={14} />
               {creating ? "Creating…" : "New simulation"}
             </button>
-            <Link href="/trading" className="terminal-secondary-button">
-              Open trading <ArrowRight size={14} />
-            </Link>
           </div>
         </header>
 
-        {actionMessage && (
-          <p role="status" className="terminal-notice">{actionMessage}</p>
-        )}
-        {error && (
-          <p role="alert" className="terminal-error">{error}</p>
-        )}
+        <nav className="terminal-dashboard-tabs" aria-label="Dashboard sections">
+          <a className="is-active" href="#terminal-analytics">Overview</a>
+          <a href="#terminal-market-overview">Market overview</a>
+          <a href="#terminal-market-news">Research & news</a>
+          <Link href="/simulator"><CalendarClock size={12} /> Simulator</Link>
+        </nav>
 
-        <section className="terminal-kpi-grid" aria-label="Portfolio metrics">
-          {valueCards.map((card) => {
+        {actionMessage && <p role="status" className="terminal-notice">{actionMessage}</p>}
+        {error && <p role="alert" className="terminal-error">{error}</p>}
+
+        <section className="terminal-metric-strip" aria-label="Portfolio summary">
+          {metricCards.map((card) => {
             const Icon = card.icon;
             return (
-              <article className="terminal-card terminal-kpi" key={card.label}>
-                <div className="terminal-card-label">
+              <article className="terminal-card terminal-metric-chip" key={card.label}>
+                <span className="terminal-metric-icon"><Icon size={14} /></span>
+                <div className="terminal-metric-copy">
                   <span>{card.label}</span>
-                  <Icon size={15} />
+                  <strong>{card.value}</strong>
+                  <small className={card.pnl ? tone(snapshot.totalPnlPaise) : ""}>{card.detail}</small>
                 </div>
-                <p className="terminal-kpi-value">{card.value}</p>
-                <p className={card.pnl ? `terminal-kpi-detail ${tone(snapshot.totalPnlPaise)}` : "terminal-kpi-detail"}>
-                  {card.pnl && (snapshot.totalPnlPaise >= 0
-                    ? <ArrowUpRight size={13} />
-                    : <ArrowDownRight size={13} />)}
-                  {card.detail}
-                </p>
               </article>
             );
           })}
         </section>
 
-        <section className="terminal-section">
-          <div className="terminal-section-heading">
-            <div>
-              <p className="terminal-kicker">EQUITIES / TILT DEMO UNIVERSE</p>
-              <h2>Company performance</h2>
-              <p>Current simulated quotes · All eight fictional instruments</p>
+        <section id="terminal-analytics" className="terminal-six-grid" aria-label="Market analytics">
+          <article className="terminal-card terminal-analytics-card">
+            <div className="terminal-analytics-heading">
+              <div>
+                <p className="terminal-analytics-label">TILT COMPOSITE</p>
+                <h2 className={tone(compositeCurrent)}>{percent(compositeCurrent)}</h2>
+              </div>
+              <span className="terminal-analytics-icon"><ChartNoAxesCombined size={15} /></span>
             </div>
-            <Link href="/markets" className="terminal-inline-link">
-              Full market <ArrowUpRight size={14} />
-            </Link>
-          </div>
+            <MiniTrend data={analytics.composite} color="#73a7ff" area label="Equal-weighted TILT composite return" />
+            <p className="terminal-analytics-foot">Equal-weighted · Opening level 0%</p>
+          </article>
 
-          <div className="terminal-stock-grid">
-            {marketRows.map((company) => {
-              const positive = (company.scenarioChange ?? 0) >= 0;
-              const stroke = positive ? "#42d7a4" : "#ff747e";
-              return (
-                <Link
-                  href="/markets"
-                  key={company.symbol}
-                  className="terminal-card terminal-stock-card"
-                >
-                  <div className="terminal-stock-heading">
-                    <div>
-                      <strong>{company.symbol}</strong>
-                      <span>{company.name}</span>
-                    </div>
-                    <span className={positive ? "terminal-direction is-up" : "terminal-direction is-down"}>
-                      {positive ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
-                    </span>
-                  </div>
-                  <p className="terminal-stock-price">{money(company.currentPrice)}</p>
-                  <div className="terminal-sparkline">
-                    {company.chart.length > 1 ? (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={company.chart}>
-                          <Line
-                            type="monotone"
-                            dataKey="price"
-                            stroke={stroke}
-                            strokeWidth={1.7}
-                            dot={false}
-                            isAnimationActive={false}
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    ) : (
-                      <div className="terminal-sparkline-empty">Waiting for market history</div>
-                    )}
-                  </div>
-                  <div className="terminal-stock-returns">
-                    <span className={tone(company.candleChange)}>
-                      {percent(company.candleChange)} <small>last candle</small>
-                    </span>
-                    <span className={tone(company.scenarioChange)}>
-                      {percent(company.scenarioChange)} <small>since start</small>
-                    </span>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
+          <article className="terminal-card terminal-analytics-card">
+            <div className="terminal-analytics-heading">
+              <div>
+                <p className="terminal-analytics-label">MARKET BREADTH</p>
+                <h2>
+                  <span className="terminal-up">{analytics.currentAdvances} ↑</span>
+                  <span className="terminal-separator">/</span>
+                  <span className="terminal-down">{analytics.currentDeclines} ↓</span>
+                </h2>
+              </div>
+              <span className="terminal-analytics-icon"><Activity size={15} /></span>
+            </div>
+            <MiniTrend data={analytics.breadth} color="#d7a45c" label="Net advancing versus declining TILT stocks" />
+            <p className="terminal-analytics-foot">{analytics.currentSamples} of {marketRows.length} stocks with adjacent candles</p>
+          </article>
 
-        <section className="terminal-lower-grid">
-          <article className="terminal-card terminal-composite-panel">
-            <div className="terminal-section-heading compact">
+          <article className="terminal-card terminal-analytics-card">
+            <div className="terminal-analytics-heading">
               <div>
-                <p className="terminal-kicker">BREADTH / SIMULATED</p>
-                <h2>TILT market composite</h2>
-                <p>Equal-weighted index · Opening value = 100</p>
+                <p className="terminal-analytics-label">REALISED MOVE</p>
+                <h2>{volatilityCurrent === null ? "—" : `${volatilityCurrent.toFixed(2)}%`}</h2>
               </div>
-              <span className="terminal-neutral-tag">STEP {market.marketStep}</span>
+              <span className="terminal-analytics-icon"><Activity size={15} /></span>
             </div>
-            <div className="terminal-breadth-row">
+            <MiniTrend data={analytics.volatility} color="#c0c0c0" label="Root mean square one-candle stock return" />
+            <p className="terminal-analytics-foot">RMS move per candle · Not a VIX forecast</p>
+          </article>
+
+          <article className="terminal-card terminal-analytics-card terminal-sector-card">
+            <div className="terminal-analytics-heading">
               <div>
-                <strong className="is-up-text">{advancing.length}</strong>
-                <span>Advancing</span>
+                <p className="terminal-analytics-label">SECTOR PULSE</p>
+                <h2>{sectorStats.length} sectors</h2>
               </div>
-              <div>
-                <strong className="is-down-text">{declining.length}</strong>
-                <span>Declining</span>
-              </div>
-              <div>
-                <strong>{unchanged.length}</strong>
-                <span>Unchanged</span>
-              </div>
+              <span className="terminal-analytics-icon"><BarChart3 size={15} /></span>
             </div>
-            <div className="terminal-composite-chart">
-              {composite.length > 1 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={composite} margin={{ top: 8, right: 4, left: -22, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="tiltCompositeFill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#39d5a1" stopOpacity={0.2} />
-                        <stop offset="100%" stopColor="#39d5a1" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid stroke="#242424" strokeDasharray="3 5" vertical={false} />
-                    <XAxis dataKey="step" tick={{ fill: "#777", fontSize: 10 }} tickLine={false} axisLine={false} minTickGap={32} />
-                    <YAxis tick={{ fill: "#777", fontSize: 10 }} tickLine={false} axisLine={false} width={38} domain={["auto", "auto"]} />
-                    <Tooltip
-                      contentStyle={{ background: "#0c0c0c", border: "1px solid #292929", borderRadius: 8, color: "#f5f5f5", fontSize: 11 }}
-                      formatter={(value) => [`${Number(value).toFixed(2)}`, "TILT composite"]}
+            <div className="terminal-sector-bars">
+              {sectorStats.slice(0, 4).map((item) => (
+                <div className="terminal-sector-row" key={item.sector}>
+                  <span title={item.sector}>{item.sector}</span>
+                  <div className="terminal-sector-track">
+                    <i
+                      className={(item.change ?? 0) >= 0 ? "is-up" : "is-down"}
+                      style={{ width: `${Math.max(3, Math.min(100, Math.abs(item.change ?? 0) / largestSectorMove * 100))}%` }}
                     />
-                    <Area type="monotone" dataKey="index" stroke="#42d7a4" strokeWidth={2} fill="url(#tiltCompositeFill)" isAnimationActive={false} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="terminal-chart-empty">
-                  <Activity size={19} />
-                  <span>Composite history appears as market candles are recorded.</span>
+                  </div>
+                  <strong className={tone(item.change)}>{percent(item.change)}</strong>
                 </div>
-              )}
+              ))}
+              {!sectorStats.length && <p className="terminal-mini-placeholder">Sector data unavailable</p>}
             </div>
-            <p className="terminal-footnote">Derived only from TILT&apos;s persisted fictional prices. Not an NSE/BSE index.</p>
+            <p className="terminal-analytics-foot">Average return by fictional sector</p>
           </article>
 
-          <article className="terminal-card terminal-list-panel">
-            <div className="terminal-section-heading compact">
+          <article className="terminal-card terminal-analytics-card terminal-mover-card">
+            <div className="terminal-analytics-heading">
               <div>
-                <p className="terminal-kicker">LEADERS / LAGGARDS</p>
-                <h2>Top movers</h2>
-                <p>Return since simulation start</p>
+                <p className="terminal-analytics-label">TOP GAINER</p>
+                <h2>{topGainer?.symbol ?? "—"}</h2>
               </div>
-              <Link href="/markets" className="terminal-icon-link" aria-label="View full market">
-                <ArrowUpRight size={16} />
-              </Link>
+              <span className="terminal-mover-pill is-up">{percent(topGainer?.scenarioChange ?? null)}</span>
             </div>
-            <div className="terminal-mover-list">
-              {[...gainers.slice(0, 3), ...laggards.slice(0, 2)].map((company, index) => {
-                const isUp = (company.scenarioChange ?? 0) >= 0;
-                return (
-                  <div className="terminal-mover-row" key={`${company.symbol}-${index}`}>
-                    <span className="terminal-mover-symbol">{company.symbol.slice(0, 2)}</span>
-                    <span className="terminal-mover-name">
-                      <strong>{company.symbol}</strong>
-                      <small>{company.name}</small>
-                    </span>
-                    <span className={isUp ? "terminal-mover-change is-up-text" : "terminal-mover-change is-down-text"}>
-                      {percent(company.scenarioChange)}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-            <Link href="/markets" className="terminal-panel-link">
-              All instruments <ArrowRight size={13} />
-            </Link>
+            {topGainer ? (
+              <>
+                <MiniTrend data={topGainer.chart} color="#42d7a4" label={`${topGainer.symbol} price return since scenario start`} />
+                <p className="terminal-analytics-foot">{topGainer.name}</p>
+              </>
+            ) : <p className="terminal-mini-placeholder">Returns appear after price data loads</p>}
           </article>
 
-          <article className="terminal-card terminal-list-panel">
-            <div className="terminal-section-heading compact">
+          <article className="terminal-card terminal-analytics-card terminal-mover-card">
+            <div className="terminal-analytics-heading">
               <div>
-                <p className="terminal-kicker">ACTIVITY / EXECUTION</p>
-                <h2>Most active</h2>
-                <p>Based on your executed virtual orders</p>
+                <p className="terminal-analytics-label">TOP LAGGARD</p>
+                <h2>{topLaggard?.symbol ?? "—"}</h2>
               </div>
-              <Link href="/portfolio" className="terminal-icon-link" aria-label="View portfolio">
-                <BriefcaseBusiness size={15} />
-              </Link>
+              <span className="terminal-mover-pill is-down">{percent(topLaggard?.scenarioChange ?? null)}</span>
             </div>
-            {mostActive.length ? (
-              <div className="terminal-mover-list">
-                {mostActive.map(([symbol, count]) => (
-                  <div className="terminal-mover-row" key={symbol}>
-                    <span className="terminal-mover-symbol">{symbol.slice(0, 2)}</span>
-                    <span className="terminal-mover-name">
-                      <strong>{symbol}</strong>
-                      <small>Executed orders</small>
-                    </span>
-                    <span className="terminal-activity-count">{count} {count === 1 ? "order" : "orders"}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="terminal-empty-note">
-                <Activity size={18} />
-                <p>Your executed trades will appear here.</p>
-                <Link href="/trading">Place your first order <ArrowRight size={13} /></Link>
-              </div>
-            )}
-            <Link href="/portfolio" className="terminal-panel-link">
-              Transaction history <ArrowRight size={13} />
-            </Link>
+            {topLaggard ? (
+              <>
+                <MiniTrend data={topLaggard.chart} color="#ff747e" label={`${topLaggard.symbol} price return since scenario start`} />
+                <p className="terminal-analytics-foot">{topLaggard.name}</p>
+              </>
+            ) : <p className="terminal-mini-placeholder">Returns appear after price data loads</p>}
           </article>
         </section>
 
-        <section className="terminal-news-section">
-          <div className="terminal-section-heading">
-            <div>
-              <p className="terminal-kicker">RESEARCH / REAL WORLD</p>
-              <h2>Market news & intelligence</h2>
-              <p>Source-grounded Indian market news · Kept separate from fictional TILT prices</p>
+        <section id="terminal-market-overview" className="terminal-workspace-grid">
+          <article className="terminal-card terminal-market-table-panel">
+            <div className="terminal-workspace-heading">
+              <div>
+                <p className="terminal-analytics-label">EQUITIES / SIMULATION</p>
+                <h2>Market overview</h2>
+                <p>All fictional instruments · Step {market.marketStep.toLocaleString("en-IN")}</p>
+              </div>
+              <Link href="/markets" className="terminal-panel-action">Open market <ArrowUpRight size={13} /></Link>
             </div>
-            <span className="terminal-neutral-tag"><Clock3 size={12} /> SOURCED BRIEFING</span>
-          </div>
-          <RealMarketIntelligence />
-        </section>
-
-        <section className="terminal-card terminal-transactions-panel">
-          <div className="terminal-section-heading compact">
-            <div>
-              <p className="terminal-kicker">ACCOUNT / RECENT EXECUTIONS</p>
-              <h2>Recent transactions</h2>
-              <p>Your most recent completed virtual orders</p>
-            </div>
-            <Link href="/portfolio" className="terminal-inline-link">
-              View portfolio <ArrowRight size={13} />
-            </Link>
-          </div>
-          {latestTransactions.length ? (
-            <div className="terminal-table-scroll">
-              <table className="terminal-table">
+            <div className="terminal-overview-table-scroll">
+              <table className="terminal-overview-table">
                 <thead>
                   <tr>
                     <th>Instrument</th>
-                    <th>Side</th>
-                    <th>Quantity</th>
-                    <th>Execution price</th>
-                    <th>Charges</th>
-                    <th>Market step</th>
+                    <th>Price</th>
+                    <th>Last candle</th>
+                    <th>Since start</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {latestTransactions.map((transaction) => (
-                    <tr key={transaction.id}>
-                      <td className="font-semibold text-white">{transaction.symbol}</td>
+                  {marketRows.map((company) => (
+                    <tr key={company.symbol}>
                       <td>
-                        <span className={transaction.side === "BUY" ? "terminal-side is-buy" : "terminal-side is-sell"}>
-                          {transaction.side}
-                        </span>
+                        <Link href="/markets" className="terminal-table-instrument">
+                          <strong>{company.symbol}</strong>
+                          <small>{company.name}</small>
+                        </Link>
                       </td>
-                      <td>{transaction.quantity.toLocaleString("en-IN")}</td>
-                      <td>{money(transaction.executionPricePaise)}</td>
-                      <td>{money(transaction.chargesPaise)}</td>
-                      <td>#{transaction.marketStep}</td>
+                      <td className="terminal-table-price">{money(company.currentPrice)}</td>
+                      <td className={tone(company.candleChange)}>{percent(company.candleChange)}</td>
+                      <td className={tone(company.scenarioChange)}>{percent(company.scenarioChange)}</td>
                     </tr>
                   ))}
+                  {marketRows.length === 0 && (
+                    <tr><td colSpan={4} className="terminal-table-empty">No market instruments are available.</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
-          ) : (
-            <div className="terminal-empty-transactions">
-              <p>No trades yet.</p>
-              <span>Make your first virtual trade to populate your execution blotter.</span>
-              <Link href="/trading">Open trading <ArrowRight size={13} /></Link>
+            <div className="terminal-breadth-summary">
+              <span><i className="is-up" /> {analytics.currentAdvances} advancing</span>
+              <span><i className="is-down" /> {analytics.currentDeclines} declining</span>
+              <span><i className="is-flat" /> {analytics.currentUnchanged} unchanged</span>
             </div>
-          )}
+          </article>
+
+          <article className="terminal-card terminal-side-list-panel">
+            <div className="terminal-workspace-heading">
+              <div>
+                <p className="terminal-analytics-label">{positionRows.length ? "PORTFOLIO / POSITIONS" : "EQUITIES / WATCH"}</p>
+                <h2>{positionRows.length ? "Your positions" : "Market watch"}</h2>
+                <p>{positionRows.length ? "Open virtual holdings" : "Selected TILT instruments"}</p>
+              </div>
+              <Link href={positionRows.length ? "/portfolio" : "/markets"} className="terminal-small-icon-link" aria-label="Open positions or market">
+                <ArrowUpRight size={14} />
+              </Link>
+            </div>
+            <div className="terminal-side-list">
+              {positionRows.length ? positionRows.map((holding) => {
+                const company = marketRows.find((item) => item.symbol === holding.symbol);
+                const change = company?.scenarioChange ?? null;
+                return (
+                  <div className="terminal-side-row" key={holding.symbol}>
+                    <span className="terminal-ticker-avatar">{holding.symbol.slice(0, 2)}</span>
+                    <span className="terminal-side-name">
+                      <strong>{holding.symbol}</strong>
+                      <small>{holding.quantity.toLocaleString("en-IN")} shares</small>
+                    </span>
+                    <span className={tone(change)}>{percent(change)}</span>
+                  </div>
+                );
+              }) : marketWatch.map((company) => (
+                <div className="terminal-side-row" key={company.symbol}>
+                  <span className="terminal-ticker-avatar">{company.symbol.slice(0, 2)}</span>
+                  <span className="terminal-side-name">
+                    <strong>{company.symbol}</strong>
+                    <small>{company.name}</small>
+                  </span>
+                  <span className={tone(company.scenarioChange)}>{percent(company.scenarioChange)}</span>
+                </div>
+              ))}
+              {!positionRows.length && !marketWatch.length && (
+                <p className="terminal-mini-placeholder">No instruments to display.</p>
+              )}
+            </div>
+            <Link href={positionRows.length ? "/portfolio" : "/markets"} className="terminal-panel-action">
+              {positionRows.length ? "Portfolio details" : "Full watchlist"} <ArrowRight size={12} />
+            </Link>
+          </article>
+
+          <article className="terminal-card terminal-side-list-panel terminal-most-active-panel">
+            <div className="terminal-workspace-heading">
+              <div>
+                <p className="terminal-analytics-label">TRADING / ACTIVITY</p>
+                <h2>Most active</h2>
+                <p>Ranked by your executed orders</p>
+              </div>
+              <Link href="/trading" className="terminal-small-icon-link" aria-label="Open trading">
+                <Activity size={14} />
+              </Link>
+            </div>
+            {mostActive.length ? (
+              <div className="terminal-side-list">
+                {mostActive.map(([symbol, count]) => {
+                  const company = marketRows.find((item) => item.symbol === symbol);
+                  return (
+                    <div className="terminal-side-row" key={symbol}>
+                      <span className="terminal-ticker-avatar">{symbol.slice(0, 2)}</span>
+                      <span className="terminal-side-name">
+                        <strong>{symbol}</strong>
+                        <small>{company?.name ?? "TILT instrument"}</small>
+                      </span>
+                      <span className="terminal-order-count">{count} {count === 1 ? "order" : "orders"}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="terminal-side-empty">
+                <Activity size={18} />
+                <p>No executed trades yet.</p>
+                <Link href="/trading">Place first order <ArrowRight size={12} /></Link>
+              </div>
+            )}
+            <Link href="/portfolio" className="terminal-panel-action">
+              Transaction history <ArrowRight size={12} />
+            </Link>
+          </article>
+
+          <article id="terminal-market-news" className="terminal-card terminal-news-panel">
+            <div className="terminal-workspace-heading">
+              <div>
+                <p className="terminal-analytics-label">RESEARCH / REAL WORLD</p>
+                <h2>Market news</h2>
+                <p>Verified Indian market briefing</p>
+              </div>
+              <span className="terminal-news-live"><span /> SOURCED</span>
+            </div>
+            <RealMarketIntelligence compact />
+          </article>
         </section>
 
-        <footer className="terminal-footer">
-          <span>TILT FINANCIAL UNIVERSE</span>
-          <span>Virtual capital only · Simulated prices · No real-money trading</span>
-        </footer>
+        <section className="terminal-bottom-bar">
+          <div><span className="terminal-status-dot" /> Shared simulation · Step {market.marketStep}</div>
+          <div>Real-market research is informational only · Virtual capital · No real-money trading</div>
+          <div className="terminal-bottom-links">
+            <Link href="/simulator"><Clock3 size={12} /> Playback</Link>
+            <Link href="/coach"><ChartNoAxesCombined size={12} /> Risk coach</Link>
+          </div>
+        </section>
       </div>
     </main>
   );
