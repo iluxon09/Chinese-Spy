@@ -5,11 +5,76 @@
 
 begin;
 
+-- Compatibility preflight:
+-- Some existing TILT databases were created from the starter schema and have
+-- not had migration 20261121000200 applied. Add its scenario/company settings
+-- here as well so this migration can upgrade either schema state safely.
 alter table public.market_scenarios
+  add column if not exists market_drift_bps integer not null default 0
+    check (market_drift_bps between -100 and 100),
+  add column if not exists market_volatility_bps integer not null default 12
+    check (market_volatility_bps between 0 and 500),
+  add column if not exists sector_volatility_bps integer not null default 8
+    check (sector_volatility_bps between 0 and 500),
+  add column if not exists company_volatility_bps integer not null default 24
+    check (company_volatility_bps between 0 and 1000),
+  add column if not exists market_shock_probability_bps integer not null default 40
+    check (market_shock_probability_bps between 0 and 10000),
+  add column if not exists market_shock_max_bps integer not null default 110
+    check (market_shock_max_bps between 0 and 2000),
   add column if not exists stock_event_probability_bps integer not null default 1400
     check (stock_event_probability_bps between 0 and 10000),
   add column if not exists stock_event_max_bps integer not null default 300
     check (stock_event_max_bps between 0 and 2000);
+
+alter table public.companies
+  add column if not exists volatility_multiplier_bps integer not null default 10000
+    check (volatility_multiplier_bps between 3000 and 30000);
+
+-- Required by the market-step RPC below. Defining it here makes this migration
+-- safe even when the earlier intraday migration was not applied.
+create or replace function public.market_hash_bucket(
+  p_seed text,
+  p_bucket_count integer
+)
+returns integer
+language sql
+immutable
+strict
+parallel safe
+set search_path = pg_catalog
+as $
+  select mod(
+    get_byte(decode(md5(p_seed), 'hex'), 0)::bigint * 16777216
+      + get_byte(decode(md5(p_seed), 'hex'), 1)::bigint * 65536
+      + get_byte(decode(md5(p_seed), 'hex'), 2)::bigint * 256
+      + get_byte(decode(md5(p_seed), 'hex'), 3)::bigint,
+    p_bucket_count::bigint
+  )::integer;
+$;
+
+revoke all on function public.market_hash_bucket(text, integer)
+  from public, anon, authenticated;
+
+-- Preserve the intended five-minute candle interval and company sensitivities.
+update public.market_scenarios
+set interval_ms = 300000
+where id = 'tilt-demo-v1';
+
+update public.companies
+set volatility_multiplier_bps = case symbol
+  when 'ASTE' then 10500
+  when 'NVMT' then 14000
+  when 'BGTC' then 13500
+  when 'HVFD' then 6500
+  when 'ZNFC' then 12000
+  when 'MEDX' then 8500
+  when 'URBN' then 9000
+  when 'LOGX' then 11000
+  else volatility_multiplier_bps
+end
+where symbol in ('ASTE', 'NVMT', 'BGTC', 'HVFD', 'ZNFC', 'MEDX', 'URBN', 'LOGX');
+
 
 -- Increase ordinary five-minute movement and introduce frequent, bounded,
 -- stock-specific catalyst shocks for the active fictional demo scenario.
