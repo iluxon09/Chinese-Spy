@@ -116,11 +116,7 @@ export default function RealMarketIntelligence({ compact = false }: { compact?: 
   const [briefingError, setBriefingError] = useState("");
   const [briefingRequested, setBriefingRequested] = useState(false);
 
-  const loadPulse = useCallback(async (refreshView = false) => {
-    if (refreshView) {
-      setPulseRefreshing(true);
-      setPulseError("");
-    }
+  const loadPulse = useCallback(async () => {
     try {
       const response = await fetch("/api/market-pulse", {
         method: "GET",
@@ -144,6 +140,12 @@ export default function RealMarketIntelligence({ compact = false }: { compact?: 
       setPulseRefreshing(false);
     }
   }, []);
+
+  const refreshPulse = useCallback(() => {
+    setPulseRefreshing(true);
+    setPulseError("");
+    void loadPulse();
+  }, [loadPulse]);
 
   const loadBriefing = useCallback(async () => {
     setBriefingRequested(true);
@@ -217,7 +219,7 @@ export default function RealMarketIntelligence({ compact = false }: { compact?: 
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => void loadPulse(true)}
+            onClick={refreshPulse}
             disabled={pulseLoading || pulseRefreshing}
             aria-label="Reload the stored market snapshot"
             title="Reload stored snapshot (does not trigger a market-data fetch)"
