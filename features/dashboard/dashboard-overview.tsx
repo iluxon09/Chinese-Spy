@@ -4,7 +4,6 @@ import { useId, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Activity,
-  ArrowDownRight,
   ArrowRight,
   ArrowUpRight,
   BarChart3,
