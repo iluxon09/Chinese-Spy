@@ -7,6 +7,7 @@ export function GET() {
     moneyUnit: "All monetary fields ending in _paise are integer paise; 100 paise = ₹1.",
     endpoints: [
       { method: "GET", path: "/api/health", purpose: "Liveness check." },
+      { method: "GET", path: "/api/market-insights", purpose: "Authenticated Google Search-grounded Indian market briefing; one refresh per 5 minutes and 20 per UTC day per user." },
       { method: "GET", path: "/api/market", purpose: "Read scenario, fictional companies, events and initial prices." },
       { method: "GET", path: "/api/sessions", purpose: "List the signed-in user's simulation sessions." },
       { method: "POST", path: "/api/sessions", body: { scenarioId: "tilt-demo-v1" }, purpose: "Create a ₹10,00,000 simulation session." },
