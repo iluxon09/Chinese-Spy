@@ -116,17 +116,22 @@ export default function SimulatorDashboard() {
         {message && <p role="status" className="rounded-xl bg-white/5 p-3 text-sm text-slate-300">{message}</p>}
 
         <section className="grid gap-4 md:grid-cols-2">
-          {market.events.length ? market.events.map((event) => (
-            <article key={event.id} className="rounded-2xl border border-white/10 bg-[#101827] p-5">
-              <p className="text-xs text-amber-300">STEP {event.market_step} NEWS</p>
-              <h2 className="mt-2 font-semibold">{event.title}</h2>
-              <p className="mt-2 text-sm text-slate-400">{event.description}</p>
-              <p className="mt-3 text-xs text-slate-500">
-                {event.symbol ?? event.sector} · {(event.effect_bps / 100).toFixed(2)}% effect
-              </p>
-            </article>
-          )) : (
-            <p className="text-sm text-slate-500">No scheduled news this candle. Baseline market volatility continues.</p>
+          {market.events.length ? market.events.map((event) => {
+            const simulated = event.id.startsWith("sim:");
+            return (
+              <article key={event.id} className="rounded-2xl border border-white/10 bg-[#101827] p-5">
+                <p className={simulated ? "text-xs font-semibold tracking-wide text-sky-300" : "text-xs font-semibold tracking-wide text-amber-300"}>
+                  {simulated ? "SIMULATED CATALYST" : "SCHEDULED NEWS"} · STEP {event.market_step}
+                </p>
+                <h2 className="mt-2 font-semibold">{event.title}</h2>
+                <p className="mt-2 text-sm text-slate-400">{event.description}</p>
+                <p className="mt-3 text-xs text-slate-500">
+                  {event.symbol ?? event.sector} · {event.effect_bps > 0 ? "+" : ""}{(event.effect_bps / 100).toFixed(2)}% simulated impact
+                </p>
+              </article>
+            );
+          }) : (
+            <p className="text-sm text-slate-500">No catalyst rolled on this candle. Continuous market, sector and company volatility still applies.</p>
           )}
         </section>
 
