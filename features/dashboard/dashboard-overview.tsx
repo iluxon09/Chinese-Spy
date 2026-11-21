@@ -299,7 +299,7 @@ export default function DashboardOverview() {
             <div>
               <p className="terminal-kicker">EQUITIES / TILT DEMO UNIVERSE</p>
               <h2>Company performance</h2>
-              <p>Real-time within the simulation · All eight fictional instruments</p>
+              <p>Current simulated quotes · All eight fictional instruments</p>
             </div>
             <Link href="/markets" className="terminal-inline-link">
               Full market <ArrowUpRight size={14} />
@@ -409,7 +409,7 @@ export default function DashboardOverview() {
                 </div>
               )}
             </div>
-            <p className="terminal-footnote">Derived only from TILT's persisted fictional prices. Not an NSE/BSE index.</p>
+            <p className="terminal-footnote">Derived only from TILT&apos;s persisted fictional prices. Not an NSE/BSE index.</p>
           </article>
 
           <article className="terminal-card terminal-list-panel">
