@@ -2763,3 +2763,38 @@ body {
   .terminal-session-line { gap: 7px; font-size: 8px; }
   .terminal-header-actions { gap: 6px; }
 }
+
+
+
+/* Harmonise existing workspace panels with the black terminal shell. */
+.terminal-subpage .bg-\[\#101827\],
+.terminal-subpage .bg-\[\#111a2b\],
+.terminal-subpage .bg-\[\#0b111a\],
+.terminal-subpage .bg-\[\#080D19\],
+.terminal-subpage .bg-\[\#080d18\] {
+  border-color: #252525 !important;
+  background-color: #090909 !important;
+}
+.terminal-subpage .border-white\/5 { border-color: #202020; }
+.terminal-subpage .border-white\/10 { border-color: #282828; }
+.terminal-subpage .bg-white\/5 { background-color: rgba(255,255,255,.035); }
+.terminal-subpage input,
+.terminal-subpage select,
+.terminal-subpage textarea {
+  border-color: #303030;
+  color: #ececec;
+  background-color: #101010;
+}
+.terminal-subpage input::placeholder,
+.terminal-subpage textarea::placeholder { color: #686868; }
+.terminal-subpage button:disabled { opacity: .48; }
+@media (max-width: 760px) {
+  .terminal-more-popover {
+    position: fixed;
+    top: 142px;
+    left: 12px;
+    right: auto;
+    max-height: min(65vh, 420px);
+    overflow-y: auto;
+  }
+}
