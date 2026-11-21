@@ -13,7 +13,7 @@ export default function LessonPage() {
 
   if (!lesson) {
     return (
-      <main className="min-h-screen bg-[#080d18] p-8 text-white">
+      <main className="terminal-subpage min-h-screen bg-[#080d18] p-8 text-white">
         <h1 className="text-2xl font-bold">Lesson not found</h1>
         <Link href="/academy" className="mt-4 inline-block text-cyan-400">
           Return to Academy
@@ -23,7 +23,7 @@ export default function LessonPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#080d18] px-5 py-8 text-white md:px-10">
+    <main className="terminal-subpage min-h-screen bg-[#080d18] px-5 py-8 text-white md:px-10">
       <div className="mx-auto max-w-4xl">
         <Link href="/academy" className="mb-8 inline-flex items-center gap-2 text-sm text-slate-400">
           <ArrowLeft size={16} /> Back to Academy
