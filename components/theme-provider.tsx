@@ -1,12 +1,9 @@
 "use client";
 
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
-  useMemo,
-  useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 import { Moon, Sun } from "lucide-react";
@@ -14,13 +11,24 @@ import { Moon, Sun } from "lucide-react";
 export type TiltTheme = "dark" | "light";
 
 const STORAGE_KEY = "tilt-theme";
+const subscribers = new Set<() => void>();
 
-type ThemeContextValue = {
-  theme: TiltTheme;
-  toggleTheme: () => void;
-};
+function subscribe(listener: () => void) {
+  subscribers.add(listener);
+  return () => subscribers.delete(listener);
+}
 
-const ThemeContext = createContext<ThemeContextValue | null>(null);
+function notifySubscribers() {
+  subscribers.forEach((listener) => listener());
+}
+
+function getThemeSnapshot(): TiltTheme {
+  return document.documentElement.dataset.theme === "light" ? "light" : "dark";
+}
+
+function getServerThemeSnapshot(): TiltTheme {
+  return "dark";
+}
 
 function applyTheme(theme: TiltTheme, persist = true) {
   document.documentElement.dataset.theme = theme;
@@ -32,23 +40,16 @@ function applyTheme(theme: TiltTheme, persist = true) {
       // The visual theme still changes when browser storage is unavailable.
     }
   }
+
+  notifySubscribers();
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<TiltTheme>("dark");
-
   useEffect(() => {
-    const initialTheme: TiltTheme =
-      document.documentElement.dataset.theme === "light" ? "light" : "dark";
-
-    setTheme(initialTheme);
-    applyTheme(initialTheme, false);
-
     function handleStorage(event: StorageEvent) {
       if (event.key !== STORAGE_KEY) return;
 
       const nextTheme: TiltTheme = event.newValue === "light" ? "light" : "dark";
-      setTheme(nextTheme);
       applyTheme(nextTheme, false);
     }
 
@@ -56,24 +57,21 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("storage", handleStorage);
   }, []);
 
-  const toggleTheme = useCallback(() => {
-    const nextTheme: TiltTheme = theme === "dark" ? "light" : "dark";
-    setTheme(nextTheme);
-    applyTheme(nextTheme);
-  }, [theme]);
-
-  const value = useMemo(() => ({ theme, toggleTheme }), [theme, toggleTheme]);
-
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+  return <>{children}</>;
 }
 
 export function ThemeToggle({ compact = false }: { compact?: boolean }) {
-  const context = useContext(ThemeContext);
-  if (!context) {
-    throw new Error("ThemeToggle must be rendered inside ThemeProvider.");
-  }
+  const theme = useSyncExternalStore(
+    subscribe,
+    getThemeSnapshot,
+    getServerThemeSnapshot,
+  );
 
-  const { theme, toggleTheme } = context;
+  const toggleTheme = useCallback(() => {
+    const nextTheme: TiltTheme = theme === "dark" ? "light" : "dark";
+    applyTheme(nextTheme);
+  }, [theme]);
+
   const nextTheme = theme === "dark" ? "light" : "dark";
   const ThemeIcon = theme === "dark" ? Sun : Moon;
 
