@@ -51,7 +51,10 @@ function lastCandleChange(
     previousPricePaise = initialPricePaise;
   }
 
-  return previousPricePaise === null
+  // Never label a comparison to an older, gapped data point as the last candle.
+  if (previousStep !== currentStep - 1 && currentStep !== 1) return null;
+
+  return previousPricePaise === null || previousPricePaise <= 0
     ? null
     : percentChange(currentPricePaise, previousPricePaise);
 }
