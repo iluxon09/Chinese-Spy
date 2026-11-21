@@ -56,6 +56,7 @@ function formatAnswer(
           : new URL(url).hostname;
 
       if (!sourceByUrl.has(url)) {
+        if (sourceByUrl.size >= 12) continue;
         sourceByUrl.set(url, { title, url });
       }
 
