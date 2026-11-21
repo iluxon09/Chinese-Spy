@@ -192,7 +192,10 @@ export default function RealMarketIntelligence({ compact = false }: { compact?: 
   }, []);
 
   useEffect(() => {
-    void loadPulse();
+    const request = window.setTimeout(() => {
+      void loadPulse();
+    }, 0);
+    return () => window.clearTimeout(request);
   }, [loadPulse]);
 
   return (
