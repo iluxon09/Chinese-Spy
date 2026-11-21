@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react
 import Link from "next/link";
 import { AlertTriangle, ArrowRight, CheckCircle2, LoaderCircle, ShieldCheck, TrendingDown } from "lucide-react";
 import type { RiskQuestionnaireAnswers } from "@/lib/crash-replay/risk-profile";
+import PageState from "@/components/ui/page-state";
 import {
   hasIdenticalPricePath,
   measureReplayAttempt,
@@ -381,12 +382,7 @@ export default function CrashReplayExperience() {
   const statedReaction = run ? reactionLabel[run.questionnaire.reactionToFall] : "";
 
   if (loading) {
-    return (
-      <main className="min-h-[70vh] p-8 text-slate-300">
-        <LoaderCircle className="mb-3 animate-spin text-emerald-300" />
-        Loading your crash replay…
-      </main>
-    );
+    return <PageState variant="loading" title="Loading crash replay" description="Restoring your risk assessment, attempts and comparison data." />;
   }
 
   return (
@@ -405,7 +401,14 @@ export default function CrashReplayExperience() {
           </Link>
         </header>
 
-        {error && <p role="alert" className="rounded-xl border border-red-400/25 bg-red-400/5 p-4 text-sm text-red-200">{error}</p>}
+        {error && (
+          <div role="alert" className="tilt-recovery-message">
+            <p>{error}</p>
+            <button type="button" onClick={() => void initialize()} disabled={busy || loading} className="tilt-inline-retry">
+              Retry / reload attempt
+            </button>
+          </div>
+        )}
         {notice && <p role="status" className="rounded-xl border border-emerald-400/20 bg-emerald-400/5 p-4 text-sm text-emerald-100">{notice}</p>}
 
         {view === "assessment" && (
