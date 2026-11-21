@@ -1755,3 +1755,230 @@ html[data-theme="dark"] .tilt-public .theme-toggle-icon { color: #d6eb8b; }
   .auth-theme-toggle { top: 17px; right: 18px; }
   .mobile-app-header-actions { gap: 7px; }
 }
+
+
+/* ==========================================================================
+   TILT SHELL + SCROLL CONTRACT
+   One document scroll for page content. Only the sidebar nav and mobile menu
+   may scroll independently; no viewport-height page wrapper is added below
+   the mobile navigation bar.
+   ========================================================================== */
+
+:root {
+  --tilt-mobile-header-height: 66px;
+  --tilt-public-header-height: 74px;
+  --tilt-sidebar-width: 272px;
+}
+
+html {
+  min-height: 100%;
+  scroll-padding-top: 1.25rem;
+  scroll-behavior: smooth;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100%;
+  overflow-x: clip;
+}
+
+.app-frame {
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: clip;
+}
+
+.app-frame-body {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: clip;
+}
+
+.app-sidebar {
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  width: var(--tilt-sidebar-width);
+  min-width: var(--tilt-sidebar-width);
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
+  flex: 0 0 var(--tilt-sidebar-width);
+  overflow: hidden;
+}
+
+.app-sidebar-nav {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+}
+
+.app-sidebar-footer {
+  min-height: 0;
+  flex: 0 0 auto;
+}
+
+.app-main-content {
+  min-width: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  flex: 1 1 auto;
+  overflow-x: clip;
+}
+
+.app-main-content > main {
+  min-width: 0;
+  scroll-margin-top: 1rem;
+}
+
+/* Keep the public pricing header outside the main content's viewport height. */
+.tilt-public {
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: clip;
+}
+
+.tilt-public main[class~="min-h-screen"] {
+  min-height: calc(100vh - var(--tilt-public-header-height));
+  min-height: calc(100dvh - var(--tilt-public-header-height));
+}
+
+.tilt-public-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+/* The mobile header is part of document flow; content height excludes it. */
+.mobile-app-header {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  min-height: var(--tilt-mobile-header-height);
+}
+
+.mobile-navigation-backdrop {
+  position: fixed;
+  inset: var(--tilt-mobile-header-height) 0 0;
+  z-index: 48;
+  width: 100%;
+  border: 0;
+  background: rgba(3, 10, 18, .58);
+  cursor: default;
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+.mobile-navigation-panel {
+  position: fixed;
+  top: var(--tilt-mobile-header-height);
+  right: 0;
+  left: 0;
+  z-index: 55;
+  width: 100%;
+  max-height: calc(100vh - var(--tilt-mobile-header-height));
+  max-height: calc(100dvh - var(--tilt-mobile-header-height));
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-app-header-actions {
+  flex-shrink: 0;
+}
+
+.tilt-product main[class~="min-h-screen"],
+.tilt-product main.dashboard-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Native table scrollers are deliberately horizontal only. */
+.tilt-product [class~="overflow-x-auto"] {
+  max-width: 100%;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tilt-product table {
+  max-width: 100%;
+}
+
+.tilt-product [id] {
+  scroll-margin-top: 1rem;
+}
+
+@media (max-width: 1023px) {
+  .app-frame-body {
+    min-height: calc(100vh - var(--tilt-mobile-header-height));
+    min-height: calc(100dvh - var(--tilt-mobile-header-height));
+  }
+
+  .app-main-content {
+    min-height: calc(100vh - var(--tilt-mobile-header-height));
+    min-height: calc(100dvh - var(--tilt-mobile-header-height));
+  }
+
+  .tilt-product main[class~="min-h-screen"],
+  .tilt-product main.dashboard-page {
+    min-height: calc(100vh - var(--tilt-mobile-header-height));
+    min-height: calc(100dvh - var(--tilt-mobile-header-height));
+  }
+
+  .tilt-product {
+    scroll-padding-top: calc(var(--tilt-mobile-header-height) + 1rem);
+  }
+
+  .tilt-product [id] {
+    scroll-margin-top: calc(var(--tilt-mobile-header-height) + 1rem);
+  }
+
+}
+
+@media (min-width: 1024px) {
+  .app-sidebar {
+    display: flex;
+  }
+
+  .mobile-app-header,
+  .mobile-navigation-panel,
+  .mobile-navigation-backdrop {
+    display: none;
+  }
+}
+
+@media (max-height: 760px) and (min-width: 1024px) {
+  .app-sidebar {
+    padding-top: 18px;
+    padding-bottom: 14px;
+  }
+
+  .app-sidebar-brand {
+    margin-bottom: 22px;
+  }
+
+  .app-sidebar-group {
+    margin-bottom: 12px;
+  }
+
+  .app-sidebar-footer {
+    gap: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

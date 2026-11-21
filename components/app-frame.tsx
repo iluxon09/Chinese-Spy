@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import AppSidebar, { appNavigation } from "@/components/app-sidebar";
@@ -12,6 +12,31 @@ import { ThemeToggle } from "@/components/theme-provider";
 export default function AppFrame({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const desktopViewport = window.matchMedia("(min-width: 1024px)");
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setMobileMenuOpen(false);
+    }
+
+    function handleViewportChange(event: MediaQueryListEvent) {
+      if (event.matches) setMobileMenuOpen(false);
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    desktopViewport.addEventListener("change", handleViewportChange);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+      desktopViewport.removeEventListener("change", handleViewportChange);
+    };
+  }, [mobileMenuOpen]);
 
   if (pathname === "/login") {
     return (
@@ -57,7 +82,7 @@ export default function AppFrame({ children }: { children: ReactNode }) {
             </div>
           </div>
         </header>
-        <div id="public-main-content">{children}</div>
+        <div id="public-main-content" tabIndex={-1}>{children}</div>
       </div>
     );
   }
@@ -87,33 +112,41 @@ export default function AppFrame({ children }: { children: ReactNode }) {
       </header>
 
       {mobileMenuOpen && (
-        <div className="mobile-navigation-panel" id="mobile-app-navigation">
-          <nav className="mobile-navigation-list" aria-label="Mobile navigation">
-            {appNavigation.map(({ label, href, icon: Icon }) => {
-              const active = href === "/"
-                ? pathname === "/"
-                : pathname === href || pathname.startsWith(`${href}/`);
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  aria-current={active ? "page" : undefined}
-                  className={active ? "mobile-nav-link is-active" : "mobile-nav-link"}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <Icon size={18} aria-hidden="true" />
-                  <span>{label}</span>
-                </Link>
-              );
-            })}
-          </nav>
-          <AccountControl compact />
-        </div>
+        <>
+          <button
+            type="button"
+            className="mobile-navigation-backdrop"
+            aria-label="Close navigation"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          <div className="mobile-navigation-panel" id="mobile-app-navigation">
+            <nav className="mobile-navigation-list" aria-label="Mobile navigation">
+              {appNavigation.map(({ label, href, icon: Icon }) => {
+                const active = href === "/"
+                  ? pathname === "/"
+                  : pathname === href || pathname.startsWith(`${href}/`);
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    aria-current={active ? "page" : undefined}
+                    className={active ? "mobile-nav-link is-active" : "mobile-nav-link"}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Icon size={18} aria-hidden="true" />
+                    <span>{label}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+            <AccountControl compact />
+          </div>
+        </>
       )}
 
       <div className="app-frame-body">
         <AppSidebar />
-        <div className="app-main-content" id="main-content">{children}</div>
+        <div className="app-main-content" id="main-content" tabIndex={-1}>{children}</div>
       </div>
     </div>
   );
