@@ -47,14 +47,14 @@ export default function AppFrame({ children }: { children: ReactNode }) {
               </span>
             </Link>
             <div className="tilt-public-header-actions">
-            <ThemeToggle compact />
-            <Link
-              href="/login"
-              className="inline-flex min-h-10 items-center justify-center rounded-lg px-4 py-2 text-sm font-bold transition"
-            >
-              Sign in / Open workspace
-            </Link>
-          </div>
+              <ThemeToggle compact />
+              <Link
+                href="/login"
+                className="inline-flex min-h-10 items-center justify-center rounded-lg px-4 py-2 text-sm font-bold transition"
+              >
+                Sign in / Open workspace
+              </Link>
+            </div>
           </div>
         </header>
         <div id="public-main-content">{children}</div>
@@ -74,14 +74,14 @@ export default function AppFrame({ children }: { children: ReactNode }) {
         <div className="mobile-app-header-actions">
           <ThemeToggle compact />
           <button
-          type="button"
-          className="mobile-menu-toggle"
-          onClick={() => setMobileMenuOpen((open) => !open)}
-          aria-label={mobileMenuOpen ? "Close navigation" : "Open navigation"}
-          aria-expanded={mobileMenuOpen}
-          aria-controls="mobile-app-navigation"
-        >
-          {mobileMenuOpen ? <X size={21} /> : <Menu size={21} />}
+            type="button"
+            className="mobile-menu-toggle"
+            onClick={() => setMobileMenuOpen((open) => !open)}
+            aria-label={mobileMenuOpen ? "Close navigation" : "Open navigation"}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-app-navigation"
+          >
+            {mobileMenuOpen ? <X size={21} /> : <Menu size={21} />}
           </button>
         </div>
       </header>

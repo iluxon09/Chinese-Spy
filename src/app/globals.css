@@ -1456,7 +1456,6 @@ html[data-theme="dark"] .tilt-product main h2,
 html[data-theme="dark"] .tilt-product main h3 {
   color: #edf3f7;
 }
-html[data-theme="dark"] .tilt-product main a { color: inherit; }
 
 html[data-theme="dark"] .tilt-product [class~="bg-[#080D19]"],
 html[data-theme="dark"] .tilt-product [class~="bg-[#080d18]"],
