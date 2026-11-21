@@ -15,7 +15,7 @@ export default function AcademyDashboard() {
   const lessons = getAllLessons();
 
   return (
-    <main className="min-h-screen bg-[#080d18] px-4 py-8 text-white sm:px-8">
+    <main className="terminal-subpage min-h-screen bg-[#080d18] px-4 py-8 text-white sm:px-8">
       <div className="mx-auto max-w-7xl space-y-8">
         <header>
           <p className="text-sm text-cyan-400">TILT LEARNING HUB</p>
