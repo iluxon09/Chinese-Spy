@@ -19,7 +19,9 @@ async function context(db:Awaited<ReturnType<typeof getAuthenticatedSupabase>>["
   db.from("market_events").select("market_step,title,description,effect_bps,symbol,sector").eq("scenario_id",s.scenario_id).lte("market_step",s.market_step).order("market_step",{ascending:false}).limit(4)
  ]);
  if([h,p,c,t,e].some(x=>x.error))throw new Error("Could not load portfolio context.");
- const holdings=(h.data??[]) as Row[],prices=new Map(((p.data??[]) as Row[]).map(x=>[String(x.symbol),n(x.price_paise)])),companies=new Map(((c.data??[]) as Row[]).map(x=>[String(x.symbol),x]));
+ const holdings=(h.data??[]) as Row[];
+ const prices=new Map<string,number>(((p.data??[]) as Row[]).map(x=>[String(x.symbol),n(x.price_paise)] as const));
+ const companies=new Map<string,Row>(((c.data??[]) as Row[]).map(x=>[String(x.symbol),x] as const));
  const positions=holdings.map(x=>{const symbol=String(x.symbol),quantity=n(x.quantity),price=prices.get(symbol),value=price===undefined?null:price*quantity,cost=n(x.total_cost_paise),co=companies.get(symbol);return{symbol,name:String(co?.name??symbol),sector:String(co?.sector??"Unknown"),quantity,currentPriceRupees:price===undefined?null:rs(price),marketValueRupees:value===null?null:rs(value),costBasisRupees:rs(cost),unrealisedPnlRupees:value===null?null:rs(value-cost)};}).filter(x=>x.quantity>0);
  const known=positions.reduce((sum,x)=>sum+(x.marketValueRupees??0),0),cash=rs(s.cash_balance_paise);
  return{available:true,scenario:"TILT fictional demo market",marketStep:n(s.market_step),startingCapitalRupees:rs(s.starting_capital_paise),cashBalanceRupees:cash,knownHoldingsValueRupees:Number(known.toFixed(2)),knownPortfolioValueRupees:Number((cash+known).toFixed(2)),positions,
