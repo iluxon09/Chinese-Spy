@@ -8,7 +8,7 @@ TILT is an educational, virtual stock-market simulator. It combines a determinis
 
 - Repository: https://github.com/iluxon09/Chinese-Spy
 - Integrated application: https://github.com/iluxon09/Chinese-Spy/tree/tilt-integration
-- Production application: https://chinese-spy-dasmadhumita874-5444.vercel.app
+- Last known production deployment (may not include the latest integration branch): https://chinese-spy-dasmadhumita874-5444.vercel.app
 - Pricing and revenue-model preview: https://chinese-spy-dasmadhumita874-5444.vercel.app/pricing
 - Vercel deployment guide: [docs/DEPLOY_VERCEL.md](docs/DEPLOY_VERCEL.md)
 - Team branch status: [docs/BRANCH_INTEGRATION_STATUS.md](docs/BRANCH_INTEGRATION_STATUS.md)
@@ -44,7 +44,7 @@ TILT is an educational, virtual stock-market simulator. It combines a determinis
 
 ### Requirements
 
-- Node.js 22.12 or newer
+- Node.js 22.12.x or a later Node.js 22.x release
 - npm 10 or newer
 - A Supabase project for the authenticated workspace
 
@@ -55,6 +55,8 @@ git clone --branch tilt-integration https://github.com/iluxon09/Chinese-Spy.git
 cd Chinese-Spy
 npm install
 ```
+
+`npm install` keeps `package-lock.json` aligned after dependency changes. Commit the regenerated lockfile. Once it is aligned, use `npm ci` to verify a clean, reproducible install.
 
 ### 2. Configure Supabase
 
@@ -80,11 +82,17 @@ In Supabase Dashboard → SQL Editor, apply migrations in timestamp order after 
 2. `supabase/migrations/20261121000000_continuous_market_volatility.sql` — continuous market movement model.
 3. `supabase/migrations/20261121000100_crash_replay.sql` — historical migration retained to preserve migration history.
 4. `supabase/migrations/20261121000200_intraday_market_volatility.sql` — five-minute price movement, company volatility settings and concurrent candle generation.
-5. `supabase/migrations/20261121000300_remove_crash_replay.sql` — removes the retired replay scenario, sessions, table and RPCs.
+5. `supabase/migrations/20261121000300_remove_crash_replay.sql` — removes the retired replay scenario, sessions, table and RPCs while retaining the historical migration file.
+6. `supabase/migrations/20261121000400_ai_coach_rate_limits.sql` — adds atomic per-user AI Coach limits (6 requests per rolling minute and 50 per UTC day).
+7. `supabase/migrations/20261121000500_market_step_cap.sql` — prevents a simulation session from advancing beyond 10,000 market steps, bounding shared price-history growth.
 
-Run each migration only once and do not edit or re-run an already-applied migration against a live database. For an existing project that already applied the older migrations, apply only the new `20261121000300_remove_crash_replay.sql` cleanup migration. For a fresh database, apply all migration files in timestamp order; the old replay migration is immediately cleaned up by the final migration.
+Run each migration only once and do not edit or re-run an already-applied migration against a live database. For a fresh database, apply all seven migrations in timestamp order. For a database that already has migrations `20261120000000` through `20261121000300` applied, apply only `20261121000400` and `20261121000500`. For any other existing migration history, inspect the Supabase migration history first and apply only missing migrations; do not blindly rerun the full list.
 
-### 4. Start the app
+#### Demo account readiness
+
+Supabase's built-in email sender may throttle confirmation emails during a live event. Do not depend on creating a brand-new account during the judging session. Pre-create two or three separate demo accounts and verify their sign-in beforehand, or configure a project-owned SMTP provider. Disabling email confirmation should be a deliberate, temporary demo-project setting, not a production default.
+
+## 4. Start the app
 
 ```cmd
 npm run dev
@@ -133,10 +141,10 @@ The GitHub Actions workflow `.github/workflows/ci.yml` runs the same checks on p
 - The frontend has one shared `TiltDataProvider`. It loads the active session snapshot once per authenticated session; route changes do not restart the bootstrap. A sign-out clears in-memory account data. Simulator playback can advance five-minute candles automatically at a user-selected pace; the next tick is scheduled only after the previous market write and snapshot refresh finish.
 - Public pricing routes bypass the simulation bootstrap and authentication redirect. They do not create sessions, start market playback or contact Supabase.
 - Behavioral Analysis is a pure, read-only analysis layer. Its adapter converts backend paise values to rupees exactly once and maps pattern recommendations to stable Academy lesson IDs.
-- The AI Risk Coach calls Gemini from an authenticated server route. It receives read-only context for the signed-in user's active TILT simulation: portfolio, holdings, prices, recent simulated trades and market events. Conversation history stays in browser memory and is not saved to TILT tables.
+- The AI Risk Coach calls Gemini from an authenticated server route. It receives read-only context for the signed-in user's active TILT simulation: portfolio, holdings, prices, recent simulated trades and market events. Conversation history stays in browser memory and is not saved to TILT tables. A database RPC enforces a per-user limit of 6 requests per rolling minute and 50 requests per UTC day.
 - Configure `GEMINI_API_KEY` in `.env.local` and Vercel Project → Settings → Environment Variables. Keep the key server-side; `GEMINI_MODEL` is optional and defaults to `gemini-3.8-flash`.
-- The intraday market model requires `supabase/migrations/20261121000200_intraday_market_volatility.sql`. It is deterministic by scenario/step so all sessions see the same stored prices; the retired replay scenario is removed by the final cleanup migration; its historical migration remains only to preserve migration ordering. See [docs/MARKET_MODEL.md](docs/MARKET_MODEL.md).
-- Behavioral Analysis uses configurable heuristics over the user's simulation history. It does not diagnose personality or infer intent; insufficient data is distinct from a negative finding.
+- The intraday market model requires `supabase/migrations/20261121000200_intraday_market_volatility.sql`. It is deterministic by scenario/step so all sessions see the same stored prices. The database enforces a 10,000-step ceiling per simulation session to bound shared price-history growth. The retired replay scenario is removed by the cleanup migration; its historical migration remains only to preserve migration ordering. See [docs/MARKET_MODEL.md](docs/MARKET_MODEL.md).
+- Behavioral Analysis uses configurable, experimental heuristics over the user's simulation history; its thresholds have not been empirically validated. It does not diagnose personality or infer intent; insufficient data is distinct from a negative finding.
 - Member 4's alternative company/scenario seed uses symbols that do not match the active eight-company database market; it is preserved as inactive reference data and is not seeded into Supabase.
 
 ## Known scope boundaries
@@ -147,4 +155,4 @@ The GitHub Actions workflow `.github/workflows/ci.yml` runs the same checks on p
 - Revenue-model prices and willingness to pay have not been validated; the pricing page intentionally publishes no paid rupee rates.
 - The mock checkout is a local UI demonstration only. It does not capture enquiries, process payments, create orders or activate paid features.
 - Instructor guides, cohort reports, paid cohort facilitation and site-licence entitlements are proposed commercial deliverables, not currently implemented product capabilities.
-- Production Supabase migration status and full authenticated workspace behavior must be verified against the intended Supabase project before a public product launch.
+- Production Supabase migration status and full authenticated workspace behavior must be verified against the intended Supabase project before a public product launch. Current automated tests cover pure logic; there is no end-to-end browser suite or live SQL/RPC integration suite yet.
