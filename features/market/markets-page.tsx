@@ -30,16 +30,50 @@ const money = (paise: number) =>
     maximumFractionDigits: 2,
   }).format(paise / 100);
 
-function lastCandleChange(points: readonly { pricePaise: number }[]) {
-  const current = points[points.length - 1];
-  const previous = points[points.length - 2];
-  if (!current || !previous || previous.pricePaise <= 0) return null;
-  return ((current.pricePaise - previous.pricePaise) / previous.pricePaise) * 100;
+function percentChange(currentPaise: number, referencePaise: number) {
+  if (
+    !Number.isFinite(currentPaise) ||
+    !Number.isFinite(referencePaise) ||
+    currentPaise < 0 ||
+    referencePaise <= 0
+  ) {
+    return null;
+  }
+
+  return ((currentPaise - referencePaise) / referencePaise) * 100;
+}
+
+function lastCandleChange(
+  points: readonly { market_step: number; pricePaise: number }[],
+  currentStep: number,
+  currentPricePaise: number,
+  initialPricePaise: number,
+) {
+  let previousPricePaise: number | null = null;
+  let previousStep = -1;
+
+  for (const point of points) {
+    if (
+      Number.isSafeInteger(point.market_step) &&
+      point.market_step < currentStep &&
+      point.market_step > previousStep
+    ) {
+      previousStep = point.market_step;
+      previousPricePaise = point.pricePaise;
+    }
+  }
+
+  if (previousPricePaise === null && currentStep === 1) {
+    previousPricePaise = initialPricePaise;
+  }
+
+  return previousPricePaise === null
+    ? null
+    : percentChange(currentPricePaise, previousPricePaise);
 }
 
 function scenarioChange(currentPaise: number, initialPaise: number) {
-  if (initialPaise <= 0) return null;
-  return ((currentPaise - initialPaise) / initialPaise) * 100;
+  return percentChange(currentPaise, initialPaise);
 }
 
 export default function MarketsPage() {
@@ -66,11 +100,11 @@ export default function MarketsPage() {
         return {
           ...company,
           currentPrice,
-          candleChange: lastCandleChange(points),
+          candleChange: lastCandleChange(points, market?.marketStep ?? 0, currentPrice, company.initialPricePaise),
           scenarioChange: scenarioChange(currentPrice, company.initialPricePaise),
         };
       }),
-    [companies, histories],
+    [companies, histories, market?.marketStep],
   );
 
   const filteredCompanies = useMemo(
@@ -96,7 +130,9 @@ export default function MarketsPage() {
     price: point.pricePaise / 100,
   }));
   const activePrice = selected?.currentPrice?.pricePaise ?? selected?.initialPricePaise ?? 0;
-  const activeChange = lastCandleChange(activeHistory);
+  const activeChange = selected
+    ? lastCandleChange(activeHistory, market.marketStep, activePrice, selected.initialPricePaise)
+    : null;
   const activeScenarioChange = selected
     ? scenarioChange(activePrice, selected.initialPricePaise)
     : null;
