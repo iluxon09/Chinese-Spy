@@ -13,7 +13,7 @@ Every company receives a reproducible return made from five components:
 3. **Company factor:** a symbol-specific movement scaled by its volatility multiplier.
 4. **Macro shock:** a low-probability, market-wide positive or negative jump.
 5. **Scheduled news:** existing scenario events are applied after the background movement.
-6. **Synthetic stock catalysts:** each active company has an independent 14% event roll per candle, with a maximum 3.00% price impact. A broad-market shock has a 1.5% per-candle probability and a maximum 2.50% move.
+6. **Synthetic stock catalysts:** each active company has an independent 14% event roll per candle, with a maximum 3.00% price impact. With eight active companies, the probability that at least one stock-specific event appears on a candle is about 70%. A broad-market shock has a separate 1.5% per-candle probability and a maximum 2.50% move. The same logic runs at every playback speed; speed changes only wall-clock delay between candles.
 
 All components are expressed in basis points. The ordinary factors are two-sided and have zero drift by default, so stocks can rise and fall rather than move only when a news event exists. Each company's volatility multiplier changes its idiosyncratic range.
 
@@ -21,7 +21,7 @@ All components are expressed in basis points. The ordinary factors are two-sided
 
 The SQL implementation hashes the scenario ID, market step, factor and symbol/sector into stable buckets. It does not call `random()` or depend on request timing. Synthetic catalysts use separate stable seeds for probability, direction, magnitude and event type. They look unpredictable to participants, but a given scenario, step and symbol always produces the same committed prices/events for every user's session and retry.
 
-Generated catalyst headlines are explicitly fictional; they are not real stock news. Real-world Indian market headlines and mover analysis are shown separately on the Markets page through Google Search-grounded research and never change simulated prices. The retired crash-replay scenario is removed by the cleanup migration. Its historical migration remains only to preserve migration ordering.
+Generated catalyst headlines are explicitly fictional; they are not real stock news. Google Search-grounded real-market research is available on both Markets and Simulator pages. It reports Nifty 50 leaders/laggards and the ten-stock watchlist from the market-pulse prototype, with verified dates, quote cutoffs and source links. It never changes simulated prices. The retired crash-replay scenario is removed by the cleanup migration. Its historical migration remains only to preserve migration ordering.
 
 The market-step RPC locks the user's own session and takes a transaction-scoped advisory lock for only the specific scenario/candle. It does not take a global lock on the scenario row, so different candles and scenarios can progress in parallel. Deterministic generation and the unique `(scenario_id, market_step, symbol)` key with `ON CONFLICT DO NOTHING` ensure concurrent users converge on the same price rows.
 
