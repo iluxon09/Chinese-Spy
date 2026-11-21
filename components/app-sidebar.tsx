@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, ChartNoAxesCombined, Activity, BriefcaseBusiness,
-  BookOpen, Calculator, Brain, ShieldCheck, CreditCard, type LucideIcon,
+  BookOpen, Calculator, Brain, MessageCircle, CreditCard, type LucideIcon,
 } from "lucide-react";
 import AccountControl from "@/components/account-control";
 import { ThemeToggle } from "@/components/theme-provider";
@@ -16,7 +16,7 @@ export const appNavigation: Array<{ label: string; href: string; icon: LucideIco
   { label: "Trading", href: "/trading", icon: Activity },
   { label: "Portfolio", href: "/portfolio", icon: BriefcaseBusiness },
   { label: "Simulator", href: "/simulator", icon: Activity },
-  { label: "Crash Replay", href: "/crash-replay", icon: ShieldCheck },
+  { label: "AI Risk Coach", href: "/coach", icon: MessageCircle },
   { label: "Behavioral Analysis", href: "/behaviour", icon: Brain },
   { label: "Finance Academy", href: "/academy", icon: BookOpen },
   { label: "Investment Architect", href: "/portfolio/architect", icon: Calculator },
@@ -25,7 +25,7 @@ export const appNavigation: Array<{ label: string; href: string; icon: LucideIco
 
 const navigationGroups = [
   { label: "MARKET WORKSPACE", hrefs: ["/", "/markets", "/trading", "/portfolio", "/simulator"] },
-  { label: "RISK & DECISIONS", hrefs: ["/crash-replay", "/behaviour"] },
+  { label: "RISK & DECISIONS", hrefs: ["/coach", "/behaviour"] },
   { label: "LEARN & PLAN", hrefs: ["/academy", "/portfolio/architect", "/pricing"] },
 ];
 

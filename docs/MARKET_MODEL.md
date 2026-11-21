@@ -20,7 +20,7 @@ All components are expressed in basis points. The ordinary factors are two-sided
 
 The SQL implementation hashes the scenario ID, market step, factor and symbol/sector into stable buckets. It does not call `random()` or depend on request timing. Thus, a given scenario and step always produces the same price path for every user's session.
 
-The crash-replay scenario has all background volatility and shock parameters set to zero. Its five-step sell-off and recovery remain controlled by the existing scripted market events.
+The retired crash-replay scenario is removed by the cleanup migration. Its historical migration remains only to preserve migration ordering.
 
 The market-step RPC locks the user's own session and takes a transaction-scoped advisory lock for only the specific scenario/candle. It does not take a global lock on the scenario row, so different candles and scenarios can progress in parallel. Deterministic generation and the unique `(scenario_id, market_step, symbol)` key with `ON CONFLICT DO NOTHING` ensure concurrent users converge on the same price rows.
 
@@ -30,4 +30,4 @@ The market-history API and client cache retain the most recent 500 candles per s
 
 ## Migration
 
-Apply `supabase/migrations/20261121000200_intraday_market_volatility.sql` in Supabase SQL Editor after the original TILT schema and Crash Replay migrations. It adds model settings and company volatility multipliers, updates regular-market timestamps to five-minute intervals, replaces only the market-advance RPC, and preserves holdings, transactions, cash balances and order calculations. Apply migrations in timestamp order.
+Apply `supabase/migrations/20261121000200_intraday_market_volatility.sql` in Supabase SQL Editor after the original TILT schema and continuous-market migration. It adds model settings and company volatility multipliers, updates regular-market timestamps to five-minute intervals, replaces only the market-advance RPC, and preserves holdings, transactions, cash balances and order calculations. Apply migrations in timestamp order. If an existing database already applied the retired replay migration, apply `20261121000300_remove_crash_replay.sql` to remove its data and database objects.

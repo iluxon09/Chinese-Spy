@@ -172,7 +172,7 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
 
   // Boot once per authenticated session, not on every client-side route change.
   useEffect(() => {
-    if (pathname === "/login" || isPublicPricingPath(pathname) || pathname.startsWith("/crash-replay") || bootedRef.current) return;
+    if (pathname === "/login" || isPublicPricingPath(pathname) || bootedRef.current) return;
     bootedRef.current = true;
     void Promise.resolve().then(boot);
   },[pathname,boot]);
@@ -303,7 +303,7 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
     }
   },[sessionId,refreshPortfolioSnapshot]);
 
-  // Global auto-play continues across Markets, Trading and Simulator routes.
+  // Global auto-play continues across Markets, Trading, Simulator and Coach routes.
   // Each tick starts only after the previous write and snapshot refresh finish.
   useEffect(() => {
     if (
@@ -315,7 +315,6 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
       sessionMutationBusy ||
       pathname === "/login" ||
       isPublicPricingPath(pathname) ||
-      pathname.startsWith("/crash-replay")
     ) return;
 
     const timer = window.setTimeout(() => {
