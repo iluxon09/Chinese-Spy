@@ -16,7 +16,7 @@ type MarketBriefing = {
   sources: MarketSource[];
 };
 
-export default function RealMarketIntelligence() {
+export default function RealMarketIntelligence({ compact = false }: { compact?: boolean }) {
   const [briefing, setBriefing] = useState<MarketBriefing | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -114,18 +114,24 @@ export default function RealMarketIntelligence() {
   }, [loadBriefing]);
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-sky-300/20 bg-[#101827]">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-4 md:px-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-300/10 text-sky-200">
-            <Globe2 size={19} />
+    <section className={compact
+      ? "terminal-news-widget overflow-hidden rounded-lg border border-white/10 bg-[#090909]"
+      : "overflow-hidden rounded-2xl border border-sky-300/20 bg-[#101827]"}>
+      <div className={compact
+        ? "flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-3"
+        : "flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-4 md:px-6"}>
+        <div className="flex min-w-0 items-center gap-2.5">
+          <div className={compact
+            ? "flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-sky-300/10 text-sky-200"
+            : "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-300/10 text-sky-200"}>
+            <Globe2 size={compact ? 14 : 19} />
           </div>
-          <div>
-            <p className="text-xs font-semibold tracking-[.18em] text-sky-300">
-              REAL-WORLD NEWS & STOCK MOVERS
+          <div className="min-w-0">
+            <p className="text-[9px] font-semibold tracking-[.16em] text-sky-300">
+              {compact ? "REAL-WORLD RESEARCH" : "REAL-WORLD NEWS & STOCK MOVERS"}
             </p>
-            <h2 className="mt-1 text-base font-semibold text-white">
-              Indian market news, gainers, laggards and insights
+            <h2 className={compact ? "mt-0.5 truncate text-xs font-semibold text-white" : "mt-1 text-base font-semibold text-white"}>
+              {compact ? "Indian market news" : "Indian market news, gainers, laggards and insights"}
             </h2>
           </div>
         </div>
@@ -134,17 +140,16 @@ export default function RealMarketIntelligence() {
           type="button"
           onClick={() => void loadBriefing(true)}
           disabled={loading || refreshing}
-          className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs font-medium text-slate-300 transition hover:border-sky-300/30 hover:bg-white/[0.04] disabled:cursor-not-allowed disabled:opacity-50"
+          className={compact
+            ? "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-white/10 text-slate-300 transition hover:border-sky-300/30 hover:bg-white/[0.04] disabled:cursor-not-allowed disabled:opacity-50"
+            : "inline-flex min-h-9 items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs font-medium text-slate-300 transition hover:border-sky-300/30 hover:bg-white/[0.04] disabled:cursor-not-allowed disabled:opacity-50" }
         >
-          <RefreshCw
-            size={13}
-            className={refreshing ? "animate-spin" : ""}
-          />
-          {refreshing ? "Refreshing…" : "Refresh research"}
+          <RefreshCw size={13} className={refreshing ? "animate-spin" : ""} />
+          {!compact && (refreshing ? "Refreshing…" : "Refresh research")}
         </button>
       </div>
 
-      <div className="space-y-4 px-5 py-5 md:px-6">
+      <div className={compact ? "terminal-news-scroll space-y-3 px-3 py-3" : "space-y-4 px-5 py-5 md:px-6"}>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
           <span>{briefing?.market ?? "India · NSE / BSE"}</span>
           {briefing?.asOf && (
