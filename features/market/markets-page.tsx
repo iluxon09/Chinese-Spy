@@ -85,7 +85,7 @@ export default function MarketsPage() {
   const [watchlist, setWatchlist] = useState<string[]>([]);
   const [watchOnly, setWatchOnly] = useState(false);
 
-  const companies = market?.companies ?? [];
+  const companies = useMemo(() => market?.companies ?? [], [market?.companies]);
   const selected =
     companies.find((company) => company.symbol === selectedSymbol) ?? companies[0];
   const sectors = useMemo(
