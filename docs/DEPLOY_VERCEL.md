@@ -63,7 +63,16 @@ Use the project's actual Supabase Project URL and publishable key. Create a Gemi
 
 Trigger a redeployment after changing environment variables. The AI Risk Coach reports a configuration error until `GEMINI_API_KEY` is present in the deployment environment.
 
-## 4. Configure Supabase Auth for the deployed URL
+## 4. Apply the latest Supabase safeguards
+
+Before using `/coach` or running the market for a long demo, confirm the database has the required migrations. A fresh database must receive all migrations in timestamp order as listed in the root README. If the project already has migrations `20261120000000` through `20261121000300` applied, run only these two new files in Supabase SQL Editor:
+
+- `supabase/migrations/20261121000400_ai_coach_rate_limits.sql` — enables atomic per-user AI Coach quotas (6 requests per minute and 50 per UTC day). The Coach API intentionally returns a configuration error until this migration exists.
+- `supabase/migrations/20261121000500_market_step_cap.sql` — adds the database-level 10,000-step session ceiling.
+
+Do not re-run migrations that are already applied. For any other migration history, inspect the Supabase migration history and apply only missing migrations. Take a database backup before applying schema changes.
+
+## 5. Configure Supabase Auth for the deployed URL
 
 After Vercel gives you the public deployment URL, for example `https://your-tilt-project.vercel.app`:
 
@@ -74,9 +83,9 @@ After Vercel gives you the public deployment URL, for example `https://your-tilt
    - `http://localhost:3000/**`
 4. If you use Vercel preview deployments for authentication testing, add the preview wildcard matching your Vercel account/team, for example `https://*-<team-or-account-slug>.vercel.app/**`. Use the exact production URL for the primary Site URL.
 
-The app uses Supabase email/password authentication. If email confirmation is enabled, test the confirmation email and return URL after deployment.
+The app uses Supabase email/password authentication. If email confirmation is enabled, test the confirmation email and return URL after deployment. For a live judging session, pre-create separate demo accounts or configure SMTP; do not rely on Supabase's default email sender to deliver last-minute sign-up confirmations.
 
-## 5. Verify the public deployment
+## 6. Verify the public deployment
 
 After Vercel reports the deployment as Ready:
 
