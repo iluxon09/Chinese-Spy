@@ -13,14 +13,15 @@ Every company receives a reproducible return made from five components:
 3. **Company factor:** a symbol-specific movement scaled by its volatility multiplier.
 4. **Macro shock:** a low-probability, market-wide positive or negative jump.
 5. **Scheduled news:** existing scenario events are applied after the background movement.
+6. **Synthetic stock catalysts:** each active company has an independent 14% event roll per candle, with a maximum 3.00% price impact. A broad-market shock has a 1.5% per-candle probability and a maximum 2.50% move.
 
 All components are expressed in basis points. The ordinary factors are two-sided and have zero drift by default, so stocks can rise and fall rather than move only when a news event exists. Each company's volatility multiplier changes its idiosyncratic range.
 
 ## Reproducibility and concurrency
 
-The SQL implementation hashes the scenario ID, market step, factor and symbol/sector into stable buckets. It does not call `random()` or depend on request timing. Thus, a given scenario and step always produces the same price path for every user's session.
+The SQL implementation hashes the scenario ID, market step, factor and symbol/sector into stable buckets. It does not call `random()` or depend on request timing. Synthetic catalysts use separate stable seeds for probability, direction, magnitude and event type. They look unpredictable to participants, but a given scenario, step and symbol always produces the same committed prices/events for every user's session and retry.
 
-The retired crash-replay scenario is removed by the cleanup migration. Its historical migration remains only to preserve migration ordering.
+Generated catalyst headlines are explicitly fictional; they are not real stock news. Real-world Indian market headlines and mover analysis are shown separately on the Markets page through Google Search-grounded research and never change simulated prices. The retired crash-replay scenario is removed by the cleanup migration. Its historical migration remains only to preserve migration ordering.
 
 The market-step RPC locks the user's own session and takes a transaction-scoped advisory lock for only the specific scenario/candle. It does not take a global lock on the scenario row, so different candles and scenarios can progress in parallel. Deterministic generation and the unique `(scenario_id, market_step, symbol)` key with `ON CONFLICT DO NOTHING` ensure concurrent users converge on the same price rows.
 
@@ -30,4 +31,4 @@ The market-history API and client cache retain the most recent 500 candles per s
 
 ## Migration
 
-Apply `supabase/migrations/20261121000200_intraday_market_volatility.sql` in Supabase SQL Editor after the original TILT schema and continuous-market migration. It adds model settings and company volatility multipliers, updates regular-market timestamps to five-minute intervals, replaces only the market-advance RPC, and preserves holdings, transactions, cash balances and order calculations. Apply migrations in timestamp order. For a database that has already applied migrations through `20261121000300`, also apply `20261121000400_ai_coach_rate_limits.sql` and `20261121000500_market_step_cap.sql` once each. The former is required by the authenticated AI Coach route; the latter enforces the session step ceiling. Never re-run previously applied migrations.
+Apply migrations in timestamp order. For a database already migrated through `20261121000500`, apply `20261121000600_dynamic_market_events_and_insights.sql` once. It adds deterministic per-stock catalysts, increases the active demo market's five-minute volatility, and creates the separate real-market research quota. For a database migrated only through `20261121000300`, apply migrations `20261121000400`, `20261121000500` and `20261121000600` in order. Never re-run previously applied migrations.
