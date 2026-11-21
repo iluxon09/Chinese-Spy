@@ -28,10 +28,10 @@ export default function RealMarketIntelligence() {
     const controller = new AbortController();
     requestControllerRef.current = controller;
 
-    if (forceRefresh) setRefreshing(true);
-    else setLoading(true);
-
-    setError("");
+    if (forceRefresh) {
+      setRefreshing(true);
+      setError("");
+    }
 
     try {
       const response = await fetch("/api/market-insights", {
@@ -98,7 +98,12 @@ export default function RealMarketIntelligence() {
 
   useEffect(() => {
     void loadBriefing(false);
-    return () => requestControllerRef.current?.abort();
+
+    return () => {
+      const controller = requestControllerRef.current;
+      requestControllerRef.current = null;
+      controller?.abort();
+    };
   }, [loadBriefing]);
 
   return (
