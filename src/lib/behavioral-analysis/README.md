@@ -35,6 +35,7 @@ Reports map to Member 4's stable Finance Academy lesson IDs:
 - Concentration checks the largest single-stock and single-sector shares of invested holding market value. Uninvested cash is excluded from that denominator.
 - `INSUFFICIENT_DATA` means the available history cannot support a reliable result; it must not be displayed as a negative finding.
 - A detected pattern can have non-emotional explanations, such as a planned stop-loss, a deliberate momentum strategy, liquidity needs or a response to new information.
+- Thresholds are configurable educational heuristics, not empirically validated predictors. A detected pattern is a prompt for reflection, not proof of a behavioural trait or a recommendation to trade.
 
 ## Security and persistence
 
