@@ -42,7 +42,7 @@ export default function InvestmentArchitect() {
   const progress = Math.min((result.sip.estimatedValue / goal) * 100, 100);
 
   return (
-    <main className="min-h-screen bg-[#080d18] px-5 py-8 text-white md:px-10">
+    <main className="terminal-subpage min-h-screen bg-[#080d18] px-5 py-8 text-white md:px-10">
       <div className="mx-auto max-w-6xl">
         <Link href="/portfolio/architect" className="mb-7 inline-flex items-center gap-2 text-sm text-slate-400">
           <ArrowLeft size={16} /> Back to Allocation Planner
