@@ -24,8 +24,8 @@ describe("market return calculations", () => {
     expect(
       calculateLastCandleChange(
         [
-          { market_step: 3, pricePaise: 11_000 },
-          { market_step: 2, pricePaise: 10_000 },
+          { market_step: 3, pricePaise: 10_000 },
+          { market_step: 2, pricePaise: 9_000 },
           { market_step: 4, pricePaise: 10_500 },
         ],
         4,
