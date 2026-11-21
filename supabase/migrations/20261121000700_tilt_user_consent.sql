@@ -61,7 +61,9 @@ begin
     v_user_id, p_consent_version, true,
     p_ai_processing_consent, v_now, v_now
   )
-  on conflict (user_id, consent_version) do update
+  -- Use the named constraint: consent_version is also an output parameter
+  -- of this function, so a column-list conflict target is ambiguous in PL/pgSQL.
+  on conflict on constraint user_consents_pkey do update
   set
     core_data_acknowledged = true,
     ai_processing_consent = excluded.ai_processing_consent,
