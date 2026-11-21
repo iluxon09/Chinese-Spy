@@ -48,9 +48,22 @@ export async function GET() {
     const lastRefreshStatus = typeof row.last_status === "string" ? row.last_status : "unknown";
     const updatedMs = lastUpdatedAt ? Date.parse(lastUpdatedAt) : 0;
     const stale = !updatedMs || Date.now() - updatedMs > STALE_AFTER_MS;
+    const latestMarketDate =
+      typeof snapshot.latest_market_date === "string" ? snapshot.latest_market_date : null;
+    const latestMarketDateMs = latestMarketDate
+      ? Date.parse(`${latestMarketDate}T00:00:00Z`)
+      : Number.NaN;
+    const marketDataAgeCalendarDays = Number.isFinite(latestMarketDateMs)
+      ? Math.max(0, Math.floor((Date.now() - latestMarketDateMs) / 86_400_000))
+      : null;
+    const marketDataStale =
+      marketDataAgeCalendarDays === null || marketDataAgeCalendarDays > 7;
 
     const warnings: string[] = [];
-    if (stale) warnings.push("The last successful snapshot is older than the expected refresh window.");
+    if (stale) warnings.push("The last successful worker refresh is older than the expected 45-minute window.");
+    if (marketDataStale) {
+      warnings.push("The latest available market session is older than seven calendar days. Treat the rankings as stale, even if the worker refreshed recently.");
+    }
     if (snapshot.status === "partial") {
       warnings.push("Some constituents could not be priced or the constituent list is using a stale fallback; rankings may be incomplete.");
     }
@@ -68,13 +81,16 @@ export async function GET() {
           interval: snapshot.bar_interval ?? "1d",
           refreshIntervalMinutes: snapshot.refresh_interval_minutes ?? 15,
           collectedAt: snapshot.collected_at ?? null,
-          latestMarketDate: snapshot.latest_market_date ?? null,
+          latestMarketDate,
           previousMarketDate: snapshot.previous_market_date ?? null,
           lastUpdatedAt,
           lastAttemptAt,
           lastRefreshStatus,
           stale,
           staleAfterMinutes: 45,
+          marketDataStale,
+          marketDataAgeCalendarDays,
+          marketDataStaleAfterCalendarDays: 7,
           rankingComplete: snapshot.ranking_complete === true,
           coverage: snapshot.coverage ?? null,
           gainers: Array.isArray(snapshot.gainers) ? snapshot.gainers : [],

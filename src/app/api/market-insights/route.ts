@@ -168,6 +168,15 @@ export async function GET() {
       : "daily_historical_or_delayed";
     const latestMarketDate =
       typeof snapshot.latest_market_date === "string" ? snapshot.latest_market_date : "unknown";
+    const latestMarketDateMs =
+      latestMarketDate !== "unknown"
+        ? Date.parse(`${latestMarketDate}T00:00:00Z`)
+        : Number.NaN;
+    const marketDataAgeCalendarDays = Number.isFinite(latestMarketDateMs)
+      ? Math.max(0, Math.floor((Date.now() - latestMarketDateMs) / 86_400_000))
+      : null;
+    const marketDataStale =
+      marketDataAgeCalendarDays === null || marketDataAgeCalendarDays > 7;
 
     const prompt = [
       "You are writing a brief, evidence-led market note for TILT, an educational financial-literacy product.",
@@ -179,8 +188,11 @@ export async function GET() {
       "Output no more than: 'Verified developments' (up to five concise bullets) and 'Limitations' (one concise paragraph). No investment recommendations, price forecasts, or buy/sell/hold language.",
       `Market-data universe: Nifty 500. Latest market date in snapshot: ${latestMarketDate}. Data type: ${dataType}. Snapshot last updated: ${lastUpdatedAt ?? "unknown"}.`,
       stale
-        ? "WARNING: The snapshot is older than 45 minutes. State that its data may be stale and do not describe it as current."
-        : "The snapshot is within the expected refresh window. This does not make the underlying daily bars real-time.",
+        ? "WARNING: The worker snapshot is older than 45 minutes. State that the snapshot may be stale."
+        : "The worker snapshot is within the expected refresh window. This does not make the underlying daily bars real-time.",
+      marketDataStale
+        ? `WARNING: The latest available market session is ${marketDataAgeCalendarDays ?? "unknown"} calendar days old. Explicitly state that the underlying market data is stale, even if the worker fetched it recently.`
+        : "The latest market session is within seven calendar days of today. Do not imply the feed is live or intraday.",
       `Authoritative precomputed mover symbols and companies: ${JSON.stringify(moverSummary)}`,
       "Reminder: these are the only movers to discuss. Do not re-rank them or generate an alternate list.",
     ].join("\n\n");
@@ -245,6 +257,8 @@ export async function GET() {
         market: "Nifty 500 · NSE",
         snapshotUpdatedAt: lastUpdatedAt,
         stale,
+        marketDataStale,
+        marketDataAgeCalendarDays,
         answer,
         sources,
       },

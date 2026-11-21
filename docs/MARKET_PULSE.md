@@ -7,7 +7,7 @@ The real-market feed is a separate data product. It does not write to the fictio
 The pipeline is:
 
 1. Fetch the official Nifty 500 constituent CSV from NSE Indices and validate 500 unique equity-series members.
-2. Retrieve the last five daily bars for those symbols through the replaceable Python provider interface (MarketDataProvider). The current prototype adapter uses yfinance.
+2. Retrieve one month of daily bars for those symbols through the replaceable Python provider interface (MarketDataProvider). The current prototype adapter uses yfinance.
 3. Exclude the current day's daily candle until after 4:00 pm IST. Select the two most recent completed market dates that each have at least 450 valid constituent closes; do not mix different sessions within a ranking. Calculate each included stock's close-to-close percentage change: (latest close - previous close) / previous close × 100.
 4. Rank positive and negative returns in application code. Ties are broken by symbol. The LLM is not involved in calculations or ranking.
 5. Publish one JSONB snapshot to the existing Supabase project through a short-lived, secret-protected RPC lock.
@@ -16,7 +16,7 @@ The pipeline is:
 ## Data semantics and failure policy
 
 - The bars are daily (1d), not 15-minute or live intraday quotes. Python runtime on Vercel is currently a Beta runtime; the market provider and persistence contract are isolated so the worker can move to another Python host without changing the frontend API.
-- The 15-minute interval is the target refresh cadence only. It does not guarantee market-data freshness or real-time prices.
+- The 15-minute interval is the target refresh cadence only. It does not guarantee market-data freshness or real-time prices. The API reports worker-snapshot freshness separately from the age of the latest market session; the latter is flagged stale after seven calendar days (a conservative threshold that can include weekends and exchange holidays).
 - Every included stock is compared across the same `market_date` and `previous_close_date`; stocks missing either session are excluded and listed. The current day's daily candle is excluded until after 4:00 pm IST to avoid ranking on a partial daily bar. `collectedAt` is when the worker fetched the bars, not the exchange quote timestamp.
 - A snapshot with 450–499 valid quotes is published as partial and explicitly marked incomplete. Fewer than 450 valid quotes are rejected.
 - Missing history and invalid prices are listed in unavailableSymbols.
@@ -162,6 +162,9 @@ Example response (values abbreviated):
     "lastRefreshStatus": "ok",
     "stale": false,
     "staleAfterMinutes": 45,
+    "marketDataStale": false,
+    "marketDataAgeCalendarDays": 1,
+    "marketDataStaleAfterCalendarDays": 7,
     "rankingComplete": true,
     "coverage": {
       "requested": 500,

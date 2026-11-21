@@ -24,6 +24,8 @@ type MarketPulse = {
   lastUpdatedAt: string | null;
   lastRefreshStatus: string;
   stale: boolean;
+  marketDataStale: boolean;
+  marketDataAgeCalendarDays: number | null;
   rankingComplete: boolean;
   coverage: { requested: number; available: number; unavailable: number; percent: number } | null;
   gainers: MarketStock[];
@@ -257,7 +259,12 @@ export default function RealMarketIntelligence({ compact = false }: { compact?: 
 
         {pulse?.stale && (
           <p className="rounded-lg border border-amber-300/20 bg-amber-300/[0.05] p-2.5 text-xs text-amber-200">
-            Stale snapshot — the last successful refresh is outside the expected window.
+            Snapshot refresh is stale — the worker has not published successfully within 45 minutes.
+          </p>
+        )}
+        {pulse?.marketDataStale && (
+          <p className="rounded-lg border border-amber-300/20 bg-amber-300/[0.05] p-2.5 text-xs text-amber-200">
+            Market data is stale — the latest available trading session is {pulse.marketDataAgeCalendarDays ?? "an unknown number of"} calendar days old. A recent fetch time does not make old market data current.
           </p>
         )}
         {pulse && pulse.coverage && (
