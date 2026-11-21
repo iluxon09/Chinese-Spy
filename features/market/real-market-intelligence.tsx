@@ -192,7 +192,9 @@ export default function RealMarketIntelligence({ compact = false }: { compact?: 
               </p>
             )}
 
-            <MarkdownMessage content={briefing.answer} />
+            <div className={compact ? "terminal-news-markdown" : undefined}>
+              <MarkdownMessage content={briefing.answer} />
+            </div>
 
             {briefing.sources.length > 0 && (
               <div className="border-t border-white/10 pt-4">
