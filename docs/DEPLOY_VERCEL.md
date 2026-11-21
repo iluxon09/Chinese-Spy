@@ -57,6 +57,7 @@ NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=YOUR_SUPABASE_PUBLISHABLE_KEY
 GEMINI_API_KEY=YOUR_GEMINI_API_KEY
 GEMINI_MODEL=gemini-3.8-flash
+MARKET_INSIGHTS_MODEL=gemini-3.8-flash
 ```
 
 Use the project's actual Supabase Project URL and publishable key. Create a Gemini API key in Google AI Studio and set it as `GEMINI_API_KEY`; `GEMINI_MODEL` is optional. Keep both Gemini variables server-side and never prefix them with `NEXT_PUBLIC_`. Never add a Supabase service-role key or secret key to a `NEXT_PUBLIC_*` variable. Never upload `.env.local` or API keys to GitHub. Google AI Pro/Ultra plan quotas are for the AI Studio interface; requests from this deployed application use Gemini API quotas and billing separately. See [Google AI plans](https://ai.google.dev/gemini-api/docs/google-ai-plans) and the [Gemini API pricing](https://ai.google.dev/gemini-api/docs/pricing).
@@ -72,7 +73,13 @@ Before using `/coach` or running the market for a long demo, confirm the databas
 
 Do not re-run migrations that are already applied. For any other migration history, inspect the Supabase migration history and apply only missing migrations. Take a database backup before applying schema changes.
 
-## 5. Configure Supabase Auth for the deployed URL
+The Markets page also uses Gemini Google Search grounding for real-world Indian market research. This consumes Google Search grounding quota separately from ordinary model tokens; check current Gemini API grounding limits and billing for your project. `MARKET_INSIGHTS_MODEL` is optional and defaults to `GEMINI_MODEL`.
+
+## 5. Apply the latest simulator and research migration
+
+If your database is already migrated through `20261121000500`, apply `supabase/migrations/20261121000600_dynamic_market_events_and_insights.sql` once in Supabase SQL Editor after taking a backup. It enables synthetic per-stock catalyst rolls and the separate per-user real-market research quota. Do not rerun previously applied migrations. For any other migration history, inspect Supabase migration records and apply only missing files in timestamp order.
+
+## 6. Configure Supabase Auth for the deployed URL
 
 After Vercel gives you the public deployment URL, for example `https://your-tilt-project.vercel.app`:
 
@@ -85,7 +92,7 @@ After Vercel gives you the public deployment URL, for example `https://your-tilt
 
 The app uses Supabase email/password authentication. If email confirmation is enabled, test the confirmation email and return URL after deployment. For a live judging session, pre-create separate demo accounts or configure SMTP; do not rely on Supabase's default email sender to deliver last-minute sign-up confirmations.
 
-## 6. Verify the public deployment
+## 7. Verify the public deployment
 
 After Vercel reports the deployment as Ready:
 
@@ -96,7 +103,8 @@ After Vercel reports the deployment as Ready:
 5. Check all eight fictional companies load.
 6. Place a small BUY order and confirm cash/holdings update.
 7. Sell a small part of the position and confirm the transaction history.
-8. Advance one market step and verify the price/history updates.
-9. Test logout and confirm protected pages redirect back to login.
+8. Advance one market step and verify prices, individual catalyst cards and per-stock percentage changes update.
+9. Open `/markets`, confirm the real-market briefing loads with source citations, and open a source link. This requires Google Search grounding access and quota for the Gemini API project.
+10. Test logout and confirm protected pages redirect back to login.
 
 Only share the public URL with judges after these checks pass. Keep the Supabase database and API protected by Auth and RLS; the browser publishable key is expected to be public, but the service-role key must remain secret.
