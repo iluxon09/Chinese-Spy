@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ExternalLink, Globe2, RefreshCw, ShieldAlert } from "lucide-react";
 import MarkdownMessage from "@/features/coach/markdown-message";
 
@@ -21,8 +21,13 @@ export default function RealMarketIntelligence() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
+  const requestControllerRef = useRef<AbortController | null>(null);
 
   const loadBriefing = useCallback(async (forceRefresh = false) => {
+    requestControllerRef.current?.abort();
+    const controller = new AbortController();
+    requestControllerRef.current = controller;
+
     if (forceRefresh) setRefreshing(true);
     else setLoading(true);
 
@@ -33,6 +38,7 @@ export default function RealMarketIntelligence() {
         method: "GET",
         credentials: "same-origin",
         cache: forceRefresh ? "no-store" : "default",
+        signal: controller.signal,
       });
 
       const payload = await response.json().catch(() => ({}));
@@ -74,31 +80,25 @@ export default function RealMarketIntelligence() {
         ),
       });
     } catch (cause) {
+      if (cause instanceof Error && cause.name === "AbortError") return;
+
       setError(
         cause instanceof Error
           ? cause.message
           : "Live market research is unavailable.",
       );
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (requestControllerRef.current === controller) {
+        requestControllerRef.current = null;
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
   }, []);
 
   useEffect(() => {
-    let active = true;
-
-    async function loadInitialBriefing() {
-      await loadBriefing(false);
-    }
-
-    if (active) {
-      void loadInitialBriefing();
-    }
-
-    return () => {
-      active = false;
-    };
+    void loadBriefing(false);
+    return () => requestControllerRef.current?.abort();
   }, [loadBriefing]);
 
   return (
