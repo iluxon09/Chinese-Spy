@@ -130,7 +130,7 @@ export default function ConsentManager({ mode }: Props) {
             <div>
               <h2 className="text-sm font-bold text-white">Optional Google Gemini features</h2>
               <p className="mt-1 text-xs leading-5 text-slate-400">When enabled, your AI Risk Coach prompts and limited virtual portfolio, recent simulated trades and market-event context are sent to Google Gemini to generate a response. The real-market briefing also uses Gemini with Google Search grounding; it does not send your portfolio.</p>
-              <p className="mt-2 text-xs leading-5 text-slate-400">AI chat history stays in the current browser session and is not saved in TILT's database. Gemini processes requests under Google's API terms and settings.</p>
+              <p className="mt-2 text-xs leading-5 text-slate-400">AI chat history stays in the current browser session and is not saved in TILT&apos;s database. Gemini processes requests under Google&apos;s API terms and settings.</p>
             </div>
             <span className="text-[10px] text-emerald-300">Optional</span>
           </article>
@@ -160,7 +160,7 @@ export default function ConsentManager({ mode }: Props) {
             <button type="submit" disabled={busy || !coreAcknowledged} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-emerald-300 px-5 text-xs font-extrabold text-slate-950 disabled:cursor-not-allowed disabled:opacity-40">
               {busy ? <><LoaderCircle size={16} className="animate-spin"/> Saving…</> : mode === "gate" ? "Continue to TILT" : "Save preferences"}
             </button>
-            {mode === "gate" && <button type="button" onClick={signOut} disabled={busy} className="min-h-11 rounded-lg border border-white/15 px-5 text-xs font-semibold text-slate-300 disabled:opacity-50">I don't agree — sign out</button>}
+            {mode === "gate" && <button type="button" onClick={signOut} disabled={busy} className="min-h-11 rounded-lg border border-white/15 px-5 text-xs font-semibold text-slate-300 disabled:opacity-50">I don&apos;t agree — sign out</button>}
           </div>
         </form>
 

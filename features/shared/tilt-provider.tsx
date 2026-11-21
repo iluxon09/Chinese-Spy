@@ -355,7 +355,7 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
     refresh,createSession,placeOrder,advanceMarket,
     marketAutoPlay,setMarketAutoPlay,marketPlaybackIntervalMs,setMarketPlaybackIntervalMs,
   }),[
-    authenticated,loading,error,sessionId,session,portfolio,market,histories,
+    authenticated,loading,error,consentRequired,sessionId,session,portfolio,market,histories,
     refresh,createSession,placeOrder,advanceMarket,
     marketAutoPlay,marketPlaybackIntervalMs,
   ]);
