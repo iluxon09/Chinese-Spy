@@ -25,7 +25,7 @@ export function crashReplayDatabaseErrorResponse(error: ReplayDatabaseError) {
 
   if (missingReplaySchema) {
     return jsonError(
-      "Crash Replay is not fully installed in Supabase. Apply supabase/migrations/20261121000100_crash_replay.sql, then reload the page. The Vercel deployment alone does not install database migrations.",
+      "Crash Replay is missing its Supabase database objects. In Supabase Dashboard → SQL Editor, apply supabase/migrations/20261121000100_crash_replay.sql after the initial schema and continuous-market migrations. For the 5-minute intraday market model, then apply supabase/migrations/20261121000200_intraday_market_volatility.sql. Vercel deployments do not execute database migrations. Reload this page after the SQL finishes.",
       503,
     );
   }
