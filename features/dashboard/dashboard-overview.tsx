@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Activity,
@@ -72,6 +72,7 @@ function MiniTrend({
   area?: boolean;
   label: string;
 }) {
+  const gradientId = `terminalMiniArea-${useId().replace(/:/g, "")}`;
   const hasData = data.filter((point) => point.value !== null).length > 1;
 
   if (!hasData) {
@@ -89,7 +90,7 @@ function MiniTrend({
         {area ? (
           <AreaChart data={data}>
             <defs>
-              <linearGradient id="terminalMiniArea" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={color} stopOpacity={0.22} />
                 <stop offset="100%" stopColor={color} stopOpacity={0} />
               </linearGradient>
@@ -110,7 +111,7 @@ function MiniTrend({
               dataKey="value"
               stroke={color}
               strokeWidth={1.6}
-              fill="url(#terminalMiniArea)"
+              fill={`url(#${gradientId})`}
               connectNulls={false}
               dot={false}
               isAnimationActive={false}
