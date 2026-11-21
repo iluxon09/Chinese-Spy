@@ -26,8 +26,8 @@ The market-step RPC locks the user's own session and takes a transaction-scoped 
 
 ## History and limits
 
-The market-history API and client cache retain the most recent 500 candles per symbol. This caps chart memory and response size during longer auto-play sessions; older transaction records and stored price rows are not deleted.
+The market-history API and client cache retain the most recent 500 candles per symbol. This caps chart memory and response size during longer auto-play sessions; older transaction records and stored price rows are not deleted. A database trigger also caps each simulation session at 10,000 market steps. Because price rows are shared by scenario and step, this bounds new price-history growth even when many users advance concurrently.
 
 ## Migration
 
-Apply `supabase/migrations/20261121000200_intraday_market_volatility.sql` in Supabase SQL Editor after the original TILT schema and continuous-market migration. It adds model settings and company volatility multipliers, updates regular-market timestamps to five-minute intervals, replaces only the market-advance RPC, and preserves holdings, transactions, cash balances and order calculations. Apply migrations in timestamp order. If an existing database already applied the retired replay migration, apply `20261121000300_remove_crash_replay.sql` to remove its data and database objects.
+Apply `supabase/migrations/20261121000200_intraday_market_volatility.sql` in Supabase SQL Editor after the original TILT schema and continuous-market migration. It adds model settings and company volatility multipliers, updates regular-market timestamps to five-minute intervals, replaces only the market-advance RPC, and preserves holdings, transactions, cash balances and order calculations. Apply migrations in timestamp order. For a database that has already applied migrations through `20261121000300`, also apply `20261121000400_ai_coach_rate_limits.sql` and `20261121000500_market_step_cap.sql` once each. The former is required by the authenticated AI Coach route; the latter enforces the session step ceiling. Never re-run previously applied migrations.
