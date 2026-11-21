@@ -7,12 +7,22 @@ import AppSidebar, { appNavigation } from "@/components/app-sidebar";
 import AccountControl from "@/components/account-control";
 import { isPublicPricingPath } from "@/lib/auth/redirect";
 import { Menu, X } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-provider";
 
 export default function AppFrame({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  if (pathname === "/login") return <>{children}</>;
+  if (pathname === "/login") {
+    return (
+      <>
+        {children}
+        <div className="auth-theme-toggle">
+          <ThemeToggle compact />
+        </div>
+      </>
+    );
+  }
 
   if (isPublicPricingPath(pathname)) {
     return (
@@ -36,12 +46,15 @@ export default function AppFrame({ children }: { children: ReactNode }) {
                 </span>
               </span>
             </Link>
+            <div className="tilt-public-header-actions">
+            <ThemeToggle compact />
             <Link
               href="/login"
               className="inline-flex min-h-10 items-center justify-center rounded-lg px-4 py-2 text-sm font-bold transition"
             >
               Sign in / Open workspace
             </Link>
+          </div>
           </div>
         </header>
         <div id="public-main-content">{children}</div>
@@ -58,7 +71,9 @@ export default function AppFrame({ children }: { children: ReactNode }) {
           <span className="app-sidebar-mark">T</span>
           <span>TILT<span>.</span></span>
         </Link>
-        <button
+        <div className="mobile-app-header-actions">
+          <ThemeToggle compact />
+          <button
           type="button"
           className="mobile-menu-toggle"
           onClick={() => setMobileMenuOpen((open) => !open)}
@@ -67,7 +82,8 @@ export default function AppFrame({ children }: { children: ReactNode }) {
           aria-controls="mobile-app-navigation"
         >
           {mobileMenuOpen ? <X size={21} /> : <Menu size={21} />}
-        </button>
+          </button>
+        </div>
       </header>
 
       {mobileMenuOpen && (
