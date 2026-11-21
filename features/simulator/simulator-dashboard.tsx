@@ -45,7 +45,7 @@ export default function SimulatorDashboard() {
   const candleMinutes = Math.max(1, Math.round(market.scenario.interval_ms / 60000));
 
   return (
-    <main className="min-h-screen bg-[#080D19] p-5 text-slate-100 md:p-8">
+    <main className="terminal-subpage min-h-screen bg-[#050505] p-5 text-slate-100 md:p-8">
       <div className="mx-auto max-w-7xl space-y-7">
         <header>
           <p className="text-xs tracking-[.25em] text-emerald-400">TILT / SIMULATION CONTROL</p>
