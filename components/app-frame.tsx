@@ -19,14 +19,22 @@ export default function AppFrame({ children }: { children: ReactNode }) {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
+    const desktopViewport = window.matchMedia("(min-width: 1024px)");
+
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") setMobileMenuOpen(false);
     }
 
+    function handleViewportChange(event: MediaQueryListEvent) {
+      if (event.matches) setMobileMenuOpen(false);
+    }
+
     window.addEventListener("keydown", handleKeyDown);
+    desktopViewport.addEventListener("change", handleViewportChange);
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
+      desktopViewport.removeEventListener("change", handleViewportChange);
     };
   }, [mobileMenuOpen]);
 
@@ -112,26 +120,26 @@ export default function AppFrame({ children }: { children: ReactNode }) {
             onClick={() => setMobileMenuOpen(false)}
           />
           <div className="mobile-navigation-panel" id="mobile-app-navigation">
-          <nav className="mobile-navigation-list" aria-label="Mobile navigation">
-            {appNavigation.map(({ label, href, icon: Icon }) => {
-              const active = href === "/"
-                ? pathname === "/"
-                : pathname === href || pathname.startsWith(`${href}/`);
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  aria-current={active ? "page" : undefined}
-                  className={active ? "mobile-nav-link is-active" : "mobile-nav-link"}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <Icon size={18} aria-hidden="true" />
-                  <span>{label}</span>
-                </Link>
-              );
-            })}
-          </nav>
-          <AccountControl compact />
+            <nav className="mobile-navigation-list" aria-label="Mobile navigation">
+              {appNavigation.map(({ label, href, icon: Icon }) => {
+                const active = href === "/"
+                  ? pathname === "/"
+                  : pathname === href || pathname.startsWith(`${href}/`);
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    aria-current={active ? "page" : undefined}
+                    className={active ? "mobile-nav-link is-active" : "mobile-nav-link"}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Icon size={18} aria-hidden="true" />
+                    <span>{label}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+            <AccountControl compact />
           </div>
         </>
       )}
