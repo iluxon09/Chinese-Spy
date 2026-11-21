@@ -39,7 +39,7 @@ export default function AIRiskCoach(){
   }catch(e){setMessages(prior);setInput(content);setError(e instanceof Error?e.message:"The AI coach is unavailable.");}finally{setSending(false);}
  }
  const snapshot=portfolio?.snapshot,holdingCount=snapshot?.holdings.filter(x=>x.quantity>0).length??0;
- return <main className="min-h-screen bg-[#080d18] px-4 py-7 text-white sm:px-7 lg:px-8"><div className="mx-auto max-w-7xl space-y-6">
+ return <main className="terminal-subpage min-h-screen bg-[#080d18] px-4 py-7 text-white sm:px-7 lg:px-8"><div className="mx-auto max-w-7xl space-y-6">
   <header className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs font-semibold tracking-[0.2em] text-emerald-300">TILT / DECISION LAB</p><h1 className="mt-2 text-3xl font-bold sm:text-4xl">AI Risk Coach</h1><p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400 sm:text-base">A conversation about risk, investing habits and the decisions behind your portfolio. Ask naturally; the coach adapts instead of putting you through a fixed assessment.</p></div><div className="inline-flex items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/5 px-3 py-2 text-xs text-emerald-200"><span className="h-2 w-2 rounded-full bg-emerald-300"/>Gemini-powered</div></header>
   <div className="grid gap-5 xl:grid-cols-[280px_minmax(0,1fr)]"><aside className="space-y-4">
    <section className="rounded-2xl border border-white/10 bg-[#111a29] p-5"><div className="flex items-center gap-2 text-sm font-semibold"><WalletCards size={17} className="text-emerald-300"/>Your TILT context</div>
