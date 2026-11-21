@@ -110,7 +110,7 @@ export default function MarketsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#080D19] p-5 text-slate-100 md:p-8">
+    <main className="terminal-subpage min-h-screen bg-[#050505] p-5 text-slate-100 md:p-8">
       <div className="mx-auto max-w-7xl space-y-7">
         <header className="flex flex-wrap items-end justify-between gap-4">
           <div>
