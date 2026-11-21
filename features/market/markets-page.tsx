@@ -23,6 +23,10 @@ import {
 import { useTilt } from "@/features/shared/tilt-provider";
 import MarketPlaybackControls from "@/features/shared/market-playback-controls";
 import RealMarketIntelligence from "@/features/market/real-market-intelligence";
+import {
+  calculateLastCandleChange,
+  calculateSinceStartChange,
+} from "@/lib/market/returns";
 
 const money = (paise: number) =>
   new Intl.NumberFormat("en-IN", {
@@ -31,54 +35,6 @@ const money = (paise: number) =>
     maximumFractionDigits: 2,
   }).format(paise / 100);
 
-function percentChange(currentPaise: number, referencePaise: number) {
-  if (
-    !Number.isFinite(currentPaise) ||
-    !Number.isFinite(referencePaise) ||
-    currentPaise < 0 ||
-    referencePaise <= 0
-  ) {
-    return null;
-  }
-
-  return ((currentPaise - referencePaise) / referencePaise) * 100;
-}
-
-function lastCandleChange(
-  points: readonly { market_step: number; pricePaise: number }[],
-  currentStep: number,
-  currentPricePaise: number,
-  initialPricePaise: number,
-) {
-  let previousPricePaise: number | null = null;
-  let previousStep = -1;
-
-  for (const point of points) {
-    if (
-      Number.isSafeInteger(point.market_step) &&
-      point.market_step < currentStep &&
-      point.market_step > previousStep
-    ) {
-      previousStep = point.market_step;
-      previousPricePaise = point.pricePaise;
-    }
-  }
-
-  if (previousPricePaise === null && currentStep === 1) {
-    previousPricePaise = initialPricePaise;
-  }
-
-  // Never label a comparison to an older, gapped data point as the last candle.
-  if (previousStep !== currentStep - 1 && currentStep !== 1) return null;
-
-  return previousPricePaise === null || previousPricePaise <= 0
-    ? null
-    : percentChange(currentPricePaise, previousPricePaise);
-}
-
-function scenarioChange(currentPaise: number, initialPaise: number) {
-  return percentChange(currentPaise, initialPaise);
-}
 
 export default function MarketsPage() {
   const { loading, error, authenticated, market, histories } = useTilt();
@@ -104,8 +60,8 @@ export default function MarketsPage() {
         return {
           ...company,
           currentPrice,
-          candleChange: lastCandleChange(points, market?.marketStep ?? 0, currentPrice, company.initialPricePaise),
-          scenarioChange: scenarioChange(currentPrice, company.initialPricePaise),
+          candleChange: calculateLastCandleChange(points, market?.marketStep ?? 0, currentPrice, company.initialPricePaise),
+          scenarioChange: calculateSinceStartChange(currentPrice, company.initialPricePaise),
         };
       }),
     [companies, histories, market?.marketStep],
@@ -135,10 +91,10 @@ export default function MarketsPage() {
   }));
   const activePrice = selected?.currentPrice?.pricePaise ?? selected?.initialPricePaise ?? 0;
   const activeChange = selected
-    ? lastCandleChange(activeHistory, market.marketStep, activePrice, selected.initialPricePaise)
+    ? calculateLastCandleChange(activeHistory, market.marketStep, activePrice, selected.initialPricePaise)
     : null;
   const activeScenarioChange = selected
-    ? scenarioChange(activePrice, selected.initialPricePaise)
+    ? calculateSinceStartChange(activePrice, selected.initialPricePaise)
     : null;
   const candleMinutes = Math.max(1, Math.round(market.scenario.interval_ms / 60000));
   const positiveCount = companyRows.filter((company) => (company.scenarioChange ?? 0) > 0).length;
