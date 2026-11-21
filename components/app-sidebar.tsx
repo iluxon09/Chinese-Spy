@@ -3,8 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard, ChartNoAxesCombined, Activity, BriefcaseBusiness,
-  BookOpen, Calculator, Brain, MessageCircle, CreditCard, type LucideIcon,
+  LayoutDashboard,
+  ChartNoAxesCombined,
+  Activity,
+  BriefcaseBusiness,
+  BookOpen,
+  Calculator,
+  Brain,
+  MessageCircle,
+  CreditCard,
+  ChevronDown,
+  UserRound,
+  type LucideIcon,
 } from "lucide-react";
 import AccountControl from "@/components/account-control";
 import { ThemeToggle } from "@/components/theme-provider";
@@ -23,11 +33,8 @@ export const appNavigation: Array<{ label: string; href: string; icon: LucideIco
   { label: "Pricing & Plans", href: "/pricing", icon: CreditCard },
 ];
 
-const navigationGroups = [
-  { label: "MARKET WORKSPACE", hrefs: ["/", "/markets", "/trading", "/portfolio", "/simulator"] },
-  { label: "RISK & DECISIONS", hrefs: ["/coach", "/behaviour"] },
-  { label: "LEARN & PLAN", hrefs: ["/academy", "/portfolio/architect", "/pricing"] },
-];
+const primaryLinks = appNavigation.slice(0, 5);
+const researchLinks = appNavigation.slice(5);
 
 function isActivePath(pathname: string, href: string) {
   return href === "/"
@@ -39,46 +46,68 @@ export default function AppSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="app-sidebar">
-      <Link href="/" className="app-sidebar-brand" aria-label="TILT home">
-        <TiltLogo className="tilt-logo-sidebar" priority />
+    <header className="terminal-header">
+      <Link href="/" className="terminal-brand" aria-label="TILT home">
+        <TiltLogo className="terminal-brand-logo" priority />
+        <span className="terminal-brand-divider" />
+        <span className="terminal-brand-caption">FINANCIAL UNIVERSE</span>
       </Link>
 
-      <nav className="app-sidebar-nav" aria-label="Main navigation">
-        {navigationGroups.map((group) => (
-          <section className="app-sidebar-group" key={group.label} aria-label={group.label}>
-            <p className="app-sidebar-group-label">{group.label}</p>
-            {appNavigation
-              .filter(({ href }) => group.hrefs.includes(href))
-              .map(({ label, href, icon: Icon }) => {
-                const active = isActivePath(pathname, href);
-                return (
-                  <Link
-                    key={href}
-                    href={href}
-                    aria-current={active ? "page" : undefined}
-                    className={active ? "app-nav-link is-active" : "app-nav-link"}
-                  >
-                    <Icon size={17} strokeWidth={1.9} aria-hidden="true" />
-                    <span>{label}</span>
-                  </Link>
-                );
-              })}
-          </section>
-        ))}
+      <nav className="terminal-main-nav" aria-label="Primary navigation">
+        {primaryLinks.map(({ label, href, icon: Icon }) => {
+          const active = isActivePath(pathname, href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-current={active ? "page" : undefined}
+              className={active ? "terminal-nav-link is-active" : "terminal-nav-link"}
+            >
+              <Icon size={15} strokeWidth={1.8} aria-hidden="true" />
+              <span>{label}</span>
+            </Link>
+          );
+        })}
+        <details className="terminal-more-menu">
+          <summary>
+            Research <ChevronDown size={13} aria-hidden="true" />
+          </summary>
+          <div className="terminal-more-popover">
+            {researchLinks.map(({ label, href, icon: Icon }) => {
+              const active = isActivePath(pathname, href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  aria-current={active ? "page" : undefined}
+                  className={active ? "is-active" : ""}
+                >
+                  <Icon size={15} aria-hidden="true" />
+                  <span>{label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </details>
       </nav>
 
-      <div className="app-sidebar-footer">
-        <ThemeToggle />
-        <div className="app-simulation-note">
-          <span className="app-simulation-indicator" />
-          <div>
-            <strong>Simulation environment</strong>
-            <small>Virtual capital · No real money</small>
+      <div className="terminal-header-actions">
+        <Link href="/coach" className="terminal-coach-link">
+          <MessageCircle size={15} aria-hidden="true" />
+          <span>AI Risk Coach</span>
+        </Link>
+        <ThemeToggle compact />
+        <details className="terminal-account-menu">
+          <summary aria-label="Account menu">
+            <span className="terminal-account-avatar">
+              <UserRound size={17} />
+            </span>
+          </summary>
+          <div className="terminal-account-popover">
+            <AccountControl compact />
           </div>
-        </div>
-        <AccountControl />
+        </details>
       </div>
-    </aside>
+    </header>
   );
 }
