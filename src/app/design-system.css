@@ -282,9 +282,6 @@
   background: var(--tilt-accent);
 }
 
-.tilt-product .portfolio-allocation-row:nth-child(even) .portfolio-allocation-track span {
-  background: var(--tilt-positive);
-}
 
 .tilt-product .portfolio-return-list {
   display: grid;
@@ -676,3 +673,30 @@ html[data-theme="dark"] .auth-form-footnote,
 html[data-theme="dark"] .auth-panel-bottom { color: var(--tilt-muted); }
 html[data-theme="dark"] .auth-theme-toggle .theme-toggle-icon { color: var(--tilt-accent); }
 
+
+
+/* Light-theme dashboard buttons and status messages use semantic tokens. */
+.dashboard-primary-button,
+.dashboard-primary-link {
+  border-color: var(--tilt-accent);
+  color: #172b3a;
+  background: var(--tilt-accent);
+  box-shadow: none;
+}
+
+.dashboard-primary-button:hover:not(:disabled),
+.dashboard-primary-link:hover { background: #f2954d; }
+
+.dashboard-notice.is-success {
+  border-color: rgba(23, 125, 107, .28);
+  color: #126657;
+  background: rgba(23, 125, 107, .08);
+}
+
+.dashboard-notice.is-error {
+  border-color: rgba(185, 80, 74, .32);
+  color: #98413c;
+  background: rgba(185, 80, 74, .08);
+}
+
+.theme-toggle-icon { color: var(--tilt-blue); }

@@ -1453,7 +1453,7 @@ html[data-theme="dark"] body {
   background: var(--tilt-bg);
 }
 html[data-theme="dark"] body { color-scheme: dark; }
-html[data-theme="dark"] ::selection { color: #07140f; background: var(--tilt-accent); }
+html[data-theme="dark"] ::selection { color: #172b3a; background: var(--tilt-accent); }
 
 html[data-theme="dark"] .tilt-product,
 html[data-theme="dark"] .tilt-product .app-main-content,
