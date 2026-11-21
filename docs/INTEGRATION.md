@@ -1,71 +1,94 @@
 # TILT integration branch
 
-This branch combines Member 1's Supabase-backed simulator/API with Member 2's dashboard, markets, trading terminal, portfolio, simulator, and Finance Academy UI.
+This is the active integration branch for TILT — Financial Universe. It combines the Supabase-backed simulation and trading engine with the dashboard, Markets, Trading, Portfolio, Simulator, Behavioral Analysis, Finance Academy, Investment Architect and Gemini-powered AI Risk Coach.
 
 ## Branch safety
 
-- `krish-backend`: Member 1 backend source of record.
-- `frontend`: Member 2 UI source of record.
-- `tilt-integration`: integration target.
-- `main`: left untouched.
+- `tilt-integration`: active integration and demo target.
+- `main`: maintained separately; do not merge or force-push without team approval.
+- `krish-backend`, `frontend`, `frontend-hardening`, `member4-integration` and the original member contribution branches: preserve as source/history branches.
 
-## Local setup (Windows CMD)
+## Active application routes
 
-From the repository root:
+| Route | Access | Purpose |
+|---|---|---|
+| `/` | Authenticated | Dashboard and recent simulation activity |
+| `/markets` | Authenticated | Fictional companies, prices, events and market history |
+| `/trading` | Authenticated | BUY/SELL market orders |
+| `/portfolio` | Authenticated | Virtual cash, holdings, P&L and allocation |
+| `/simulator` | Authenticated | Manual market advancement and auto-play controls |
+| `/behaviour` | Authenticated | Read-only behavioural analysis of the signed-in user's simulation |
+| `/coach` | Authenticated | Gemini Risk Coach with read-only simulation context |
+| `/academy` | Authenticated | Five Finance Academy lessons and knowledge checks |
+| `/portfolio/architect` | Authenticated | Educational allocation, SIP and goal planning |
+| `/pricing` | Public | Pilot-first pricing/revenue-model preview |
+| `/pricing/demo-checkout` | Public | Mock checkout UI; no payment or order is submitted |
+| `/login` | Public | Supabase email/password sign-in and account creation |
+
+## Data ownership and architecture
+
+- Supabase PostgreSQL is the source of truth for authenticated sessions, cash, holdings, orders, charges, market prices and transaction history.
+- Monetary values in the trading API and database are integer paise. The server derives execution prices and transaction charges; clients submit order intent and an idempotency UUID only.
+- The active market is fictional and deterministic by scenario and step. Market, sector, company and macro factors generate recurring upward and downward movement; scheduled news events apply additional shocks. All users converge on the same stored price rows for a scenario/step.
+- `TiltDataProvider` loads the active session and shared market state. Market playback advances only after the previous write and portfolio refresh have completed.
+- A database trigger caps each simulation session at 10,000 market steps to bound shared price-history growth.
+- Behavioral Analysis is read-only and analyses observable simulation activity. Its thresholds are configurable educational heuristics, not empirically validated predictors or psychological diagnoses.
+- The AI Risk Coach calls Gemini only from an authenticated server route. It receives read-only context from the signed-in user's simulation; conversation text stays in browser memory and is not persisted in TILT tables. PostgreSQL enforces a maximum of 6 requests per rolling minute and 50 per UTC day per user.
+- Pricing and checkout are pilot/mock-only. No real payments, paid entitlements, instructor tools or cohort administration are implemented.
+
+## Local setup (Windows PowerShell or CMD)
+
+Requirements: Node.js 22.12.x or a later 22.x release, npm 10 or newer, a Supabase project, and a Gemini API key for the AI Coach.
 
 ```cmd
 git fetch origin
 git switch tilt-integration
-git pull origin tilt-integration
+git pull --ff-only origin tilt-integration
 npm install
 ```
 
-Use `npm install`, not `npm ci`, for this first install because the package manifest now includes the frontend dependencies and the committed backend lockfile needs to be regenerated locally. Commit the regenerated `package-lock.json` after verifying it contains no secrets.
+After dependency changes, `npm install` regenerates `package-lock.json`. Commit that regenerated file. Once the lockfile is aligned, verify a reproducible install with `npm ci`.
 
-Ensure `.env.local` exists locally with the Supabase URL and publishable key used by the backend. Never commit this file or a service-role key. The existing Supabase migration should already be applied to the project's database.
+Create `.env.local` from `.env.example`. Keep `GEMINI_API_KEY` server-side and never commit `.env.local`, a Supabase service-role key or any other secret.
+
+## Database migrations
+
+Apply migrations once, in timestamp order, on a fresh database:
+
+1. `20261120000000_initial_schema.sql`
+2. `20261121000000_continuous_market_volatility.sql`
+3. `20261121000100_crash_replay.sql` (historical migration; its retired feature is removed by the next cleanup migration)
+4. `20261121000200_intraday_market_volatility.sql`
+5. `20261121000300_remove_crash_replay.sql`
+6. `20261121000400_ai_coach_rate_limits.sql`
+7. `20261121000500_market_step_cap.sql`
+
+For a database that already has migrations through `20261121000300`, apply only migrations 00400 and 00500. Inspect the database's actual migration history before applying anything to an existing project. Do not re-run already-applied migrations; take a backup before schema changes.
 
 ## Run and verify
 
 ```cmd
 npm run dev
-```
-
-Open `http://localhost:3000`, sign in at `/login`, and open the dashboard. The dashboard loads the authenticated user's latest simulation. Use **New Simulation** to create a separate clean ₹10,00,000 session; existing simulations and their trades remain stored.
-
-Run checks after installing:
-
-```cmd
+npm run lint
 npm run typecheck
 npm test
-npm run lint
 npm run build
 ```
 
-## Integrated routes
+The current automated tests cover pure logic. There is not yet a full browser end-to-end suite or live SQL/RPC integration suite, so a manual smoke test remains required.
 
-- `/`: API-backed dashboard and recent transactions.
-- `/markets`: fictional companies, current prices, current-step news, and persisted price history.
-- `/trading`: authenticated BUY/SELL orders through `POST /api/sessions/{sessionId}/orders`.
-- `/portfolio`: backend-calculated portfolio, P&L and allocation.
-- `/simulator`: current market step and authenticated market advancement.
-- `/academy` and `/academy/[lessonId]`: Member 2's static learning content.
-- `/portfolio/architect`: Member 2's illustrative SIP/goal calculator.
-- `/portfolio/upload`: CSV preview only; it does not import transactions.
+## Demo smoke test
 
-## Data ownership and integration notes
+1. Sign in with a pre-created demo account; do not depend on last-minute confirmation email delivery.
+2. Confirm the dashboard and all eight fictional companies load.
+3. Buy a small quantity and verify cash, holdings and transaction history.
+4. Sell part of the position and verify realised P&L/charges.
+5. Advance the market and confirm prices move both up and down across successive steps.
+6. Open Behavioral Analysis and confirm it presents read-only observations or an explicit insufficient-data state.
+7. Open the AI Risk Coach and send a prompt; verify a complete streamed response. The coach requires migration 00400.
+8. Confirm the market-step ceiling migration 00500 is applied; the API should return HTTP 409 after the session reaches 10,000 steps.
+9. Sign out and verify protected pages return to the login route.
 
-- Supabase and Member 1's API routes remain the source of truth for cash, holdings, orders, charges, prices, market steps, and transaction history.
-- The frontend does not persist simulated trades in `localStorage`.
-- Order requests send a fresh `clientOrderId` UUID and never send a client-calculated execution price.
-- Amounts returned by the API use integer paise; UI formatting divides by 100.
-- Market Mirror / behavioural analytics are intentionally deferred. `/behaviour` is only a placeholder and is not linked from the sidebar.
-- CSV upload is preview-only; persistent CSV import remains unimplemented.
-- The combined application has not yet been executed against the local Windows/Supabase environment. Complete the four local checks above and share any errors before considering the integration verified.
+## Known product boundaries
 
-## Authentication and logout
-
-- Every application page except `/login` is protected by the Next.js `proxy.ts` gate.
-- Unauthenticated visitors are redirected to `/login`; after successful sign-in they return to the originally requested internal path.
-- Authenticated visitors opening `/login` are redirected to the dashboard (or the validated internal `next` path).
-- The sidebar displays the authenticated user's email and a **Log out** control. Sign-out uses the Supabase browser client, clears the auth session, and navigates to `/login`.
-- API handlers retain their own authentication and session-ownership checks. The proxy does not replace API authorization.
+Market orders only; no limit orders. Transaction charges are simplified educational assumptions, not a complete statutory Indian fee schedule. Behavioral Analysis is heuristic. Pricing/checkout is mock-only. Instructor and cohort features are proposals, not implemented capabilities.
