@@ -96,7 +96,7 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
   const [portfolio,setPortfolio] = useState<Portfolio|null>(null);
   const [market,setMarket] = useState<Market|null>(null);
   const [histories,setHistories] = useState<Record<string,PricePoint[]>>({});
-  const [marketAutoPlay,setMarketAutoPlay] = useState(false);
+  const [marketAutoPlay,setMarketAutoPlay] = useState(true);
   const [marketPlaybackIntervalMs,setMarketPlaybackIntervalMs] = useState(2500);
   const [sessionMutationBusy,setSessionMutationBusy] = useState(false);
 
@@ -109,7 +109,7 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
     setPortfolio(null);
     setMarket(null);
     setHistories({});
-    setMarketAutoPlay(false);
+    setMarketAutoPlay(true);
     setSessionMutationBusy(false);
   }, []);
 
