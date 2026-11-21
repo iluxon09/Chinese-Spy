@@ -290,6 +290,20 @@ export async function POST(request: Request) {
       return jsonError("Sign in to use the TILT AI Risk Coach.", 401);
     }
 
+    const { data: consent, error: consentError } = await supabase
+      .from("user_consents")
+      .select("core_data_acknowledged,ai_processing_consent")
+      .eq("user_id", user.id)
+      .eq("consent_version", "2026-11-21-v1")
+      .maybeSingle();
+
+    if (consentError) {
+      return jsonError("AI consent storage is unavailable. Apply the latest TILT consent migration.", 503);
+    }
+    if (consent?.core_data_acknowledged !== true || consent.ai_processing_consent !== true) {
+      return jsonError("Enable Google Gemini processing in Privacy & consent before using the AI Risk Coach.", 403);
+    }
+
     const apiKey = process.env.GEMINI_API_KEY?.trim();
 
     if (!apiKey) {

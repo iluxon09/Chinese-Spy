@@ -6,6 +6,7 @@ import {
 } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import ConsentManager from "@/components/consent-manager";
 import { isPublicPricingPath } from "@/lib/auth/redirect";
 import {
   appendMarketPricePoints,
@@ -61,7 +62,7 @@ type MarketAdvanceResult = {
   pricePoints: AdvancedPricePoint[];
 };
 type TiltContextValue = {
-  authenticated:boolean; loading:boolean; error:string; sessionId:string|null;
+  authenticated:boolean; loading:boolean; error:string; consentRequired:boolean; sessionId:string|null;
   session:Session|null; portfolio:Portfolio|null; market:Market|null;
   histories:Record<string,PricePoint[]>;
   refresh:()=>Promise<void>;
@@ -89,6 +90,7 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
   const bootedRef = useRef(false);
   const sessionMutationInFlightRef = useRef(false);
   const [authenticated,setAuthenticated] = useState(false);
+  const [consentRequired,setConsentRequired] = useState(false);
   const [loading,setLoading] = useState(true);
   const [error,setError] = useState("");
   const [sessionId,setSessionId] = useState<string|null>(null);
@@ -102,6 +104,7 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
 
   const clearAccountData = useCallback(() => {
     setAuthenticated(false);
+    setConsentRequired(false);
     setLoading(false);
     setError("");
     setSessionId(null);
@@ -142,6 +145,15 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
     setLoading(true);
     setError("");
     try {
+      const consent = await api<{coreDataAcknowledged:boolean}>("/api/consent");
+      setAuthenticated(true);
+
+      if (!consent.coreDataAcknowledged) {
+        setConsentRequired(true);
+        return;
+      }
+
+      setConsentRequired(false);
       const result = await api<{sessions:Session[]}>("/api/sessions");
       const selected = result.sessions?.[0];
 
@@ -339,7 +351,7 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
   ]);
 
   const value = useMemo<TiltContextValue>(() => ({
-    authenticated,loading,error,sessionId,session,portfolio,market,histories,
+    authenticated,loading,error,consentRequired,sessionId,session,portfolio,market,histories,
     refresh,createSession,placeOrder,advanceMarket,
     marketAutoPlay,setMarketAutoPlay,marketPlaybackIntervalMs,setMarketPlaybackIntervalMs,
   }),[
@@ -348,7 +360,29 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
     marketAutoPlay,marketPlaybackIntervalMs,
   ]);
 
-  return <TiltContext.Provider value={value}>{children}</TiltContext.Provider>;
+  const isPublicRoute = pathname === "/login" || isPublicPricingPath(pathname);
+  const loadingWorkspace = !isPublicRoute && loading;
+  const needsConsent = !isPublicRoute && !loading && consentRequired;
+  const authError = !isPublicRoute && !loading && !authenticated && !consentRequired;
+
+  return (
+    <TiltContext.Provider value={value}>
+      {loadingWorkspace ? (
+        <main className="grid min-h-screen place-content-center gap-3 bg-[#080d18] px-6 text-center text-sm text-slate-400" aria-live="polite">
+          <span className="text-2xl font-black tracking-[.16em] text-white">TILT<span className="text-emerald-300">.</span></span>
+          <p>Securing your workspace…</p>
+        </main>
+      ) : needsConsent ? (
+        <ConsentManager mode="gate" />
+      ) : authError ? (
+        <main className="grid min-h-screen place-content-center gap-3 bg-[#080d18] px-6 text-center text-sm text-slate-400" role="alert">
+          <span className="text-2xl font-black tracking-[.16em] text-white">TILT<span className="text-emerald-300">.</span></span>
+          <p className="max-w-lg">{error || "Your session could not be verified. Please sign in again."}</p>
+          <a className="text-emerald-300 underline underline-offset-4" href="/login">Return to sign in</a>
+        </main>
+      ) : children}
+    </TiltContext.Provider>
+  );
 }
 
 export function useTilt() {

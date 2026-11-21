@@ -14,6 +14,7 @@ import {
   CreditCard,
   ChevronDown,
   UserRound,
+  ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
 import AccountControl from "@/components/account-control";
@@ -105,6 +106,10 @@ export default function AppSidebar() {
           </summary>
           <div className="terminal-account-popover">
             <AccountControl compact />
+            <Link href="/settings/privacy" className="terminal-account-privacy-link">
+              <ShieldCheck size={14} aria-hidden="true" />
+              <span>Privacy & consent</span>
+            </Link>
           </div>
         </details>
       </div>

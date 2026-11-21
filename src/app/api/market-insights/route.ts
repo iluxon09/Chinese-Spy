@@ -112,6 +112,20 @@ export async function GET() {
       return jsonError("Sign in to view real-market intelligence.", 401);
     }
 
+    const { data: consent, error: consentError } = await supabase
+      .from("user_consents")
+      .select("core_data_acknowledged,ai_processing_consent")
+      .eq("user_id", user.id)
+      .eq("consent_version", "2026-11-21-v1")
+      .maybeSingle();
+
+    if (consentError) {
+      return jsonError("AI consent storage is unavailable. Apply the latest TILT consent migration.", 503);
+    }
+    if (consent?.core_data_acknowledged !== true || consent.ai_processing_consent !== true) {
+      return jsonError("Enable Google Gemini processing in Privacy & consent before requesting the market briefing.", 403);
+    }
+
     const apiKey = process.env.GEMINI_API_KEY?.trim();
     if (!apiKey) {
       return jsonError(
