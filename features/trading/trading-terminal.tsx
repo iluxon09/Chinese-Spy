@@ -106,13 +106,13 @@ export default function TradingTerminal() {
     }
   }
 
-  if (loading) return <main className="p-8 text-slate-300">Loading trading terminal…</main>;
+  if (loading) return <main className="terminal-subpage p-8 text-slate-300">Loading trading terminal…</main>;
   if (!authenticated || !market || !portfolio) {
-    return <main className="p-8 text-slate-400">{error || "Sign in to trade."}</main>;
+    return <main className="terminal-subpage p-8 text-slate-400">{error || "Sign in to trade."}</main>;
   }
 
   return (
-    <main className="min-h-screen bg-[#080D19] px-5 py-8 text-slate-100 md:px-8">
+    <main className="terminal-subpage min-h-screen bg-[#080D19] px-5 py-8 text-slate-100 md:px-8">
       <div className="mx-auto max-w-7xl space-y-7">
         <header className="flex flex-wrap items-end justify-between gap-4">
           <div>
