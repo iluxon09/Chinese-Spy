@@ -12,6 +12,50 @@ const money = (paise: number) => new Intl.NumberFormat("en-IN", {
   maximumFractionDigits: 2,
 }).format(paise / 100);
 
+function percentChange(currentPaise: number, referencePaise: number): number | null {
+  if (
+    !Number.isFinite(currentPaise) ||
+    !Number.isFinite(referencePaise) ||
+    currentPaise < 0 ||
+    referencePaise <= 0
+  ) {
+    return null;
+  }
+
+  return ((currentPaise - referencePaise) / referencePaise) * 100;
+}
+
+function lastCandleChange(
+  points: readonly { market_step: number; pricePaise: number }[],
+  currentStep: number,
+  currentPricePaise: number,
+  initialPricePaise: number,
+): number | null {
+  let previousPricePaise: number | null = null;
+  let previousStep = -1;
+
+  for (const point of points) {
+    if (
+      Number.isSafeInteger(point.market_step) &&
+      point.market_step < currentStep &&
+      point.market_step > previousStep
+    ) {
+      previousStep = point.market_step;
+      previousPricePaise = point.pricePaise;
+    }
+  }
+
+  // On the first candle, step zero is the opening/initial price. Use it even
+  // if a partially loaded history response omitted that single row.
+  if (previousPricePaise === null && currentStep === 1) {
+    previousPricePaise = initialPricePaise;
+  }
+
+  return previousPricePaise === null
+    ? null
+    : percentChange(currentPricePaise, previousPricePaise);
+}
+
 export default function SimulatorDashboard() {
   const { loading, error, authenticated, market, histories, advanceMarket, marketAutoPlay } = useTilt();
   const [busy, setBusy] = useState(false);
@@ -88,31 +132,42 @@ export default function SimulatorDashboard() {
 
         <section className="rounded-2xl border border-white/10 bg-[#101827] p-5">
           <h2 className="font-semibold">Company prices</h2>
-          <p className="mt-1 text-xs text-slate-500">Latest movement is measured against the previous candle.</p>
+          <p className="mt-1 text-xs text-slate-500">Each stock shows its last-candle move and its total return since the simulation started.</p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {market.companies.map((company) => {
               const points = histories[company.symbol] ?? [];
-              const latest = points[points.length - 1];
-              const previous = points[points.length - 2];
-              const change = latest && previous && previous.pricePaise > 0
-                ? ((latest.pricePaise - previous.pricePaise) / previous.pricePaise) * 100
-                : null;
+              const currentPrice = company.currentPrice?.pricePaise ?? company.initialPricePaise;
+              const candleChange = lastCandleChange(
+                points,
+                market.marketStep,
+                currentPrice,
+                company.initialPricePaise,
+              );
+              const sinceStartChange = percentChange(
+                currentPrice,
+                company.initialPricePaise,
+              );
 
               return (
-                <article key={company.symbol} className="rounded-xl border border-white/5 p-4">
+                <article key={company.symbol} className="min-w-0 rounded-xl border border-white/5 p-4">
                   <p className="font-semibold">{company.symbol}</p>
                   <p className="text-xs text-slate-500">{company.name} · {company.sector}</p>
-                  <p className="mt-3 text-xl font-bold">
-                    {money(company.currentPrice?.pricePaise ?? company.initialPricePaise)}
+                  <p className="mt-3 text-xl font-bold tabular-nums">
+                    {money(currentPrice)}
                   </p>
-                  <p className={change === null ? "mt-1 text-xs text-slate-500" : change >= 0 ? "mt-1 flex items-center gap-1 text-xs text-emerald-300" : "mt-1 flex items-center gap-1 text-xs text-rose-300"}>
-                    {change === null ? "Waiting for next candle" : (
-                      <>
-                        {change >= 0 ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
-                        {change >= 0 ? "+" : ""}{change.toFixed(2)}% last candle
-                      </>
-                    )}
-                  </p>
+                  <div className="mt-2 space-y-1.5 text-xs tabular-nums">
+                    <p className={candleChange === null ? "text-slate-500" : candleChange > 0 ? "flex items-center gap-1 text-emerald-300" : candleChange < 0 ? "flex items-center gap-1 text-rose-300" : "text-slate-400"}>
+                      {candleChange === null ? "— last candle" : (
+                        <>
+                          {candleChange > 0 ? <TrendingUp size={13} /> : candleChange < 0 ? <TrendingDown size={13} /> : null}
+                          {candleChange > 0 ? "+" : ""}{candleChange.toFixed(2)}% last candle
+                        </>
+                      )}
+                    </p>
+                    <p className={sinceStartChange === null ? "text-slate-500" : sinceStartChange > 0 ? "text-emerald-300" : sinceStartChange < 0 ? "text-rose-300" : "text-slate-400"}>
+                      {sinceStartChange === null ? "— since start" : `${sinceStartChange > 0 ? "+" : ""}${sinceStartChange.toFixed(2)}% since start`}
+                    </p>
+                  </div>
                 </article>
               );
             })}
