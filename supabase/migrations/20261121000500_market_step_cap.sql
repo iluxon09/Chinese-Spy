@@ -10,7 +10,13 @@ language plpgsql
 set search_path = pg_catalog, public, pg_temp
 as $$
 begin
-  if new.market_step > 10000 then
+  if tg_op = 'INSERT' then
+    if new.market_step > 10000 then
+      raise exception using
+        errcode = 'P0001',
+        message = 'MARKET_STEP_LIMIT_REACHED';
+    end if;
+  elsif new.market_step > old.market_step and new.market_step > 10000 then
     raise exception using
       errcode = 'P0001',
       message = 'MARKET_STEP_LIMIT_REACHED';
