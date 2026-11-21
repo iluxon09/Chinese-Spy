@@ -2630,7 +2630,7 @@ body {
 .terminal-news-section > section > div:last-child { padding-top: 13px; padding-bottom: 13px; }
 .terminal-news-section .text-slate-500 { color: #747474; }
 .terminal-news-section .text-slate-400 { color: #999; }
-.terminal-news-section .border-white\\/10 { border-color: #242424; }
+.terminal-news-section .border-white\/10 { border-color: #242424; }
 .terminal-transactions-panel { margin-top: 14px; }
 .terminal-table-scroll { width: 100%; overflow-x: auto; }
 .terminal-table {
@@ -2727,15 +2727,15 @@ body {
   color: #f4f4f5 !important;
   background: #050505 !important;
 }
-.terminal-subpage .bg-\\[\\#101827\\] {
+.terminal-subpage .bg-\[\#101827\] {
   border-color: #252525 !important;
   background: #090909 !important;
 }
-.terminal-subpage .bg-\\[\\#101827\\]\\/70 {
+.terminal-subpage .bg-\[\#101827\]\\/70 {
   border-color: #252525 !important;
   background: #0b0b0b !important;
 }
-.terminal-subpage .border-white\\/10 { border-color: #252525; }
+.terminal-subpage .border-white\/10 { border-color: #252525; }
 .terminal-subpage .text-slate-500 { color: #777; }
 .terminal-subpage .text-slate-400 { color: #a0a0a0; }
 .terminal-subpage .text-slate-100 { color: #f3f4f6; }
