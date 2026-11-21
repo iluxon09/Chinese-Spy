@@ -160,18 +160,33 @@ export async function GET() {
       timeZone: "Asia/Kolkata",
     }).format(now);
 
+    const focusedWatchlist = [
+      "RELIANCE — Reliance Industries",
+      "TCS — Tata Consultancy Services",
+      "INFY — Infosys",
+      "HDFCBANK — HDFC Bank",
+      "ICICIBANK — ICICI Bank",
+      "SBIN — State Bank of India",
+      "ITC — ITC",
+      "LT — Larsen & Toubro",
+      "BHARTIARTL — Bharti Airtel",
+      "AXISBANK — Axis Bank",
+    ];
+
     const prompt = [
-      "Prepare a concise, source-grounded Indian equity-market briefing for a financial-literacy simulator.",
-      `Current reference time: ${asOf} (Asia/Kolkata).`,
-      "Use Google Search to research the latest available NSE/BSE trading information and market news as of this reference time.",
-      "If the Indian cash market is closed because it is a weekend or exchange holiday, clearly state that it is closed and use the most recent completed trading session. Never label a previous close as live or today's intraday data.",
-      "Summarise the Nifty 50 and Sensex move, the strongest and weakest major sectors, and up to five notable Nifty 50 gainers and five laggards with their percentage changes where verifiable.",
-      "For notable movers, explain the reported catalyst only when a credible source supports it. Distinguish confirmed company/exchange news from market commentary and from your own interpretation. Say when no reliable specific catalyst is available.",
-      "Give 2–3 concise market insights about breadth, sector concentration, volatility or risk. Explain what the evidence suggests without predicting returns.",
-      "Prioritise NSE/BSE disclosures and reputable financial reporting such as Reuters, Business Standard, Economic Times, Mint and established broker research. Cross-check material price moves with more than one credible source where possible.",
-      "Cite factual claims inline using the web citations provided by Google Search grounding. Include dates and price timestamps. Do not invent prices, percentages, earnings, announcements or reasons.",
-      "Use clean Markdown with short paragraphs and compact bullet lists. No Markdown tables, no raw HTML, no buy/sell/hold recommendations and no personal investment advice.",
-      "This is REAL-WORLD market information and must remain completely separate from TILT's fictional companies and simulated prices.",
+      "Prepare a concise but complete, source-grounded Indian equity-market briefing for TILT's financial-literacy simulator.",
+      `Research request time: ${asOf} (Asia/Kolkata). This is the research timestamp, NOT automatically the timestamp of the market prices.`,
+      "Use Google Search to retrieve the latest verifiable NSE/BSE market data, official exchange information and company/market news available at the research request time.",
+      "Start by stating the exact market-data cutoff date and time. State whether the Indian cash market is currently open or closed. On weekends or exchange holidays, use the most recent completed trading session and label it explicitly as the previous session close. During market hours, label prices as intraday/last reported and include the quote timestamp when a source provides it. Never call a previous close live.",
+      "INDEX PULSE: report Nifty 50, Sensex, Nifty Bank and India VIX latest available value and percentage move. State the data date/session. Add advances versus declines and the strongest and weakest major NSE sectors when reliable values are available.",
+      "NIFTY 50 LEADERS AND LAGGARDS: list up to five biggest Nifty 50 gainers and five biggest Nifty 50 losers for the relevant session. For every row give symbol, company, close/last reported price in INR and percentage move from the previous close. Do not mix Nifty 50 constituents with all-NSE or Nifty 500 movers. Label the universe correctly.",
+      "TILT REAL-STOCK WATCHLIST: the following ten symbols came from the attached market-pulse prototype. Explicitly report each one, even if data is unavailable: " + focusedWatchlist.join("; ") + ". For each, give latest verified price, previous close, one-day percentage change and the exact date/session. If no credible quote is found, write 'Not verified' instead of guessing. These ten stocks are a curated watchlist, not a claim to represent the whole market.",
+      "COMPANY NEWS: identify the important verified headlines for the strongest and weakest movers, especially companies in the ten-stock watchlist. Explain the specific catalyst only when a credible report, company filing or exchange disclosure supports it. Distinguish a confirmed announcement from a brokerage view, market commentary or correlation. If there is no verified company-specific catalyst, say so.",
+      "MARKET INSIGHTS: give two or three short observations about breadth, sector leadership, volatility, flows or the gap between large caps and broader markets. Explain what the evidence suggests, what remains uncertain, and avoid forecasting returns.",
+      "Prioritise NSE/BSE filings and official index data, then reputable sources such as Reuters, Business Standard, Economic Times, Mint, Moneycontrol and established broker research. Cross-check material price moves and catalysts with more than one credible source where possible.",
+      "Attach Google Search grounding citations to factual claims. Include source publication dates and market-data timestamps. Do not invent prices, percentage changes, trading volumes, earnings, company announcements, flows or reasons. When credible sources disagree, state that values differ and prefer exchange closing data.",
+      "FORMAT: use these Markdown headings in this order: 'Market session', 'Index and sector pulse', 'Nifty 50 gainers', 'Nifty 50 laggards', 'TILT ten-stock watchlist', 'Verified company news', 'What the session suggests'. Use concise flat bullet lists, not tables or nested lists. Format every percentage with an explicit + or − sign and two decimals. No raw HTML.",
+      "This is REAL-WORLD information. Do not use TILT's fictional stock prices or invent any mapping between real companies and fictional symbols. Real-market information must never influence TILT's fictional simulation prices. No buy/sell/hold recommendations or personal investment advice.",
     ].join("\n\n");
 
     const upstream = await fetch(
