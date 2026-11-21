@@ -974,11 +974,18 @@ select:focus-visible, textarea:focus-visible {
 .tilt-product [class~="text-slate-500"] { color: #71827d !important; }
 .tilt-product [class~="text-slate-600"] { color: #85938d !important; }
 
+.tilt-product [class~="text-cyan-100"],
+.tilt-product [class~="text-cyan-200"],
 .tilt-product [class~="text-cyan-300"],
 .tilt-product [class~="text-cyan-400"],
 .tilt-product [class~="text-blue-300"],
 .tilt-product [class~="text-blue-400"] {
   color: var(--tilt-blue) !important;
+}
+
+.tilt-product [class~="text-violet-300"],
+.tilt-product [class~="text-purple-400"] {
+  color: #6951a7 !important;
 }
 
 .tilt-product [class~="text-emerald-100"],
