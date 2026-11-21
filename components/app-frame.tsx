@@ -16,17 +16,17 @@ export default function AppFrame({ children }: { children: ReactNode }) {
 
   if (isPublicPricingPath(pathname)) {
     return (
-      <div className="min-h-screen bg-[#080d18] text-slate-100">
+      <div className="tilt-public min-h-screen">
         <a
           href="#public-main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-emerald-300 focus:px-4 focus:py-2 focus:font-semibold focus:text-slate-950"
         >
           Skip to content
         </a>
-        <header className="border-b border-white/10 bg-[#0b1423]">
+        <header className="tilt-public-header">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-8">
             <Link href="/pricing" className="inline-flex items-center gap-3" aria-label="TILT pricing home">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-300 text-lg font-black text-slate-950">
+              <span className="tilt-public-mark">
                 T
               </span>
               <span className="leading-tight">
@@ -38,7 +38,7 @@ export default function AppFrame({ children }: { children: ReactNode }) {
             </Link>
             <Link
               href="/login"
-              className="inline-flex min-h-10 items-center justify-center rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:border-emerald-300/50 hover:bg-white/5"
+              className="inline-flex min-h-10 items-center justify-center rounded-lg px-4 py-2 text-sm font-bold transition"
             >
               Sign in / Open workspace
             </Link>
@@ -50,7 +50,7 @@ export default function AppFrame({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="app-frame">
+    <div className="app-frame tilt-product">
       <a className="skip-link" href="#main-content">Skip to content</a>
 
       <header className="mobile-app-header">
