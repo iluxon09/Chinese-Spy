@@ -43,7 +43,7 @@ immutable
 strict
 parallel safe
 set search_path = pg_catalog
-as $
+as $market_hash_bucket$
   select mod(
     get_byte(decode(md5(p_seed), 'hex'), 0)::bigint * 16777216
       + get_byte(decode(md5(p_seed), 'hex'), 1)::bigint * 65536
@@ -51,7 +51,7 @@ as $
       + get_byte(decode(md5(p_seed), 'hex'), 3)::bigint,
     p_bucket_count::bigint
   )::integer;
-$;
+$market_hash_bucket$;
 
 revoke all on function public.market_hash_bucket(text, integer)
   from public, anon, authenticated;
