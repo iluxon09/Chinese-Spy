@@ -314,7 +314,7 @@ export function TiltDataProvider({children}:{children:ReactNode}) {
       loading ||
       sessionMutationBusy ||
       pathname === "/login" ||
-      isPublicPricingPath(pathname) ||
+      isPublicPricingPath(pathname)
     ) return;
 
     const timer = window.setTimeout(() => {
