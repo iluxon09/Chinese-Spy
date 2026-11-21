@@ -629,31 +629,36 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 
 
 /* ==========================================================================
-   TILT / EDITORIAL FINTECH DESIGN SYSTEM
-   Warm mineral canvas, deep evergreen navigation, cobalt utility accents,
-   chartreuse primary actions. Presentation layer only.
+   TILT / MARKET-LED PRODUCT DESIGN SYSTEM
+   Deep ink, warm mineral paper, signal orange and market teal.
    ========================================================================== */
 
 :root {
   color-scheme: light;
-  --tilt-bg: #f3f5f1;
-  --tilt-canvas: #f3f5f1;
-  --tilt-panel: #ffffff;
-  --tilt-panel-soft: #f8faf7;
-  --tilt-line: #dce5de;
-  --tilt-muted: #667a76;
-  --tilt-text: #182e30;
-  --tilt-accent: #c8e36a;
-  --tilt-primary: #126f67;
-  --tilt-blue: #355bb3;
-  --tilt-positive: #14785f;
-  --tilt-negative: #bf554d;
-  --tilt-sidebar: #14292c;
-  --tilt-sidebar-line: #294447;
-  --tilt-radius-sm: 8px;
-  --tilt-radius-md: 12px;
-  --tilt-radius-lg: 18px;
-  --tilt-shadow-card: 0 2px 5px rgba(25, 48, 43, .035), 0 14px 36px rgba(25, 48, 43, .045);
+  --tilt-bg: #f4f1e9;
+  --tilt-canvas: #f4f1e9;
+  --tilt-panel: #fffdf8;
+  --tilt-panel-soft: #f2eee5;
+  --tilt-line: #ded8cc;
+  --tilt-muted: #667780;
+  --tilt-text: #172d3b;
+  --tilt-accent: #e97c24;
+  --tilt-primary: #17384a;
+  --tilt-blue: #4267b2;
+  --tilt-positive: #177d6b;
+  --tilt-negative: #b9504a;
+  --tilt-warning: #95651f;
+  --tilt-sidebar: #0b1c2b;
+  --tilt-sidebar-line: #284151;
+  --tilt-radius-sm: 6px;
+  --tilt-radius-md: 9px;
+  --tilt-radius-lg: 13px;
+  --tilt-shadow-card: 0 1px 2px rgba(23, 45, 59, .035);
+  --tilt-chart-series: #e97c24;
+  --tilt-chart-grid: #e5ded2;
+  --tilt-chart-muted: #6c7d84;
+  --tilt-chart-tooltip: #fffdf8;
+  --tilt-focus: rgba(233, 124, 36, .45);
 }
 
 html, body {
@@ -677,7 +682,7 @@ select:focus-visible, textarea:focus-visible {
   outline-offset: 3px;
 }
 
-::selection { color: #102426; background: #d9ed91; }
+::selection { color: #172b3a; background: var(--tilt-accent); }
 
 .tilt-product {
   min-height: 100vh;
@@ -1011,7 +1016,7 @@ select:focus-visible, textarea:focus-visible {
   color: #9a681c !important;
 }
 
-/* Chartreuse actions, used sparingly; cobalt remains the navigational accent. */
+/* Brand actions use orange; semantic gains/losses remain teal/coral. */
 .tilt-product [class~="bg-emerald-300"],
 .tilt-product [class~="bg-emerald-400"],
 .tilt-product [class~="bg-emerald-500"],
@@ -1028,7 +1033,7 @@ select:focus-visible, textarea:focus-visible {
 .tilt-product [class*="bg-emerald-300/"],
 .tilt-product [class*="bg-emerald-400/"],
 .tilt-product [class*="bg-emerald-500/"] {
-  background-color: rgba(20, 120, 95, .09) !important;
+  background-color: rgba(23, 125, 107, .09) !important;
 }
 
 .tilt-product [class*="bg-cyan-300/"],
@@ -1052,7 +1057,7 @@ select:focus-visible, textarea:focus-visible {
 .tilt-product [class*="border-cyan-"],
 .tilt-product [class*="border-blue-"] { border-color: rgba(53, 91, 179, .22) !important; }
 
-.tilt-product [class*="border-emerald-"] { border-color: rgba(20, 120, 95, .23) !important; }
+.tilt-product [class*="border-emerald-"] { border-color: rgba(23, 125, 107, .24) !important; }
 .tilt-product [class*="border-amber-"] { border-color: rgba(154, 104, 28, .23) !important; }
 .tilt-product [class*="border-rose-"],
 .tilt-product [class*="border-red-"] { border-color: rgba(191, 85, 77, .24) !important; }
@@ -1419,21 +1424,27 @@ select:focus-visible, textarea:focus-visible {
 /* Dark palette and component overrides. */
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --tilt-bg: #080f19;
-  --tilt-canvas: #0a121d;
-  --tilt-panel: #111d2b;
-  --tilt-panel-soft: #152333;
-  --tilt-line: #29394a;
-  --tilt-muted: #91a0b2;
-  --tilt-text: #e8eef4;
-  --tilt-accent: #c8e36a;
-  --tilt-primary: #55cda6;
-  --tilt-blue: #8eafff;
-  --tilt-positive: #65d6ad;
-  --tilt-negative: #f08c8c;
-  --tilt-sidebar: #08141e;
-  --tilt-sidebar-line: #263c42;
-  --tilt-shadow-card: 0 8px 26px rgba(0, 0, 0, .19), 0 1px 2px rgba(0, 0, 0, .22);
+  --tilt-bg: #06111e;
+  --tilt-canvas: #081827;
+  --tilt-panel: #102333;
+  --tilt-panel-soft: #162c3d;
+  --tilt-line: #2b4353;
+  --tilt-muted: #a2b2bd;
+  --tilt-text: #f1eee6;
+  --tilt-accent: #ff9138;
+  --tilt-primary: #ff9138;
+  --tilt-blue: #8fa9e6;
+  --tilt-positive: #5bc4a3;
+  --tilt-negative: #f18d83;
+  --tilt-warning: #e8bb67;
+  --tilt-sidebar: #06121e;
+  --tilt-sidebar-line: #20394b;
+  --tilt-shadow-card: 0 1px 2px rgba(0, 0, 0, .16);
+  --tilt-chart-series: #ff9a42;
+  --tilt-chart-grid: #2b4050;
+  --tilt-chart-muted: #94a8b6;
+  --tilt-chart-tooltip: #102333;
+  --tilt-focus: rgba(255, 145, 56, .48);
 }
 
 html[data-theme="dark"],
@@ -1442,7 +1453,7 @@ html[data-theme="dark"] body {
   background: var(--tilt-bg);
 }
 html[data-theme="dark"] body { color-scheme: dark; }
-html[data-theme="dark"] ::selection { color: #07140f; background: var(--tilt-accent); }
+html[data-theme="dark"] ::selection { color: #172b3a; background: var(--tilt-accent); }
 
 html[data-theme="dark"] .tilt-product,
 html[data-theme="dark"] .tilt-product .app-main-content,
@@ -1509,7 +1520,7 @@ html[data-theme="dark"] .tilt-product [class~="text-emerald-300"],
 html[data-theme="dark"] .tilt-product [class~="text-emerald-400"],
 html[data-theme="dark"] .tilt-product [class~="text-green-300"],
 html[data-theme="dark"] .tilt-product [class~="text-green-400"] {
-  color: #69d9b4 !important;
+  color: var(--tilt-positive) !important;
 }
 html[data-theme="dark"] .tilt-product [class~="text-rose-200"],
 html[data-theme="dark"] .tilt-product [class~="text-rose-300"],
@@ -1532,7 +1543,7 @@ html[data-theme="dark"] .tilt-product [class~="bg-cyan-500"] {
 }
 html[data-theme="dark"] .tilt-product [class*="bg-emerald-300/"],
 html[data-theme="dark"] .tilt-product [class*="bg-emerald-400/"],
-html[data-theme="dark"] .tilt-product [class*="bg-emerald-500/"] { background-color: rgba(70, 205, 163, .13) !important; }
+html[data-theme="dark"] .tilt-product [class*="bg-emerald-500/"] { background-color: rgba(91, 196, 163, .13) !important; }
 html[data-theme="dark"] .tilt-product [class*="bg-cyan-300/"],
 html[data-theme="dark"] .tilt-product [class*="bg-cyan-400/"],
 html[data-theme="dark"] .tilt-product [class*="bg-cyan-500/"] { background-color: rgba(105, 151, 246, .15) !important; }
@@ -1544,7 +1555,7 @@ html[data-theme="dark"] .tilt-product [class*="bg-red-300/"],
 html[data-theme="dark"] .tilt-product [class*="bg-red-400/"] { background-color: rgba(220, 102, 102, .14) !important; }
 html[data-theme="dark"] .tilt-product [class*="border-cyan-"],
 html[data-theme="dark"] .tilt-product [class*="border-blue-"] { border-color: rgba(116, 155, 240, .32) !important; }
-html[data-theme="dark"] .tilt-product [class*="border-emerald-"] { border-color: rgba(70, 205, 163, .3) !important; }
+html[data-theme="dark"] .tilt-product [class*="border-emerald-"] { border-color: rgba(91, 196, 163, .32) !important; }
 html[data-theme="dark"] .tilt-product [class*="border-amber-"] { border-color: rgba(201, 151, 66, .3) !important; }
 html[data-theme="dark"] .tilt-product [class*="border-rose-"],
 html[data-theme="dark"] .tilt-product [class*="border-red-"] { border-color: rgba(220, 102, 102, .32) !important; }

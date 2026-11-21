@@ -5,6 +5,7 @@ import { ArrowRight, RefreshCw, TrendingDown, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { useTilt } from "@/features/shared/tilt-provider";
 import MarketPlaybackControls from "@/features/shared/market-playback-controls";
+import PageState from "@/components/ui/page-state";
 
 const money = (paise: number) => new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -31,9 +32,14 @@ export default function SimulatorDashboard() {
     }
   }
 
-  if (loading) return <main className="p-8 text-slate-300">Loading simulator…</main>;
-  if (!authenticated || !market) {
-    return <main className="p-8 text-slate-400">{error || "Sign in to start a simulation."}</main>;
+  if (loading) {
+    return <PageState variant="loading" title="Loading the simulator" description="Preparing the current market step and playback controls." />;
+  }
+  if (!authenticated) {
+    return <PageState variant="empty" title="Sign in to start a simulation" description="Create a private virtual market session and control how the market advances." action={<Link href="/login" className="tilt-state-action">Sign in / Create account</Link>} />;
+  }
+  if (!market) {
+    return <PageState variant="error" title="The simulation is unavailable" description={error || "TILT could not retrieve the current simulation state. Refresh the page to try again."} />;
   }
 
   const candleMinutes = Math.max(1, Math.round(market.scenario.interval_ms / 60000));

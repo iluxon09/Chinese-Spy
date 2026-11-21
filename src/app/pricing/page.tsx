@@ -4,7 +4,7 @@ import {
   Check,
   GraduationCap,
   LockKeyhole,
-  Sparkles,
+  Landmark,
   WalletCards,
 } from "lucide-react";
 import { PRICING_PLANS } from "@/lib/pricing/plans";
@@ -20,7 +20,7 @@ export default function PricingPage() {
       <div className="mx-auto max-w-7xl space-y-9">
         <header className="space-y-5">
           <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1.5 text-xs font-semibold text-emerald-200">
-            <Sparkles size={14} aria-hidden="true" /> REVENUE MODEL PREVIEW
+            <Landmark size={14} aria-hidden="true" /> REVENUE MODEL PREVIEW
           </div>
           <div className="max-w-3xl">
             <p className="text-xs font-bold uppercase tracking-[.24em] text-emerald-400">TILT / BUSINESS MODEL</p>
@@ -52,7 +52,7 @@ export default function PricingPage() {
               key={plan.id}
               className={`flex h-full flex-col rounded-2xl border p-6 shadow-lg shadow-black/10 ${
                 plan.highlightLabel
-                  ? "border-emerald-400/50 bg-gradient-to-b from-emerald-400/[.11] to-[#111a2b]"
+                  ? "border-emerald-400/50 bg-[#111a2b]"
                   : "border-white/10 bg-[#111a2b]"
               }`}
             >

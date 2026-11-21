@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import Script from "next/script";
 import { TiltDataProvider } from "@/features/shared/tilt-provider";
 import "./globals.css";
+import "./design-system.css";
 
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope", display: "swap" });
 const ibmPlexMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-ibm-plex-mono", display: "swap" });
