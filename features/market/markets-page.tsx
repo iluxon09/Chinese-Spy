@@ -215,16 +215,21 @@ export default function MarketsPage() {
               </span>
             </div>
             <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {market.events.map((event) => (
-                <article key={event.id} className="rounded-xl border border-white/10 bg-[#101827]/70 p-4">
-                  <p className="text-xs text-amber-300">STEP {event.market_step}</p>
-                  <h3 className="mt-2 font-semibold">{event.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-400">{event.description}</p>
-                  <p className="mt-3 text-xs text-slate-500">
-                    {event.symbol ?? event.sector} · {(event.effect_bps / 100).toFixed(2)}% scripted effect
-                  </p>
-                </article>
-              ))}
+              {market.events.map((event) => {
+                const simulated = event.id.startsWith("sim:");
+                return (
+                  <article key={event.id} className="rounded-xl border border-white/10 bg-[#101827]/70 p-4">
+                    <p className={simulated ? "text-xs font-semibold text-sky-300" : "text-xs font-semibold text-amber-300"}>
+                      {simulated ? "SIMULATED CATALYST" : "SCHEDULED NEWS"} · STEP {event.market_step}
+                    </p>
+                    <h3 className="mt-2 font-semibold">{event.title}</h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-400">{event.description}</p>
+                    <p className="mt-3 text-xs text-slate-500">
+                      {event.symbol ?? event.sector} · {event.effect_bps > 0 ? "+" : ""}{(event.effect_bps / 100).toFixed(2)}% simulated impact
+                    </p>
+                  </article>
+                );
+              })}
             </div>
           </section>
         )}
