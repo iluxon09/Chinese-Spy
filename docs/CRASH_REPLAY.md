@@ -29,9 +29,16 @@ The questionnaire records horizon, drawdown comfort, stated response to a sharp 
 
 ## Migration and deployment
 
-Apply `supabase/migrations/20261121000100_crash_replay.sql` to the connected Supabase project after the existing TILT schema migration has been applied. The migration is additive and creates the replay scenario, event seed, run table, row-level security policies and two RPCs.
+Apply the SQL files in timestamp order in the connected Supabase project's SQL Editor:
 
-After applying it, sign in and open `/crash-replay`. If the migration is missing, the route will return a database error rather than silently creating a partial replay.
+1. `supabase/migrations/20261120000000_initial_schema.sql` (fresh project only; skip when already installed).
+2. `supabase/migrations/20261121000000_continuous_market_volatility.sql` (when not already installed).
+3. `supabase/migrations/20261121000100_crash_replay.sql` (required for this feature).
+4. `supabase/migrations/20261121000200_intraday_market_volatility.sql` (required for the five-minute regular-market model).
+
+For an existing TILT project with the first two migrations already installed, apply steps 3 and 4 only, in that order. The Crash Replay migration creates the replay scenario, event seed, run table, row-level security policies and two RPCs. The intraday migration adds market-factor configuration and updates the regular-market advancement RPC; it keeps the crash replay scenario deterministic by disabling background volatility for that scenario.
+
+After applying the required migrations, reload `/crash-replay`. The page checks the replay schema and provides a retry action if the database setup is not yet complete. A Vercel deployment does not execute Supabase migrations.
 
 ## Known boundaries in this first release
 
