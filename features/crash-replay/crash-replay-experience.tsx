@@ -405,7 +405,19 @@ export default function CrashReplayExperience() {
           </Link>
         </header>
 
-        {error && <p role="alert" className="rounded-xl border border-red-400/25 bg-red-400/5 p-4 text-sm text-red-200">{error}</p>}
+        {error && (
+          <div role="alert" className="tilt-recovery-message">
+            <p>{error}</p>
+            <button
+              type="button"
+              onClick={() => void initialize()}
+              disabled={busy || loading}
+              className="tilt-inline-retry"
+            >
+              Retry / reload attempt
+            </button>
+          </div>
+        )}
         {notice && <p role="status" className="rounded-xl border border-emerald-400/20 bg-emerald-400/5 p-4 text-sm text-emerald-100">{notice}</p>}
 
         {view === "assessment" && (
