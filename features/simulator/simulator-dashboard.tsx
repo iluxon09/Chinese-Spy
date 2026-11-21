@@ -5,6 +5,7 @@ import { ArrowRight, RefreshCw, TrendingDown, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { useTilt } from "@/features/shared/tilt-provider";
 import MarketPlaybackControls from "@/features/shared/market-playback-controls";
+import RealMarketIntelligence from "@/features/market/real-market-intelligence";
 import {
   calculateLastCandleChange,
   calculateSinceStartChange,
@@ -76,24 +77,33 @@ export default function SimulatorDashboard() {
         {error && <p role="alert" className="rounded-xl border border-red-400/20 bg-red-400/5 p-3 text-sm text-red-200">{error}</p>}
         {message && <p role="status" className="rounded-xl bg-white/5 p-3 text-sm text-slate-300">{message}</p>}
 
-        <section className="grid gap-4 md:grid-cols-2">
-          {market.events.length ? market.events.map((event) => {
-            const simulated = event.id.startsWith("sim:");
-            return (
-              <article key={event.id} className="rounded-2xl border border-white/10 bg-[#101827] p-5">
-                <p className={simulated ? "text-xs font-semibold tracking-wide text-sky-300" : "text-xs font-semibold tracking-wide text-amber-300"}>
-                  {simulated ? "SIMULATED CATALYST" : "SCHEDULED NEWS"} · STEP {event.market_step}
-                </p>
-                <h2 className="mt-2 font-semibold">{event.title}</h2>
-                <p className="mt-2 text-sm text-slate-400">{event.description}</p>
-                <p className="mt-3 text-xs text-slate-500">
-                  {event.symbol ?? event.sector} · {event.effect_bps > 0 ? "+" : ""}{(event.effect_bps / 100).toFixed(2)}% simulated impact
-                </p>
-              </article>
-            );
-          }) : (
-            <p className="text-sm text-slate-500">No catalyst rolled on this candle. Continuous market, sector and company volatility still applies.</p>
-          )}
+        <RealMarketIntelligence />
+
+        <section className="rounded-2xl border border-sky-300/15 bg-[#101827] p-5">
+          <div className="mb-4">
+            <p className="text-xs font-semibold tracking-[.18em] text-sky-300">TILT SIMULATED NEWS & CATALYSTS</p>
+            <h2 className="mt-1 text-lg font-semibold">Events rolled into this candle</h2>
+            <p className="mt-1 text-xs text-slate-400">These fictional catalysts move TILT prices. Real-world news above is context only and never changes the simulator.</p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {market.events.length ? market.events.map((event) => {
+              const simulated = event.id.startsWith("sim:");
+              return (
+                <article key={event.id} className="rounded-2xl border border-white/10 bg-[#101827] p-5">
+                  <p className={simulated ? "text-xs font-semibold tracking-wide text-sky-300" : "text-xs font-semibold tracking-wide text-amber-300"}>
+                    {simulated ? "SIMULATED CATALYST" : "SCHEDULED NEWS"} · STEP {event.market_step}
+                  </p>
+                  <h3 className="mt-2 font-semibold">{event.title}</h3>
+                  <p className="mt-2 text-sm text-slate-400">{event.description}</p>
+                  <p className="mt-3 text-xs text-slate-500">
+                    {event.symbol ?? event.sector} · {event.effect_bps > 0 ? "+" : ""}{(event.effect_bps / 100).toFixed(2)}% simulated impact
+                  </p>
+                </article>
+              );
+            }) : (
+              <p className="text-sm text-slate-500">No catalyst rolled on this candle. Continuous market, sector and company volatility still applies.</p>
+            )}
+          </div>
         </section>
 
         <section className="rounded-2xl border border-white/10 bg-[#101827] p-5">
