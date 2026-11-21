@@ -4,7 +4,6 @@ import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import AppSidebar, { appNavigation } from "@/components/app-sidebar";
-import TiltLogo from "@/components/tilt-logo";
 import AccountControl from "@/components/account-control";
 import { isPublicPricingPath } from "@/lib/auth/redirect";
 import { Menu, X } from "lucide-react";
@@ -62,7 +61,15 @@ export default function AppFrame({ children }: { children: ReactNode }) {
         <header className="tilt-public-header">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-8">
             <Link href="/pricing" className="inline-flex items-center gap-3" aria-label="TILT pricing home">
-              <TiltLogo className="tilt-logo-public" priority />
+              <span className="tilt-public-mark">
+                T
+              </span>
+              <span className="leading-tight">
+                <strong className="block text-lg tracking-tight">TILT<span className="text-emerald-300">.</span></strong>
+                <span className="block text-[10px] font-semibold tracking-[.2em] text-slate-400">
+                  FINANCIAL UNIVERSE
+                </span>
+              </span>
             </Link>
             <div className="tilt-public-header-actions">
               <ThemeToggle compact />
@@ -85,8 +92,9 @@ export default function AppFrame({ children }: { children: ReactNode }) {
       <a className="skip-link" href="#main-content">Skip to content</a>
 
       <header className="mobile-app-header">
-        <Link href="/" className="mobile-app-brand" onClick={() => setMobileMenuOpen(false)} aria-label="TILT home">
-          <TiltLogo className="tilt-logo-mobile" priority />
+        <Link href="/" className="mobile-app-brand" onClick={() => setMobileMenuOpen(false)}>
+          <span className="app-sidebar-mark">T</span>
+          <span>TILT<span>.</span></span>
         </Link>
         <div className="mobile-app-header-actions">
           <ThemeToggle compact />

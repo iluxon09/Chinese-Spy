@@ -8,7 +8,6 @@ import {
 } from "lucide-react";
 import AccountControl from "@/components/account-control";
 import { ThemeToggle } from "@/components/theme-provider";
-import TiltLogo from "@/components/tilt-logo";
 
 export const appNavigation: Array<{ label: string; href: string; icon: LucideIcon }> = [
   { label: "Overview", href: "/", icon: LayoutDashboard },
@@ -41,7 +40,11 @@ export default function AppSidebar() {
   return (
     <aside className="app-sidebar">
       <Link href="/" className="app-sidebar-brand" aria-label="TILT home">
-        <TiltLogo className="tilt-logo-sidebar" priority />
+        <span className="app-sidebar-mark">T</span>
+        <span>
+          <strong>TILT<span>.</span></strong>
+          <small>FINANCIAL UNIVERSE</small>
+        </span>
       </Link>
 
       <nav className="app-sidebar-nav" aria-label="Main navigation">

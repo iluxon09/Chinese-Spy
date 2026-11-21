@@ -22,7 +22,6 @@ import {
 } from "recharts";
 import { useTilt } from "@/features/shared/tilt-provider";
 import MarketPlaybackControls from "@/features/shared/market-playback-controls";
-import PageState from "@/components/ui/page-state";
 
 const money = (paise: number) =>
   new Intl.NumberFormat("en-IN", {
@@ -86,21 +85,9 @@ export default function MarketsPage() {
     [companyRows, query, sector, watchOnly, watchlist],
   );
 
-  if (loading) {
-    return <PageState variant="loading" title="Loading the market" description="Fetching the current simulated quotes and price history." />;
-  }
-  if (!authenticated) {
-    return (
-      <PageState
-        variant="empty"
-        title="Sign in to view the market"
-        description="Your market watchlist and simulation prices are available in your signed-in workspace."
-        action={<Link href="/login" className="tilt-state-action">Sign in / Create account</Link>}
-      />
-    );
-  }
-  if (!market) {
-    return <PageState variant="error" title="Market data is unavailable" description={error || "TILT could not load the current market snapshot. Refresh the page to try again."} />;
+  if (loading) return <main className="p-8 text-slate-300">Loading fictional market…</main>;
+  if (!authenticated || !market) {
+    return <main className="p-8 text-slate-400">{error || "Sign in to view the market."}</main>;
   }
 
   const activeHistory = selected ? histories[selected.symbol] ?? [] : [];
@@ -254,18 +241,18 @@ export default function MarketsPage() {
                       <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                         <defs>
                           <linearGradient id="tiltUploadedMarketGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="var(--tilt-chart-series)" stopOpacity={0.28} />
-                            <stop offset="100%" stopColor="var(--tilt-chart-series)" stopOpacity={0} />
+                            <stop offset="0%" stopColor="#34D399" stopOpacity={0.28} />
+                            <stop offset="100%" stopColor="#34D399" stopOpacity={0} />
                           </linearGradient>
                         </defs>
-                        <CartesianGrid stroke="var(--tilt-chart-grid)" vertical={false} />
-                        <XAxis dataKey="step" stroke="var(--tilt-chart-muted)" tickLine={false} axisLine={false} minTickGap={24} />
-                        <YAxis stroke="var(--tilt-chart-muted)" tickLine={false} axisLine={false} width={62} tickFormatter={(value) => `₹${Number(value).toLocaleString("en-IN")}`} domain={["auto", "auto"]} />
+                        <CartesianGrid stroke="#ffffff10" vertical={false} />
+                        <XAxis dataKey="step" stroke="#64748b" tickLine={false} axisLine={false} minTickGap={24} />
+                        <YAxis stroke="#64748b" tickLine={false} axisLine={false} width={62} tickFormatter={(value) => `₹${Number(value).toLocaleString("en-IN")}`} domain={["auto", "auto"]} />
                         <Tooltip
-                          contentStyle={{ backgroundColor: "var(--tilt-chart-tooltip)", border: "1px solid var(--tilt-line)", borderRadius: 8, color: "var(--tilt-text)" }}
+                          contentStyle={{ backgroundColor: "#101827", border: "1px solid #334155", borderRadius: 12, color: "#fff" }}
                           formatter={(value) => [money(Number(value) * 100), "Simulated price"]}
                         />
-                        <Area type="monotone" dataKey="price" stroke="var(--tilt-chart-series)" strokeWidth={2.2} fill="url(#tiltUploadedMarketGradient)" activeDot={{ r: 4 }} />
+                        <Area type="monotone" dataKey="price" stroke="#34D399" strokeWidth={2.2} fill="url(#tiltUploadedMarketGradient)" activeDot={{ r: 4 }} />
                       </AreaChart>
                     </ResponsiveContainer>
                   ) : (

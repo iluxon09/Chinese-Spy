@@ -52,7 +52,7 @@ export default function PricingPage() {
               key={plan.id}
               className={`flex h-full flex-col rounded-2xl border p-6 shadow-lg shadow-black/10 ${
                 plan.highlightLabel
-                  ? "border-emerald-400/50 bg-gradient-to-b from-emerald-400/[.11] to-[#111a2b]"
+                  ? "border-emerald-400/50 bg-[#111a2b]"
                   : "border-white/10 bg-[#111a2b]"
               }`}
             >

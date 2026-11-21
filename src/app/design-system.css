@@ -478,3 +478,201 @@
   .tilt-product .tilt-state-spinner { animation: none; }
   .tilt-product main a { transition: none; }
 }
+
+
+/* Dark-theme refinements for the new ink / orange / market-teal identity. */
+html[data-theme="dark"] ::selection {
+  color: #172b3a;
+  background: var(--tilt-accent);
+}
+
+html[data-theme="dark"] button:focus-visible,
+html[data-theme="dark"] a:focus-visible,
+html[data-theme="dark"] input:focus-visible,
+html[data-theme="dark"] select:focus-visible,
+html[data-theme="dark"] textarea:focus-visible {
+  outline-color: var(--tilt-focus);
+}
+
+html[data-theme="dark"] .mobile-app-header,
+html[data-theme="dark"] .tilt-public-header {
+  border-color: var(--tilt-line);
+  background: var(--tilt-panel);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+html[data-theme="dark"] .tilt-public-header a:last-child {
+  border-color: var(--tilt-accent);
+  color: #172b3a;
+  background: var(--tilt-accent);
+}
+
+/* The dashboard has its own layout classes, so map them explicitly to tokens. */
+html[data-theme="dark"] .dashboard-page {
+  color: var(--tilt-text);
+  background: var(--tilt-canvas);
+}
+
+html[data-theme="dark"] .dashboard-topbar {
+  border-color: var(--tilt-line);
+  background: var(--tilt-panel);
+  box-shadow: none;
+}
+
+html[data-theme="dark"] .dashboard-breadcrumb,
+html[data-theme="dark"] .dashboard-session-meta,
+html[data-theme="dark"] .dashboard-intro > div > p:last-child,
+html[data-theme="dark"] .dashboard-panel-heading p,
+html[data-theme="dark"] .dashboard-chart-footnote,
+html[data-theme="dark"] .dashboard-company-name span,
+html[data-theme="dark"] .dashboard-company-price span {
+  color: var(--tilt-muted);
+}
+
+html[data-theme="dark"] .dashboard-topbar h1,
+html[data-theme="dark"] .dashboard-intro h2,
+html[data-theme="dark"] .dashboard-panel-heading h3,
+html[data-theme="dark"] .dashboard-metric-value,
+html[data-theme="dark"] .dashboard-company-name strong,
+html[data-theme="dark"] .dashboard-company-price strong {
+  color: var(--tilt-text);
+}
+
+html[data-theme="dark"] .dashboard-session-meta strong { color: var(--tilt-text); }
+html[data-theme="dark"] .dashboard-live-dot { background: var(--tilt-positive); box-shadow: none; }
+
+html[data-theme="dark"] .dashboard-primary-button,
+html[data-theme="dark"] .dashboard-primary-link {
+  border-color: var(--tilt-accent);
+  color: #172b3a;
+  background: var(--tilt-accent);
+  box-shadow: none;
+}
+
+html[data-theme="dark"] .dashboard-primary-button:hover:not(:disabled),
+html[data-theme="dark"] .dashboard-primary-link:hover {
+  background: #ffab64;
+}
+
+html[data-theme="dark"] .dashboard-notice.is-success {
+  border-color: rgba(91, 196, 163, .35);
+  color: #a9e6d3;
+  background: rgba(91, 196, 163, .10);
+}
+
+html[data-theme="dark"] .dashboard-notice.is-error {
+  border-color: rgba(241, 141, 131, .4);
+  color: #ffc0b8;
+  background: rgba(241, 141, 131, .10);
+}
+
+html[data-theme="dark"] .dashboard-eyebrow,
+html[data-theme="dark"] .dashboard-section-label,
+html[data-theme="dark"] .dashboard-metric-top svg { color: var(--tilt-positive); }
+
+html[data-theme="dark"] .dashboard-metric,
+html[data-theme="dark"] .dashboard-panel {
+  border-color: var(--tilt-line);
+  background: var(--tilt-panel);
+  box-shadow: var(--tilt-shadow-card);
+}
+
+html[data-theme="dark"] .dashboard-metric-top,
+html[data-theme="dark"] .dashboard-metric-detail,
+html[data-theme="dark"] .dashboard-panel-tag {
+  color: var(--tilt-muted);
+}
+
+html[data-theme="dark"] .dashboard-metric-detail.is-positive { color: var(--tilt-positive); }
+html[data-theme="dark"] .dashboard-metric-detail.is-negative { color: var(--tilt-negative); }
+html[data-theme="dark"] .dashboard-panel-heading h3 span { color: var(--tilt-blue); }
+html[data-theme="dark"] .dashboard-text-link,
+html[data-theme="dark"] .dashboard-panel-footer-link { color: var(--tilt-blue); }
+html[data-theme="dark"] .dashboard-text-link:hover,
+html[data-theme="dark"] .dashboard-panel-footer-link:hover { color: #b6c8f2; }
+
+html[data-theme="dark"] .dashboard-panel-tag {
+  border-color: var(--tilt-line);
+  background: var(--tilt-panel-soft);
+}
+
+html[data-theme="dark"] .dashboard-watch-row,
+html[data-theme="dark"] .dashboard-table td { border-color: var(--tilt-line); }
+
+html[data-theme="dark"] .dashboard-company-symbol {
+  color: #a7e0d0;
+  background: rgba(91, 196, 163, .12);
+}
+
+html[data-theme="dark"] .dashboard-table th {
+  color: var(--tilt-muted);
+  background: var(--tilt-panel-soft);
+}
+
+html[data-theme="dark"] .dashboard-table td { color: var(--tilt-text); }
+html[data-theme="dark"] .dashboard-disclaimer { color: var(--tilt-muted); border-color: var(--tilt-line); }
+
+/* Authentication uses solid surfaces; the brand mark and form remain the focus. */
+html[data-theme="dark"] .auth-page { background: var(--tilt-canvas); }
+html[data-theme="dark"] .auth-grid {
+  border-color: var(--tilt-line);
+  background: var(--tilt-panel);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .18);
+}
+html[data-theme="dark"] .auth-intro { background: #0b1c2b; }
+html[data-theme="dark"] .auth-intro::after { display: none; }
+html[data-theme="dark"] .auth-benefit {
+  border-color: #304958;
+  background: #122a3a;
+  backdrop-filter: none;
+}
+html[data-theme="dark"] .auth-benefit-icon {
+  color: #ffb16e;
+  background: rgba(255, 145, 56, .12);
+}
+html[data-theme="dark"] .auth-kicker,
+html[data-theme="dark"] .auth-panel-eyebrow { color: #ff9a42; }
+html[data-theme="dark"] .auth-kicker-dot {
+  background: #ff9a42;
+  box-shadow: none;
+}
+html[data-theme="dark"] .auth-intro h1 span { color: #ffb16e; }
+html[data-theme="dark"] .auth-panel { background: var(--tilt-panel); }
+html[data-theme="dark"] .auth-mode-switch {
+  border-color: var(--tilt-line);
+  background: var(--tilt-panel-soft);
+}
+html[data-theme="dark"] .auth-mode-switch button { color: var(--tilt-muted); }
+html[data-theme="dark"] .auth-mode-switch button.is-active {
+  color: var(--tilt-text);
+  background: rgba(255, 145, 56, .12);
+  box-shadow: inset 0 0 0 1px rgba(255, 145, 56, .28);
+}
+html[data-theme="dark"] .auth-input-wrap {
+  border-color: var(--tilt-line);
+  color: var(--tilt-muted);
+  background: var(--tilt-panel-soft);
+}
+html[data-theme="dark"] .auth-input-wrap:focus-within {
+  border-color: var(--tilt-accent);
+  box-shadow: 0 0 0 3px rgba(255, 145, 56, .12);
+}
+html[data-theme="dark"] .auth-input-wrap input { color: var(--tilt-text); }
+html[data-theme="dark"] .auth-input-wrap input::placeholder { color: var(--tilt-muted); }
+html[data-theme="dark"] .auth-password-toggle { color: var(--tilt-muted); }
+html[data-theme="dark"] .auth-password-toggle:hover {
+  color: var(--tilt-accent);
+  background: var(--tilt-panel-soft);
+}
+html[data-theme="dark"] .auth-submit {
+  color: #172b3a;
+  background: var(--tilt-accent);
+  box-shadow: none;
+}
+html[data-theme="dark"] .auth-submit:hover:not(:disabled) { filter: brightness(1.06); }
+html[data-theme="dark"] .auth-legal,
+html[data-theme="dark"] .auth-form-footnote,
+html[data-theme="dark"] .auth-panel-bottom { color: var(--tilt-muted); }
+html[data-theme="dark"] .auth-theme-toggle .theme-toggle-icon { color: var(--tilt-accent); }
+

@@ -22,7 +22,6 @@ import {
   YAxis,
 } from "recharts";
 import { useTilt } from "@/features/shared/tilt-provider";
-import PageState from "@/components/ui/page-state";
 
 const money = (paise: number) =>
   new Intl.NumberFormat("en-IN", {
@@ -107,14 +106,9 @@ export default function TradingTerminal() {
     }
   }
 
-  if (loading) {
-    return <PageState variant="loading" title="Loading the trading terminal" description="Synchronising quotes, cash balance and open positions." />;
-  }
-  if (!authenticated) {
-    return <PageState variant="empty" title="Sign in to place virtual orders" description="The trading terminal uses your signed-in simulation session and server-validated balances." action={<Link href="/login" className="tilt-state-action">Sign in / Create account</Link>} />;
-  }
-  if (!market || !portfolio) {
-    return <PageState variant="error" title="Trading data is unavailable" description={error || "TILT could not retrieve the current market and portfolio. Refresh the page to try again."} />;
+  if (loading) return <main className="p-8 text-slate-300">Loading trading terminal…</main>;
+  if (!authenticated || !market || !portfolio) {
+    return <main className="p-8 text-slate-400">{error || "Sign in to trade."}</main>;
   }
 
   return (
@@ -195,15 +189,15 @@ export default function TradingTerminal() {
                       <AreaChart data={chartData}>
                         <defs>
                           <linearGradient id="tradePriceFill" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="var(--tilt-chart-series)" stopOpacity={0.25} />
-                            <stop offset="100%" stopColor="var(--tilt-chart-series)" stopOpacity={0} />
+                            <stop offset="0%" stopColor="#34D399" stopOpacity={0.25} />
+                            <stop offset="100%" stopColor="#34D399" stopOpacity={0} />
                           </linearGradient>
                         </defs>
-                        <CartesianGrid stroke="var(--tilt-chart-grid)" vertical={false} />
-                        <XAxis dataKey="step" stroke="var(--tilt-chart-muted)" tickLine={false} axisLine={false} minTickGap={24} />
-                        <YAxis stroke="var(--tilt-chart-muted)" tickLine={false} axisLine={false} width={58} domain={["auto", "auto"]} />
-                        <Tooltip contentStyle={{ backgroundColor: "var(--tilt-chart-tooltip)", border: "1px solid var(--tilt-line)", borderRadius: 8, color: "var(--tilt-text)" }} formatter={(value) => [money(Number(value) * 100), "Simulated price"]} />
-                        <Area type="monotone" dataKey="price" stroke="var(--tilt-chart-series)" strokeWidth={2} fill="url(#tradePriceFill)" />
+                        <CartesianGrid stroke="#ffffff10" vertical={false} />
+                        <XAxis dataKey="step" stroke="#64748b" tickLine={false} axisLine={false} minTickGap={24} />
+                        <YAxis stroke="#64748b" tickLine={false} axisLine={false} width={58} domain={["auto", "auto"]} />
+                        <Tooltip contentStyle={{ backgroundColor: "#101827", border: "1px solid #334155", borderRadius: 12, color: "#fff" }} formatter={(value) => [money(Number(value) * 100), "Simulated price"]} />
+                        <Area type="monotone" dataKey="price" stroke="#34D399" strokeWidth={2} fill="url(#tradePriceFill)" />
                       </AreaChart>
                     </ResponsiveContainer>
                   ) : (

@@ -21,7 +21,6 @@ import {
   Wallet,
 } from "lucide-react";
 import { useTilt } from "@/features/shared/tilt-provider";
-import PageState from "@/components/ui/page-state";
 
 const money = (paise: number) =>
   new Intl.NumberFormat("en-IN", {
@@ -48,16 +47,16 @@ export default function DashboardOverview() {
     createSession,
   } = useTilt();
   const [creating, setCreating] = useState(false);
-  const [actionMessage, setActionMessage] = useState<{ tone: "success" | "error"; text: string } | null>(null);
+  const [actionMessage, setActionMessage] = useState("");
 
   async function startNewSimulation() {
     setCreating(true);
     setActionMessage("");
     try {
-      await createSession();
-      setActionMessage({ tone: "success", text: "New simulation created. Your new portfolio is ready to use." });
+      const id = await createSession();
+      setActionMessage("New simulation created: " + id.slice(0, 8));
     } catch (e) {
-      setActionMessage({ tone: "error", text: e instanceof Error ? e.message : "Could not create simulation." });
+      setActionMessage(e instanceof Error ? e.message : "Could not create simulation.");
     } finally {
       setCreating(false);
     }
@@ -65,32 +64,30 @@ export default function DashboardOverview() {
 
   if (loading) {
     return (
-      <PageState
-        variant="loading"
-        title="Loading your workspace"
-        description="Retrieving your simulation, portfolio and market history."
-      />
+      <main className="dashboard-state">
+        <span className="dashboard-state-kicker">TILT / FINANCIAL UNIVERSE</span>
+        <p>Loading your portfolio…</p>
+      </main>
     );
   }
 
   if (!authenticated) {
     return (
-      <PageState
-        variant="empty"
-        title="Sign in to open your workspace"
-        description={error || "Your virtual portfolio and trading activity are available after sign-in."}
-        action={<Link className="tilt-state-action" href="/login">Sign in / Create account</Link>}
-      />
+      <main className="dashboard-state">
+        <span className="dashboard-state-kicker">TILT / FINANCIAL UNIVERSE</span>
+        <h1>Make your next move count.</h1>
+        <p>{error || "Sign in to begin your simulation."}</p>
+        <Link className="dashboard-primary-link" href="/login">Sign in / Create account</Link>
+      </main>
     );
   }
 
   if (!portfolio || !market) {
     return (
-      <PageState
-        variant="error"
-        title="Workspace data is unavailable"
-        description={error || "TILT could not load the current portfolio and market snapshot. Refresh the page to try again."}
-      />
+      <main className="dashboard-state">
+        <span className="dashboard-state-kicker">TILT / FINANCIAL UNIVERSE</span>
+        <p role="alert">{error || "Portfolio unavailable"}</p>
+      </main>
     );
   }
 
@@ -131,7 +128,7 @@ export default function DashboardOverview() {
         </button>
       </header>
 
-      {actionMessage && <p role={actionMessage.tone === "error" ? "alert" : "status"} className={`dashboard-notice ${actionMessage.tone === "error" ? "is-error" : "is-success"}`}>{actionMessage.text}</p>}
+      {actionMessage && <p role="status" className="dashboard-notice">{actionMessage}</p>}
 
       <div className="dashboard-content">
         <section className="dashboard-intro">
@@ -180,26 +177,26 @@ export default function DashboardOverview() {
                   <AreaChart data={chart} margin={{ top: 12, right: 8, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="tiltPriceFill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="var(--tilt-chart-series)" stopOpacity={0.22} />
-                        <stop offset="95%" stopColor="var(--tilt-chart-series)" stopOpacity={0} />
+                        <stop offset="0%" stopColor="#42c9a0" stopOpacity={0.22} />
+                        <stop offset="95%" stopColor="#42c9a0" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid stroke="var(--tilt-chart-grid)" strokeDasharray="3 5" vertical={false} />
-                    <XAxis dataKey="step" axisLine={false} tickLine={false} tick={{ fill: "var(--tilt-chart-muted)", fontSize: 11 }} minTickGap={28} />
+                    <CartesianGrid stroke="#243143" strokeDasharray="3 5" vertical={false} />
+                    <XAxis dataKey="step" axisLine={false} tickLine={false} tick={{ fill: "#78879a", fontSize: 11 }} minTickGap={28} />
                     <YAxis
                       axisLine={false}
                       tickLine={false}
                       width={58}
-                      tick={{ fill: "var(--tilt-chart-muted)", fontSize: 11 }}
+                      tick={{ fill: "#78879a", fontSize: 11 }}
                       tickFormatter={(value: number) => `₹${compactMoney(value)}`}
                       domain={["auto", "auto"]}
                     />
                     <Tooltip
-                      contentStyle={{ background: "var(--tilt-chart-tooltip)", border: "1px solid var(--tilt-line)", borderRadius: 8, color: "var(--tilt-text)", fontSize: 12 }}
-                      labelStyle={{ color: "var(--tilt-chart-muted)", marginBottom: 4 }}
+                      contentStyle={{ background: "#111d2b", border: "1px solid #2a3a4d", borderRadius: 8, color: "#edf4f7", fontSize: 12 }}
+                      labelStyle={{ color: "#93a3b5", marginBottom: 4 }}
                       formatter={(value) => [money(Number(value) * 100), "Price"]}
                     />
-                    <Area type="monotone" dataKey="price" stroke="var(--tilt-chart-series)" strokeWidth={2} fill="url(#tiltPriceFill)" activeDot={{ r: 4, fill: "var(--tilt-chart-series)", stroke: "var(--tilt-panel)", strokeWidth: 2 }} />
+                    <Area type="monotone" dataKey="price" stroke="#42c9a0" strokeWidth={2} fill="url(#tiltPriceFill)" activeDot={{ r: 4, fill: "#42c9a0", stroke: "#0d1724", strokeWidth: 2 }} />
                   </AreaChart>
                 </ResponsiveContainer>
               ) : (
