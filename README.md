@@ -21,7 +21,8 @@ TILT is an educational, virtual stock-market simulator. It combines a determinis
 - Public pricing and pilot-first revenue-model preview; no live billing or paid entitlements.
 - Responsive application shell with desktop navigation and an accessible mobile menu.
 - User-owned simulation sessions, each starting with ₹10,00,000 virtual capital.
-- Eight fictional companies with five-minute market candles, correlated market/sector/company price movement, occasional macro shocks, scripted news and auto-play controls.
+- Eight fictional companies with five-minute market candles, correlated market/sector/company price movement, occasional macro shocks, a 14% per-stock synthetic-catalyst roll per candle and shared auto-play controls.
+- Per-stock last-candle and since-start percentage returns, with gap-safe history comparisons and explicit missing-data handling.
 - BUY and SELL market orders with server-side validation, integer-paise accounting, configurable charges and idempotency.
 - Portfolio value, cash, holdings, average cost, realised/unrealised P&L and allocation.
 - Dashboard, market watch, trading terminal, portfolio and simulation controls.
@@ -29,7 +30,7 @@ TILT is an educational, virtual stock-market simulator. It combines a determinis
 - SIP and goal-based SIP calculators with validation, assumptions and educational disclaimers.
 - Behavioral Analysis of the signed-in user's simulation activity: entry/exit timing, trading frequency, transaction-cost drag and portfolio concentration, with evidence-backed pattern summaries.
 - Gemini-powered AI Risk Coach with a conversational risk discussion and read-only context from the signed-in user's virtual portfolio and recent simulated trades.
-- Google Search-grounded Indian market briefing with current-session/last-close context, cited mover and sector summaries, and source links; kept separate from fictional simulator data.
+- Google Search-grounded Indian market briefing with correctly dated session/close data, Nifty 50 gainers and laggards, sector summaries, verified company headlines and a ten-stock large-cap watchlist (RELIANCE, TCS, INFY, HDFCBANK, ICICIBANK, SBIN, ITC, LT, BHARTIARTL and AXISBANK); kept separate from fictional simulator data.
 
 ## Technology
 
@@ -90,7 +91,7 @@ In Supabase Dashboard → SQL Editor, apply migrations in timestamp order after 
 7. `supabase/migrations/20261121000500_market_step_cap.sql` — prevents a simulation session from advancing beyond 10,000 market steps, bounding shared price-history growth.
 8. `supabase/migrations/20261121000600_dynamic_market_events_and_insights.sql` — adds deterministic per-stock catalyst events, stronger bounded intraday volatility and a separate real-market research quota (one refresh per five minutes and 20 per UTC day per user).
 
-Run each migration only once and do not edit or re-run an already-applied migration against a live database. For a fresh database, apply all seven migrations in timestamp order. For a database that already has migrations `20261120000000` through `20261121000500` applied, apply only `20261121000600`. For a database already through `20261121000300`, apply `20261121000400`, `20261121000500` and `20261121000600` in order. For any other existing migration history, inspect Supabase migration history first and apply only missing migrations; do not blindly rerun the full list.
+Run each migration only once and do not edit or re-run an already-applied migration against a live database. For a fresh database, apply all eight migrations in timestamp order. For a database that already has migrations `20261120000000` through `20261121000500` applied, apply only `20261121000600`. For a database already through `20261121000300`, apply `20261121000400`, `20261121000500` and `20261121000600` in order. For any other existing migration history, inspect Supabase migration history first and apply only missing migrations; do not blindly rerun the full list.
 
 #### Demo account readiness
 
