@@ -22,6 +22,7 @@ import {
 } from "recharts";
 import { useTilt } from "@/features/shared/tilt-provider";
 import MarketPlaybackControls from "@/features/shared/market-playback-controls";
+import RealMarketIntelligence from "@/features/market/real-market-intelligence";
 
 const money = (paise: number) =>
   new Intl.NumberFormat("en-IN", {
@@ -166,6 +167,8 @@ export default function MarketsPage() {
         </header>
 
         <MarketPlaybackControls />
+
+        <RealMarketIntelligence />
 
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Market summary">
           <article className="rounded-2xl border border-white/10 bg-[#101827] p-5">
