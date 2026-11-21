@@ -7,6 +7,7 @@ import {
   BookOpen, Calculator, Brain, ShieldCheck, CreditCard, type LucideIcon,
 } from "lucide-react";
 import AccountControl from "@/components/account-control";
+import { ThemeToggle } from "@/components/theme-provider";
 
 export const appNavigation: Array<{ label: string; href: string; icon: LucideIcon }> = [
   { label: "Overview", href: "/", icon: LayoutDashboard },
@@ -71,6 +72,7 @@ export default function AppSidebar() {
       </nav>
 
       <div className="app-sidebar-footer">
+        <ThemeToggle />
         <div className="app-simulation-note">
           <span className="app-simulation-indicator" />
           <div>
