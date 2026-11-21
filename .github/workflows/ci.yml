@@ -39,10 +39,10 @@ jobs:
           node-version: "22.12.0"
           cache: npm
 
-      # The committed lockfile predates the integrated frontend dependencies.
-      # Reconcile it in the runner until the regenerated lockfile is committed.
+      # The committed lockfile is still awaiting regeneration on the integration branch.
+      # Reconcile only the lock here; npm ci below performs the clean dependency install.
       - name: Reconcile npm lockfile
-        run: npm install --no-audit --no-fund
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
 
       - name: Verify clean dependency install
         run: npm ci --no-audit --no-fund
