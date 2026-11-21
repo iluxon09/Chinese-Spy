@@ -1766,6 +1766,7 @@ html[data-theme="dark"] .tilt-public .theme-toggle-icon { color: #d6eb8b; }
 
 :root {
   --tilt-mobile-header-height: 66px;
+  --tilt-public-header-height: 74px;
   --tilt-sidebar-width: 272px;
 }
 
@@ -1843,6 +1844,11 @@ body {
   min-height: 100vh;
   min-height: 100dvh;
   overflow-x: clip;
+}
+
+.tilt-public main[class~="min-h-screen"] {
+  min-height: calc(100vh - var(--tilt-public-header-height));
+  min-height: calc(100dvh - var(--tilt-public-header-height));
 }
 
 .tilt-public-header {
@@ -1938,10 +1944,6 @@ body {
     scroll-margin-top: calc(var(--tilt-mobile-header-height) + 1rem);
   }
 
-  .tilt-public main[class~="min-h-screen"] {
-    min-height: calc(100vh - 74px);
-    min-height: calc(100dvh - 74px);
-  }
 }
 
 @media (min-width: 1024px) {
