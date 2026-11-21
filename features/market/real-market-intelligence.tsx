@@ -122,10 +122,10 @@ export default function RealMarketIntelligence() {
           </div>
           <div>
             <p className="text-xs font-semibold tracking-[.18em] text-sky-300">
-              REAL MARKET INTELLIGENCE
+              REAL-WORLD NEWS & STOCK MOVERS
             </p>
             <h2 className="mt-1 text-base font-semibold text-white">
-              Indian market news & movers
+              Indian market news, gainers, laggards and insights
             </h2>
           </div>
         </div>
@@ -150,7 +150,7 @@ export default function RealMarketIntelligence() {
           {briefing?.asOf && (
             <>
               <span aria-hidden="true">·</span>
-              <span>Research checked {briefing.asOf} IST</span>
+              <span>Brief researched {briefing.asOf} IST</span>
             </>
           )}
           <span className="rounded-full border border-sky-300/20 bg-sky-300/5 px-2 py-1 text-[10px] font-semibold tracking-wide text-sky-200">
@@ -164,7 +164,7 @@ export default function RealMarketIntelligence() {
             <div className="h-3 w-full animate-pulse rounded bg-white/10" />
             <div className="h-3 w-5/6 animate-pulse rounded bg-white/10" />
             <p className="pt-2 text-xs text-slate-500">
-              Checking the latest completed NSE/BSE session and current market headlines…
+              Checking the latest available NSE/BSE session, ten-stock watchlist and verified company headlines…
             </p>
           </div>
         )}
@@ -217,9 +217,7 @@ export default function RealMarketIntelligence() {
         <div className="flex items-start gap-2 border-t border-white/10 pt-4 text-[11px] leading-5 text-slate-500">
           <ShieldAlert size={14} className="mt-0.5 shrink-0" />
           <p>
-            Real-world market information may be delayed or revised. This research is
-            educational, not investment advice, and it never changes TILT’s fictional
-            stock prices or simulation events.
+            Real-world price data is labelled with its actual market session or quote timestamp; on weekends/holidays the latest completed session is used. This research is educational, not investment advice, and never changes TILT’s fictional stock prices or simulator events.
           </p>
         </div>
       </div>
