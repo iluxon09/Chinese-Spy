@@ -59,7 +59,7 @@ GEMINI_API_KEY=YOUR_GEMINI_API_KEY
 GEMINI_MODEL=gemini-3.8-flash
 ```
 
-Use the project's actual Supabase Project URL and publishable key. Create a Gemini API key in Google AI Studio and set it as `GEMINI_API_KEY`; `GEMINI_MODEL` is optional. Keep both Gemini variables server-side and never prefix them with `NEXT_PUBLIC_`. Never add a Supabase service-role key or secret key to a `NEXT_PUBLIC_*` variable. Never upload `.env.local` or API keys to GitHub.
+Use the project's actual Supabase Project URL and publishable key. Create a Gemini API key in Google AI Studio and set it as `GEMINI_API_KEY`; `GEMINI_MODEL` is optional. Keep both Gemini variables server-side and never prefix them with `NEXT_PUBLIC_`. Never add a Supabase service-role key or secret key to a `NEXT_PUBLIC_*` variable. Never upload `.env.local` or API keys to GitHub. Google AI Pro/Ultra plan quotas are for the AI Studio interface; requests from this deployed application use Gemini API quotas and billing separately. See [Google AI plans](https://ai.google.dev/gemini-api/docs/google-ai-plans) and the [Gemini API pricing](https://ai.google.dev/gemini-api/docs/pricing).
 
 Trigger a redeployment after changing environment variables. The AI Risk Coach reports a configuration error until `GEMINI_API_KEY` is present in the deployment environment.
 

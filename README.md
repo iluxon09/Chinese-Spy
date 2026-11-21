@@ -68,7 +68,7 @@ GEMINI_API_KEY=YOUR_GEMINI_API_KEY
 GEMINI_MODEL=gemini-3.8-flash
 ```
 
-Use the project's URL and publishable key from Supabase Project Settings. Create a Gemini API key in Google AI Studio and set it as `GEMINI_API_KEY`. Keep it server-side: never use a `NEXT_PUBLIC_` prefix, expose it in browser code, or commit `.env.local`.
+Use the project's URL and publishable key from Supabase Project Settings. Create a Gemini API key in Google AI Studio and set it as `GEMINI_API_KEY`. Keep it server-side: never use a `NEXT_PUBLIC_` prefix, expose it in browser code, or commit `.env.local`. Google AI subscription quotas apply inside AI Studio; direct Gemini API calls from TILT are managed and billed separately under Gemini API usage tiers. Check the API quota and pricing for your Google Cloud project before public use.
 
 The public pricing and demo-checkout pages work without a signed-in user or Supabase configuration. The simulator and workspace features still require the configured Supabase project and an authenticated account.
 
