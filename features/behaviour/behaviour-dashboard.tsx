@@ -90,7 +90,7 @@ export default function BehaviourDashboard() {
   }, [reports]);
 
   return (
-    <main className="min-h-screen bg-[#080d18] px-4 py-8 text-white sm:px-8">
+    <main className="terminal-subpage min-h-screen bg-[#080d18] px-4 py-8 text-white sm:px-8">
       <div className="mx-auto max-w-7xl space-y-8">
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div>
