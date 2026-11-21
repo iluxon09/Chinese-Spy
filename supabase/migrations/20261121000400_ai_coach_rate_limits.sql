@@ -36,7 +36,7 @@ begin
     raise exception using errcode = 'P0001', message = 'AUTH_REQUIRED';
   end if;
 
-  insert into public.ai_coach_rate_limits as usage (
+  insert into public.ai_coach_rate_limits as current_usage (
     user_id,
     window_started_at,
     window_request_count,
@@ -55,22 +55,22 @@ begin
   on conflict (user_id) do update
   set
     window_started_at = case
-      when usage.window_started_at <= v_now - interval '1 minute'
+      when current_usage.window_started_at <= v_now - interval '1 minute'
         then v_now
-      else usage.window_started_at
+      else current_usage.window_started_at
     end,
     window_request_count = case
-      when usage.window_started_at <= v_now - interval '1 minute'
+      when current_usage.window_started_at <= v_now - interval '1 minute'
         then 1
-      else least(7, usage.window_request_count + 1)
+      else least(7, current_usage.window_request_count + 1)
     end,
     usage_date = case
-      when usage.usage_date <> v_today then v_today
-      else usage.usage_date
+      when current_usage.usage_date <> v_today then v_today
+      else current_usage.usage_date
     end,
     daily_request_count = case
-      when usage.usage_date <> v_today then 1
-      else least(51, usage.daily_request_count + 1)
+      when current_usage.usage_date <> v_today then 1
+      else least(51, current_usage.daily_request_count + 1)
     end,
     updated_at = v_now
   returning window_request_count, daily_request_count
