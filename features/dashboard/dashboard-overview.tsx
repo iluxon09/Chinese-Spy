@@ -39,14 +39,6 @@ const money = (paise: number) =>
     maximumFractionDigits: 2,
   }).format(paise / 100);
 
-const compactMoney = (paise: number) =>
-  new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    notation: "compact",
-    maximumFractionDigits: 1,
-  }).format(paise / 100);
-
 const percent = (value: number | null) =>
   value === null ? "—" : `${value > 0 ? "+" : ""}${value.toFixed(2)}%`;
 
