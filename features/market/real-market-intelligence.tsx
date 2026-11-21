@@ -97,9 +97,16 @@ export default function RealMarketIntelligence() {
   }, []);
 
   useEffect(() => {
-    void loadBriefing(false);
+    let active = true;
+
+    // Deferring to a microtask lets React Strict Mode cancel the development
+    // replay before a duplicate request can consume the server-side quota.
+    queueMicrotask(() => {
+      if (active) void loadBriefing(false);
+    });
 
     return () => {
+      active = false;
       const controller = requestControllerRef.current;
       requestControllerRef.current = null;
       controller?.abort();
