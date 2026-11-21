@@ -1,0 +1,2 @@
+# Pinned prototype provider. Review Yahoo Finance terms before public/commercial use.
+yfinance==1.8.0

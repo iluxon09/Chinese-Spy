@@ -8,16 +8,12 @@ export const maxDuration = 50;
 
 const DEFAULT_MODEL = "gemini-3.8-flash";
 const REQUEST_TIMEOUT_MS = 40_000;
-const MAX_ANSWER_LENGTH = 14_000;
+const MAX_ANSWER_LENGTH = 8_000;
 
-type CitationSource = {
-  title: string;
-  url: string;
-};
+type CitationSource = { title: string; url: string };
 
 function safeSourceUrl(value: unknown): string | null {
   if (typeof value !== "string") return null;
-
   try {
     const url = new URL(value);
     return url.protocol === "https:" ? url.toString() : null;
@@ -35,28 +31,24 @@ function formatAnswer(
   for (const block of outputBlocks) {
     if (block.type !== "text" || typeof block.text !== "string") continue;
 
-    let text = block.text;
+    let content = block.text;
     const annotations = Array.isArray(block.annotations)
       ? block.annotations
           .map(parseJsonObject)
           .filter((item): item is Record<string, unknown> => item !== null)
       : [];
-
-    const insertions: Array<{ index: number; links: string[] }> = [];
+    const positions = new Map<number, Set<string>>();
 
     for (const annotation of annotations) {
       if (annotation.type !== "url_citation") continue;
-
       const url = safeSourceUrl(annotation.url ?? annotation.uri);
       if (!url) continue;
 
-      const title =
-        typeof annotation.title === "string" && annotation.title.trim()
-          ? annotation.title.trim()
-          : new URL(url).hostname;
-
-      if (!sourceByUrl.has(url)) {
-        if (sourceByUrl.size >= 12) continue;
+      if (!sourceByUrl.has(url) && sourceByUrl.size < 12) {
+        const title =
+          typeof annotation.title === "string" && annotation.title.trim()
+            ? annotation.title.trim()
+            : new URL(url).hostname;
         sourceByUrl.set(url, { title, url });
       }
 
@@ -65,52 +57,37 @@ function formatAnswer(
         typeof endIndex === "number" &&
         Number.isInteger(endIndex) &&
         endIndex >= 0 &&
-        endIndex <= text.length
+        endIndex <= content.length
       ) {
-        insertions.push({ index: endIndex, links: [url] });
+        const urls = positions.get(endIndex) ?? new Set<string>();
+        urls.add(url);
+        positions.set(endIndex, urls);
       }
     }
 
-    // Insert source links from right to left so earlier offsets stay valid.
-    const grouped = new Map<number, Set<string>>();
-    for (const insertion of insertions) {
-      const urls = grouped.get(insertion.index) ?? new Set<string>();
-      insertion.links.forEach((url) => urls.add(url));
-      grouped.set(insertion.index, urls);
-    }
-
-    const orderedInsertions = [...grouped.entries()].sort(
-      (left, right) => right[0] - left[0],
-    );
-
-    for (const [index, urls] of orderedInsertions) {
-      const links = [...urls]
+    for (const [index, urls] of [...positions.entries()].sort((a, b) => b[0] - a[0])) {
+      const citations = [...urls]
         .map((url) => {
-          const sourceIndex =
-            [...sourceByUrl.keys()].indexOf(url) + 1;
+          const sourceIndex = [...sourceByUrl.keys()].indexOf(url) + 1;
           return sourceIndex > 0 ? ` [${sourceIndex}](${url})` : "";
         })
         .join("");
-
-      text = text.slice(0, index) + links + text.slice(index);
+      content = content.slice(0, index) + citations + content.slice(index);
     }
 
-    if (text.trim()) paragraphs.push(text.trim());
+    if (content.trim()) paragraphs.push(content.trim());
   }
 
   return {
     answer: paragraphs.join("\n\n").slice(0, MAX_ANSWER_LENGTH),
-    sources: [...sourceByUrl.values()].slice(0, 12),
+    sources: [...sourceByUrl.values()],
   };
 }
 
 export async function GET() {
   try {
     const { supabase, user } = await getAuthenticatedSupabase();
-
-    if (!user) {
-      return jsonError("Sign in to view real-market intelligence.", 401);
-    }
+    if (!user) return jsonError("Sign in to view market explanations.", 401);
 
     const { data: consent, error: consentError } = await supabase
       .from("user_consents")
@@ -120,87 +97,92 @@ export async function GET() {
       .maybeSingle();
 
     if (consentError) {
-      return jsonError("AI consent storage is unavailable. Apply the latest TILT consent migration.", 503);
+      return jsonError("AI consent storage is unavailable. Verify the TILT consent migration.", 503);
     }
     if (consent?.core_data_acknowledged !== true || consent.ai_processing_consent !== true) {
-      return jsonError("Enable Google Gemini processing in Privacy & consent before requesting the market briefing.", 403);
+      return jsonError("Enable Google Gemini processing in Privacy & consent before requesting an explanation.", 403);
+    }
+
+    const { data: marketState, error: marketError } = await supabase
+      .from("market_pulse_state")
+      .select("snapshot,last_success_at")
+      .eq("universe_key", "NIFTY_500")
+      .maybeSingle();
+
+    if (marketError) {
+      console.error("Market explanation snapshot read failed", marketError.code ?? "unknown");
+      return jsonError("The Nifty 500 snapshot is unavailable. Verify the market-pulse migration.", 503);
+    }
+
+    const snapshot = parseJsonObject(marketState?.snapshot);
+    if (!snapshot) {
+      return jsonError("No successful Nifty 500 snapshot exists yet. The explanation is unavailable until the first refresh.", 503);
+    }
+
+    const gainers = Array.isArray(snapshot.gainers) ? snapshot.gainers.slice(0, 5) : [];
+    const losers = Array.isArray(snapshot.losers) ? snapshot.losers.slice(0, 5) : [];
+    const moverSummary = [...gainers, ...losers]
+      .map((item) => {
+        const stock = parseJsonObject(item);
+        if (!stock) return null;
+        return {
+          symbol: stock.symbol,
+          company: stock.company,
+          market_date: stock.market_date,
+        };
+      })
+      .filter((item) => item !== null);
+
+    if (moverSummary.length === 0) {
+      return jsonError("The stored snapshot contains no verified movers to explain.", 503);
     }
 
     const apiKey = process.env.GEMINI_API_KEY?.trim();
-    if (!apiKey) {
-      return jsonError(
-        "Live market research is not configured. Add GEMINI_API_KEY to the server environment.",
-        503,
-      );
-    }
+    if (!apiKey) return jsonError("Market explanations are not configured. Add GEMINI_API_KEY.", 503);
 
     const model =
       process.env.MARKET_INSIGHTS_MODEL?.trim() ||
       process.env.GEMINI_MODEL?.trim() ||
       DEFAULT_MODEL;
-
     if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/.test(model)) {
       return jsonError("Invalid MARKET_INSIGHTS_MODEL identifier.", 500);
     }
 
-    // Quota counters are atomic in PostgreSQL and shared across server instances.
     const { data: withinQuota, error: quotaError } = await supabase.rpc(
       "consume_market_insights_quota",
     );
-
     if (quotaError) {
-      console.error(
-        "Market-insights quota check failed",
-        quotaError.code ?? "unknown",
-      );
-
-      return jsonError(
-        "Live market research is not configured. Apply migration 20261121000600_dynamic_market_events_and_insights.sql.",
-        503,
-      );
+      console.error("Market-explanation quota check failed", quotaError.code ?? "unknown");
+      return jsonError("Market explanation limits are not configured. Verify migration 20261121000600_dynamic_market_events_and_insights.sql.", 503);
     }
-
     if (withinQuota !== true) {
-      return jsonError(
-        "Market research refresh limit reached: one refresh every 5 minutes and 20 per day. Please try again later.",
-        429,
-      );
+      return jsonError("Market explanation limit reached: one request every 5 minutes and 20 per day. Try later.", 429);
     }
 
-    const now = new Date();
-    const asOf = new Intl.DateTimeFormat("en-IN", {
-      dateStyle: "full",
-      timeStyle: "short",
-      timeZone: "Asia/Kolkata",
-    }).format(now);
-
-    const focusedWatchlist = [
-      "RELIANCE — Reliance Industries",
-      "TCS — Tata Consultancy Services",
-      "INFY — Infosys",
-      "HDFCBANK — HDFC Bank",
-      "ICICIBANK — ICICI Bank",
-      "SBIN — State Bank of India",
-      "ITC — ITC",
-      "LT — Larsen & Toubro",
-      "BHARTIARTL — Bharti Airtel",
-      "AXISBANK — Axis Bank",
-    ];
+    const lastUpdatedAt =
+      typeof marketState?.last_success_at === "string" ? marketState.last_success_at : null;
+    const snapshotAgeMs = lastUpdatedAt ? Date.now() - Date.parse(lastUpdatedAt) : Number.POSITIVE_INFINITY;
+    const stale = snapshotAgeMs > 45 * 60 * 1000;
+    const dataType = typeof snapshot.data_type === "string"
+      ? snapshot.data_type
+      : "daily_historical_or_delayed";
+    const latestMarketDate =
+      typeof snapshot.latest_market_date === "string" ? snapshot.latest_market_date : "unknown";
 
     const prompt = [
-      "Prepare a concise but complete, source-grounded Indian equity-market briefing for TILT's financial-literacy simulator.",
-      `Research request time: ${asOf} (Asia/Kolkata). This is the research timestamp, NOT automatically the timestamp of the market prices.`,
-      "Use Google Search to retrieve the latest verifiable NSE/BSE market data, official exchange information and company/market news available at the research request time.",
-      "Start by stating the exact market-data cutoff date and time. State whether the Indian cash market is currently open or closed. On weekends or exchange holidays, use the most recent completed trading session and label it explicitly as the previous session close. During market hours, label prices as intraday/last reported and include the quote timestamp when a source provides it. Never call a previous close live.",
-      "INDEX PULSE: report Nifty 50, Sensex, Nifty Bank and India VIX latest available value and percentage move. State the data date/session. Add advances versus declines and the strongest and weakest major NSE sectors when reliable values are available.",
-      "NIFTY 50 LEADERS AND LAGGARDS: list up to five biggest Nifty 50 gainers and five biggest Nifty 50 losers for the relevant session. For every row give symbol, company, close/last reported price in INR and percentage move from the previous close. Do not mix Nifty 50 constituents with all-NSE or Nifty 500 movers. Label the universe correctly.",
-      "TILT REAL-STOCK WATCHLIST: the following ten symbols came from the attached market-pulse prototype. Explicitly report each one, even if data is unavailable: " + focusedWatchlist.join("; ") + ". For each, give latest verified price, previous close, one-day percentage change and the exact date/session. If no credible quote is found, write 'Not verified' instead of guessing. These ten stocks are a curated watchlist, not a claim to represent the whole market.",
-      "COMPANY NEWS: identify the important verified headlines for the strongest and weakest movers, especially companies in the ten-stock watchlist. Explain the specific catalyst only when a credible report, company filing or exchange disclosure supports it. Distinguish a confirmed announcement from a brokerage view, market commentary or correlation. If there is no verified company-specific catalyst, say so.",
-      "MARKET INSIGHTS: give two or three short observations about breadth, sector leadership, volatility, flows or the gap between large caps and broader markets. Explain what the evidence suggests, what remains uncertain, and avoid forecasting returns.",
-      "Prioritise NSE/BSE filings and official index data, then reputable sources such as Reuters, Business Standard, Economic Times, Mint, Moneycontrol and established broker research. Cross-check material price moves and catalysts with more than one credible source where possible.",
-      "Attach Google Search grounding citations to factual claims. Include source publication dates and market-data timestamps. Do not invent prices, percentage changes, trading volumes, earnings, company announcements, flows or reasons. When credible sources disagree, state that values differ and prefer exchange closing data.",
-      "FORMAT: use these Markdown headings in this order: 'Market session', 'Index and sector pulse', 'Nifty 50 gainers', 'Nifty 50 laggards', 'TILT ten-stock watchlist', 'Verified company news', 'What the session suggests'. Use concise flat bullet lists, not tables or nested lists. Format every percentage with an explicit + or − sign and two decimals. No raw HTML.",
-      "This is REAL-WORLD information. Do not use TILT's fictional stock prices or invent any mapping between real companies and fictional symbols. Real-market information must never influence TILT's fictional simulation prices. No buy/sell/hold recommendations or personal investment advice.",
+      "You are writing a brief, evidence-led market note for TILT, an educational financial-literacy product.",
+      "The following Nifty 500 movers have already been calculated by deterministic backend code using the same two completed daily market sessions for every included stock. Treat this list as immutable input, not a question.",
+      "Do not calculate, select, add, remove, reorder, rank, or substitute any stock. Do not produce gainers/losers tables or restate numerical prices, returns, or rankings. The application renders those separately from its stored snapshot.",
+      "Your task is limited to explaining whether credible, dated news or company/exchange disclosures help explain any of these moves. Do not infer causation from price movement alone. If you cannot verify a catalyst, say that no specific catalyst was verified.",
+      "Use Google Search grounding. Prefer NSE/BSE/company filings and reputable news. Include publication dates, and distinguish confirmed announcements from commentary, broker opinion, and unverified speculation.",
+      "If a catalyst is not from the same market session, say so. If a news event merely coincides with a move, describe it as context rather than a cause.",
+      "Output no more than: 'Verified developments' (up to five concise bullets) and 'Limitations' (one concise paragraph). No investment recommendations, price forecasts, or buy/sell/hold language.",
+      `Market-data universe: Nifty 500. Latest market date in snapshot: ${latestMarketDate}. Data type: ${dataType}. Snapshot last updated: ${lastUpdatedAt ?? "unknown"}.`,
+      stale
+        ? "WARNING: The snapshot is older than 45 minutes. State that its data may be stale and do not describe it as current."
+        : "The snapshot is within the expected refresh window. This does not make the underlying daily bars real-time.",
+      `Authoritative precomputed mover symbols and companies: ${JSON.stringify(moverSummary)}`,
+      "Reminder: these are the only movers to discuss. Do not re-rank them or generate an alternate list.",
     ].join("\n\n");
 
     const upstream = await fetch(
@@ -223,46 +205,21 @@ export async function GET() {
     );
 
     if (!upstream.ok) {
-      const payload = await upstream.json().catch(() => ({}));
-      const upstreamStatus =
-        typeof payload === "object" &&
-        payload !== null &&
-        "error" in payload &&
-        typeof payload.error === "object" &&
-        payload.error !== null &&
-        "status" in payload.error
-          ? String(payload.error.status)
-          : "unknown";
-
+      const payload = parseJsonObject(await upstream.json().catch(() => null));
+      const upstreamStatus = parseJsonObject(payload?.error)?.status;
       if (upstream.status === 429) {
-        return jsonError(
-          "Google Search grounding quota reached. Check Gemini API usage and billing.",
-          429,
-        );
+        return jsonError("Google Search grounding quota reached. Check Gemini API usage and billing.", 429);
       }
-
       if (upstream.status === 401 || upstream.status === 403) {
-        return jsonError(
-          "Gemini rejected the key or Google Search grounding is unavailable for this API project. Check AI Studio access and billing.",
-          503,
-        );
+        return jsonError("Gemini rejected the key or Search grounding is unavailable for this API project.", 503);
       }
-
-      console.error(
-        "Grounded market research request failed",
-        upstream.status,
-        upstreamStatus,
-      );
-
-      return jsonError(
-        "Live market research could not be completed. Try again shortly.",
-        502,
-      );
+      console.error("Grounded mover explanation failed", upstream.status, upstreamStatus ?? "unknown");
+      return jsonError("Market explanation could not be completed. Try again shortly.", 502);
     }
 
     const interaction = parseJsonObject(await upstream.json());
     if (!interaction || interaction.status !== "completed" || !Array.isArray(interaction.steps)) {
-      return jsonError("Google Search did not return a completed market briefing.", 502);
+      return jsonError("Google Search did not return a completed market explanation.", 502);
     }
 
     const outputBlocks = interaction.steps
@@ -278,38 +235,34 @@ export async function GET() {
       );
 
     const { answer, sources } = formatAnswer(outputBlocks);
-
     if (!answer || sources.length === 0) {
-      return jsonError(
-        "The latest search did not provide verifiable source citations. Refresh the briefing in a moment.",
-        502,
-      );
+      return jsonError("The search did not return a cited explanation. Try again shortly.", 502);
     }
 
     return NextResponse.json(
       {
-        asOf,
-        market: "India · NSE / BSE",
+        asOf: new Date().toISOString(),
+        market: "Nifty 500 · NSE",
+        snapshotUpdatedAt: lastUpdatedAt,
+        stale,
         answer,
         sources,
       },
       {
         headers: {
-          "Cache-Control": "private, max-age=900, stale-while-revalidate=900",
+          "Cache-Control": "private, max-age=300, stale-while-revalidate=300",
           Vary: "Cookie",
         },
       },
     );
   } catch (error) {
     if (error instanceof Error && error.name === "TimeoutError") {
-      return jsonError("Live market research timed out. Please retry.", 504);
+      return jsonError("Market explanation timed out. Please retry.", 504);
     }
-
     console.error(
-      "TILT market research error",
+      "TILT market explanation error",
       error instanceof Error ? error.message : "unknown",
     );
-
-    return jsonError("Live market research is temporarily unavailable.", 503);
+    return jsonError("Market explanation is temporarily unavailable.", 503);
   }
 }

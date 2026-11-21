@@ -30,7 +30,7 @@ TILT is an educational, virtual stock-market simulator. It combines a determinis
 - SIP and goal-based SIP calculators with validation, assumptions and educational disclaimers.
 - Behavioral Analysis of the signed-in user's simulation activity: entry/exit timing, trading frequency, transaction-cost drag and portfolio concentration, with evidence-backed pattern summaries.
 - Gemini-powered AI Risk Coach with a conversational risk discussion and read-only context from the signed-in user's virtual portfolio and recent simulated trades.
-- Google Search-grounded Indian market briefing with correctly dated session/close data, Nifty 50 gainers and laggards, sector summaries, verified company headlines and a ten-stock large-cap watchlist (RELIANCE, TCS, INFY, HDFCBANK, ICICIBANK, SBIN, ITC, LT, BHARTIARTL and AXISBANK); kept separate from fictional simulator data.
+- Separate Nifty 500 real-market pulse with deterministic Top 5 gainers/losers, daily prices and percentage moves from a replaceable Python provider; optional Gemini commentary can explain stored movers but cannot rank or select them. Real prices never enter the fictional simulator.
 
 ## Technology
 
@@ -90,8 +90,9 @@ In Supabase Dashboard → SQL Editor, apply migrations in timestamp order after 
 6. `supabase/migrations/20261121000400_ai_coach_rate_limits.sql` — adds atomic per-user AI Coach limits (6 requests per rolling minute and 50 per UTC day).
 7. `supabase/migrations/20261121000500_market_step_cap.sql` — prevents a simulation session from advancing beyond 10,000 market steps, bounding shared price-history growth.
 8. `supabase/migrations/20261121000600_dynamic_market_events_and_insights.sql` — adds deterministic per-stock catalyst events, stronger bounded intraday volatility and a separate real-market research quota (one refresh per five minutes and 20 per UTC day per user).
+9. `supabase/migrations/20261121000700_tilt_user_consent.sql` — stores account-scoped core-data acknowledgement and optional Gemini-processing consent.\n10. `supabase/migrations/20261121000800_nifty500_market_pulse.sql` — adds the Nifty 500 snapshot store, protected worker RPCs and database extensions for 15-minute scheduling.
 
-Run each migration only once and do not edit or re-run an already-applied migration against a live database. For a fresh database, apply all eight migrations in timestamp order. For a database that already has migrations `20261120000000` through `20261121000500` applied, apply only `20261121000600`. For a database already through `20261121000300`, apply `20261121000400`, `20261121000500` and `20261121000600` in order. For any other existing migration history, inspect Supabase migration history first and apply only missing migrations; do not blindly rerun the full list.
+Run each migration only once and do not edit or re-run an already-applied migration against a live database. For a fresh database, apply all ten migrations in timestamp order. For any existing database, inspect the migration history first and apply only missing migrations in timestamp order. Do not blindly rerun the full list. For a project already at migration `20261121000700`, apply only `20261121000800_nifty500_market_pulse.sql` for this market-data feature.
 
 #### Demo account readiness
 
@@ -128,7 +129,7 @@ The GitHub Actions workflow `.github/workflows/ci.yml` runs the same checks on p
 | `/pricing/demo-checkout` | Public | No-charge UPI/card/net-banking UI preview; no enquiry or order is submitted |
 | `/login` | Public | Sign in / create account |
 | `/` | Authenticated | Dashboard and recent activity |
-| `/markets` | Authenticated | Fictional prices/history plus a separate Google Search-grounded Indian market briefing |
+| `/markets` | Authenticated | Fictional simulator prices plus a separate Nifty 500 daily market pulse and optional sourced mover commentary |
 | `/trading` | Authenticated | BUY / SELL terminal and transactions |
 | `/portfolio` | Authenticated | Portfolio value, allocation and P&L |
 | `/simulator` | Authenticated | Market-step and event controls |
@@ -148,7 +149,7 @@ The GitHub Actions workflow `.github/workflows/ci.yml` runs the same checks on p
 - Public pricing routes bypass the simulation bootstrap and authentication redirect. They do not create sessions, start market playback or contact Supabase.
 - Behavioral Analysis is a pure, read-only analysis layer. Its adapter converts backend paise values to rupees exactly once and maps pattern recommendations to stable Academy lesson IDs.
 - The AI Risk Coach calls Gemini from an authenticated server route. It receives read-only context for the signed-in user's active TILT simulation: portfolio, holdings, prices, recent simulated trades and market events. Conversation history stays in browser memory and is not saved to TILT tables. A database RPC enforces a per-user limit of 6 requests per rolling minute and 50 requests per UTC day.
-- The Markets page's real-market briefing uses Gemini Google Search grounding and displays source citations. It is informational only, refreshes at most once every five minutes and 20 times per UTC day per user, and never feeds real prices/news into the fictional simulator.
+- The Nifty 500 pulse is computed by the Python market-data worker and persisted in `market_pulse_state`. The authenticated `GET /api/market-pulse` endpoint only reads the latest snapshot; it never calls a provider. Supabase Cron + pg_net triggers the Vercel worker every 15 minutes. The source currently supplies daily historical/delayed bars, not live 15-minute quotes. Optional Gemini commentary is user-triggered, receives the already-computed movers, and cannot select or rerank them. See [docs/MARKET_PULSE.md](docs/MARKET_PULSE.md).
 - Configure `GEMINI_API_KEY` in `.env.local` and Vercel Project → Settings → Environment Variables. Keep the key server-side; `GEMINI_MODEL` is optional and defaults to `gemini-3.8-flash`.
 - The intraday market model requires `supabase/migrations/20261121000200_intraday_market_volatility.sql`. It is deterministic by scenario/step so all sessions see the same stored prices. Migration `20261121000600_dynamic_market_events_and_insights.sql` introduces a 14% per-stock per-candle chance of a synthetic catalyst (up to 3.00% impact), plus a 1.5% chance of a broad-market shock (up to 2.50%). Every catalyst is explicitly fictional; its seed is stable per scenario, step and symbol so users share identical prices. The database enforces a 10,000-step ceiling per simulation session to bound shared price-history growth. The retired replay scenario is removed by the cleanup migration; its historical migration remains only to preserve migration ordering. See [docs/MARKET_MODEL.md](docs/MARKET_MODEL.md).
 - Behavioral Analysis uses configurable, experimental heuristics over the user's simulation history; its thresholds have not been empirically validated. It does not diagnose personality or infer intent; insufficient data is distinct from a negative finding.
