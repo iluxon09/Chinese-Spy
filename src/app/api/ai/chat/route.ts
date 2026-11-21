@@ -193,13 +193,13 @@ async function loadSimulationContext(
     ((pricesResult.data ?? []) as DatabaseRow[]).map((row) => [
       String(row.symbol),
       toNumber(row.price_paise),
-    ]),
+    ] as const),
   );
   const companies = new Map<string, DatabaseRow>(
     ((companiesResult.data ?? []) as DatabaseRow[]).map((row) => [
       String(row.symbol),
       row,
-    ]),
+    ] as const),
   );
 
   const positions = holdings
